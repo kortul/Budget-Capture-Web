@@ -1,0 +1,5 @@
+Source ref: refs/heads/main
+Source commit: 3861348f3badec8cb7f3ad109117e1b66370c967
+Node: v24.22.2
+npm: 11.19.1
+Lockfile SHA-256: 1ef207fcf848ca60438a99de738ee593cbcfc700e88973d6926bc6b2b3e985b8
