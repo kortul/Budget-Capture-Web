@@ -91,8 +91,8 @@ try {
   const syntheticPdf = Array.from(makeSyntheticPdf());
   const extractedPdfText = await page.evaluate(async bytes => {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdfjs/pdf.worker.mjs';
-    const assetBase = new URL('./vendor/pdfjs/', document.baseURI).href;
-    const document = await window.pdfjsLib.getDocument({
+    const assetBase = new URL('./vendor/pdfjs/', globalThis.document.baseURI).href;
+    const pdfDocument = await window.pdfjsLib.getDocument({
       data:new Uint8Array(bytes),
       isEvalSupported:false,
       cMapUrl:`${assetBase}cmaps/`,
@@ -102,9 +102,9 @@ try {
       iccUrl:`${assetBase}iccs/`,
       useWorkerFetch:true,
     }).promise;
-    const firstPage = await document.getPage(1);
+    const firstPage = await pdfDocument.getPage(1);
     const text = await firstPage.getTextContent();
-    await document.destroy();
+    await pdfDocument.destroy();
     return text.items.map(item => item.str).join(' ');
   }, syntheticPdf);
   assert.match(extractedPdfText,/BROWSER PDF WORKER TEST/,'PDF.js must execute the same-origin worker and extract text');
