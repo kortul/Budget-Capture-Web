@@ -7,7 +7,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'd
 const port = Number(process.env.PORT || 4175);
 const base = process.env.BASE_PATH || '/budget-capture-e2e/';
 const mime = {
-  '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
+  '.html':'text/html; charset=utf-8',
+  '.js':'text/javascript; charset=utf-8',
+  '.mjs':'text/javascript; charset=utf-8',
+  '.css':'text/css; charset=utf-8',
+  '.json':'application/json; charset=utf-8',
+  '.webmanifest':'application/manifest+json',
+  '.wasm':'application/wasm',
+};
   '.json':'application/json; charset=utf-8', '.webmanifest':'application/manifest+json', '.wasm':'application/wasm',
 };
 const server = http.createServer((req, res) => {
