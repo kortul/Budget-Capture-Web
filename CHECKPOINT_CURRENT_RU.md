@@ -1,0 +1,148 @@
+# Budget Capture Web — контрольная точка 0.1.6.0
+
+**Дата:** 19 ноября 2026  
+**Статус:** профиль категорий завершён; source regression и security-hardening contract проверки проходят. Production build / dist / Chromium E2E пока не подтверждены.
+
+## Что реализовано
+
+- `profile.js` — версия профиля, универсальные defaults, нормализация и legacy migration.
+- `db.js` — профиль внутри SQLite `web_metadata` под ключом `budget_profile_v1`, миграция legacy-флага в нейтральное поле `highlighted_flag`, save/reopen и import/export.
+- `app.js` + `index.html` — редактирование Expenses / Income / Other, специальных Numbers categories и captions.
+- Персональные категории и имена специальных Numbers-таблиц не зашиты в публичный JavaScript.
+- Персональная `.budget` копия хранится отдельно; исходный Windows backup не перезаписывался.
+
+## Security hardening, 19.11.2026
+
+- SQLite: `sql.js` обновлён с 1.13.0 до 1.16.0 (выпуск от 10.11.2026); `useOldExtensionFunctions: true` явно сохраняет прежнее поведение legacy SQLite math/string functions.
+- XLSX: зависимость переключена со старого `xlsx@0.18.5` на официальный SheetJS CE tarball `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`.
+- PDF: `pdfjs-dist` обновлён до `6.5.438`; runtime использует legacy ESM API и worker из одной версии.
+- PDF parser вызывается с `isEvalSupported: false`.
+- Build script сверяет фактические установленные версии `sql.js`, `pdfjs-dist`, `xlsx` и `playwright` перед сборкой.
+- E2E сценарий проверяет версию загруженного PDF.js и SheetJS, локальные same-origin пути и parsing PDF/XLSX.
+- PDF parser явно передаёт same-origin URL для CMaps, standard fonts, WASM и ICC; build manifest должен хешировать все эти файлы; E2E дополнительно проверяет успешный same-origin fetch representative-файлов каждого каталога.
+- Корневой `asset-manifest.json` включает версии пакетов и происхождение SheetJS/PDF.js; это согласовано с `test:dist`.
+- `dist/vendor/licenses/` сохраняет лицензии sql.js, PDF.js и SheetJS CE; копии входят в SHA-256 manifest и проверяются на непустое содержимое.
+- Runtime без CDN fallback: библиотеки и вспомогательные ресурсы PDF.js (CMaps / standard fonts / WASM / ICC) должны быть vendored в опубликованный `dist/vendor`.
+- Эти изменения пока являются source-level hardening. Реальная production-сборка и браузерное выполнение ещё не подтверждены.
+
+## Проверки, выполненные в этой контрольной точке
+
+- `node --check` всех runtime-модулей, build scripts и test scripts — PASS.
+- `npm test` — 9/9 source suites PASS (including explicit rejection of stale sql.js 1.13.0 in the lockfile guard):
+  - core smoke;
+  - profile migration;
+  - SQLite migration/save/reopen round-trip;
+  - app contract;
+  - GitHub Pages build contract;
+  - lockfile security guard (transitive SHA-512 / HTTPS host allowlist);
+  - lockfile bootstrap workflow contract (manual trigger / verifier-before-artifact / no deployment);
+  - Windows/browser import compatibility;
+  - Yandex PDF parsing/reconciliation.
+- `npm run build:pages` — BLOCKED: отсутствует `node_modules/sql.js`; `dist/` не создаётся.
+- Builder + `test:dist` дополнительно прошли на отдельном синтетическом fixture-проекте: все assets и package metadata в manifest проверены SHA-256. Fixture использует искусственные vendor-файлы и не подтверждает реальные пакеты или production runtime.
+- Privacy scan сверил 37 персональных категорий/подписей (за вычетом универсальных defaults): точных совпадений с текстовыми границами в публичном проекте — 0.
+- `npm run verify:lock` — BLOCKED: отсутствует `package-lock.json`.
+- `npm run test:dist` — BLOCKED: нет `dist/asset-manifest.json`, поскольку build не создан.
+- Chromium E2E не запускался в этой контрольной точке. Предыдущая проверка среды зафиксировала системную Chromium policy `URLBlocklist: ["*"]`, блокирующую localhost и file URLs.
+- GitHub Actions / Pages deployment и iPhone Safari не проверялись.
+
+## Следующий шаг
+
+В trusted network environment создать и проверить `package-lock.json` для точных зависимостей из `package.json`, затем выполнить `npm ci`, установить Playwright Chromium и пройти полный release pipeline:
+
+```bash
+npm run verify:lock
+npm ci --ignore-scripts --no-audit --no-fund
+npx playwright install --with-deps chromium
+npm test
+npm run build:pages
+npm run test:dist
+npm run test:e2e
+```
+
+Не повышать версию до 0.1.7.0 и не публиковать как production-ready, пока все этапы не пройдут. Подробности — в `VALIDATION_ATTEMPT_2026-11-19_RU.md` и `SECURITY_DEPENDENCY_REVIEW_2026-11-19_RU.md`.
+
+
+## Дополнительная работа после release-gate hardening
+
+- Добавлен отдельный ручной workflow `.github/workflows/prepare-lockfile.yml` для генерации настоящего npm lockfile на GitHub-hosted runner, где доступен registry. Он только разрешает package metadata (`--package-lock-only --ignore-scripts`), запускает строгий `verify:lock`, создаёт SHA-256 и экспортирует артефакт с checksum и commit metadata; deployment не выполняет.
+- Добавлен `tests/lockfile_workflow_contract.mjs` в `npm test`: workflow должен быть ручным, Node 24, verifier должен выполняться до upload, артефакт содержит lockfile/checksum; workflow не должен запускать `npm ci` или Pages deployment.
+- После загрузки проекта в GitHub запустить workflow вручную, скачать artifact, проверить checksum, добавить package-lock.json в root и сделать commit; только после этого Pages pipeline сможет пройти первый release gate.
+
+
+## Lockfile bootstrap, 19.11.2026
+
+- `sql.js` обновлён до 1.16.0; package/build/lockfile guards согласованы с этим pin, а legacy function semantics выставлены явно.
+- Добавлен `.github/workflows/prepare-lockfile.yml`: ручной GitHub Actions запуск генерирует lockfile в доступной к npm сетевой среде, выполняет strict verifier и экспортирует lockfile + checksum + commit metadata. Не устанавливает библиотеки и не деплоит Pages.
+- README и resume-инструкция обновлены: для текущей среды предпочитать этот workflow вместо попыток создать поддельный локальный lockfile.
+- Добавлен contract test workflow; полный source suite теперь 9/9 PASS.
+
+
+## Dependency refresh — sql.js 1.16.0
+
+- 19.11.2026 проверена официальная release history: `sql.js@1.16.0` (10.11.2026) является актуальным stable, заменяет `1.13.0` (15.03.2025).
+- Пакетный pin, builder version checks, lockfile verifier и tests обновлены на 1.16.0.
+- `app.js` явно передаёт `useOldExtensionFunctions: true`, сохраняя прежнее поведение legacy math/string функций.
+- `npm test` и синтетический `build:pages` / `test:dist` пройдены после обновления. Реальный runtime sql.js 1.16.0 остаётся на проверку GitHub runner после `npm ci`.
+
+## Текущий dependency pin after freshness review
+
+- `sql.js`: **1.16.0** (SQLite 3.54.1, released 10.11.2026). Previous `1.13.0` pin removed from active configs.
+- `app.js` sets `useOldExtensionFunctions: true` explicitly, preserving legacy SQLite math/string behavior.
+- Updated files: `package.json`, `scripts/build-pages.mjs`, `scripts/verify-lockfile.mjs`, `tests/build_contract.mjs`, `tests/dist_contract.mjs`, `tests/lockfile_guard.mjs`.
+- Fresh test run after the change: `npm test` 9/9 PASS; JS/MJS syntax PASS; isolated structural build + `test:dist` PASS (20 placeholder assets).
+- Real package installation and real sql.js WASM execution remain pending GitHub Actions/network access.
+GitHub Actions in both workflows are pinned to verified full-length commit SHAs; checkout runs with `persist-credentials: false`. Keep these immutable references unless a replacement SHA is checked against the official upstream release and reviewed.
+
+## GitHub Actions runtime hardening — Node 24
+
+- Оба workflow обновлены на официальные Node 24-compatible релизы и full immutable SHA: checkout v7.0.1, setup-node v7.1.0, configure-pages v6.0.0, upload-pages-artifact v5.0.0, deploy-pages v5.0.1; lockfile bootstrap использует upload-artifact v6.0.0.
+- Composite `upload-pages-artifact@v5.0.0` внутри себя использует `upload-artifact@v7.0.0`, также закреплённый upstream commit SHA.
+- В `tests/lockfile_workflow_contract.mjs` добавлены точные утверждения о версиях Actions и Node 24.
+- Официальные upstream release metadata checked; подробные ссылки и full SHA — в `GITHUB_ACTIONS_NODE24_REVIEW_2026-11-19_RU.md`.
+- Source regression после обновления: 9/9 PASS. YAML parse обоих workflow — PASS. Чистый synthetic Pages build + `test:dist` — 20 assets, 20/20 SHA-256 PASS.
+- Реальные GitHub Actions jobs не запускались: репозиторий пользователя ещё не подключён в этой рабочей сессии. `package-lock.json`, `npm ci`, production vendor build, Chromium E2E и Pages deployment остаются незавершёнными.
+
+
+## Checkpoint refresh — GitHub Actions Node 24, 19.11.2026
+
+- Both `.github/workflows/pages.yml` and `.github/workflows/prepare-lockfile.yml` now target Node 24.
+- Direct Actions pins were upgraded and re-verified against official upstream release metadata: checkout v7.0.1, setup-node v7.1.0, configure-pages v6.0.0, upload-pages-artifact v5.0.0, deploy-pages v5.0.1, upload-artifact v6.0.0. Every direct reference is a full 40-character commit SHA.
+- `upload-pages-artifact@v5.0.0` is a composite action that internally pins upload-artifact v7.0.0 by full SHA.
+- Added `GITHUB_ACTIONS_NODE24_REVIEW_2026-11-19_RU.md` with all direct and nested pins and official metadata links.
+- Expanded `tests/lockfile_workflow_contract.mjs` to require Node 24 and the reviewed SHA pins.
+- Fresh verification: `npm test` 9/9 PASS; all JS/MJS syntax checks PASS; both workflow YAML documents parse; 8/8 direct action uses are full immutable SHA references; isolated synthetic build and `test:dist` PASS with 20/20 asset hashes.
+- Important limits: no real lockfile has been generated; no real npm tarballs or runtime WASM were installed; no actual GitHub workflow run, Chromium E2E or Pages deploy has occurred. The synthetic fixture uses placeholder files and is structural-only.
+
+## Независимая перепроверка после Node 24 checkpoint — 19.11.2026
+
+Архив исходной контрольной точки повторно проверен: SHA-256 совпал с опубликованной суммой `e6b2412e316ec7e88af4655e219c69ca421f6c49b1ae99dbcba89e29bf0c95e3`; внутри 41 файл.
+
+Локальная среда этой проверки: Node.js `v22.16.0`, npm `10.9.2` (это не GitHub Node 24 runner).
+
+- `npm test` — PASS, 9/9 suites.
+- JS/MJS syntax — PASS.
+- YAML parse обоих workflows — PASS.
+- Immutable Action references — PASS, 8/8 полных 40-символьных SHA.
+- Попытка `npm install --package-lock-only --ignore-scripts --no-audit --no-fund` не получила ответ от registry: DNS `EAI_AGAIN` на `registry.npmjs.org`. Частичный `package-lock.json` не создан.
+- `npm run verify:lock` — BLOCKED: `package-lock.json` отсутствует.
+- `npm run build:pages` — BLOCKED: отсутствует `node_modules/sql.js`.
+
+Следовательно, состояние release gate не изменилось: исходные тесты подтверждены, но настоящая dependency resolution, `npm ci`, production vendor build, dist SHA verification, Chromium E2E и deployment ещё не выполнены. Не повышать версию и не публиковать.
+
+**Единственный следующий технический шаг:** загрузить source-only ZIP в GitHub, запустить вручную `Actions → Prepare verified dependency lockfile → Run workflow`, скачать artifact, проверить SHA-256 и source commit, добавить полученный `package-lock.json` в корень и отправить commit в `main`. Затем Pages workflow сможет выполнить реальную сборку и E2E на GitHub-hosted runner.
+
+## Publication gate hardening — 19.11.2026
+
+Во время повторной проверки найдено опасное несоответствие требованию «публикацию пока не запускаем»: предыдущий `pages.yml` деплоил сайт автоматически после каждого push в `main`. Это исправлено до дальнейшего GitHub запуска.
+
+- `push` в `main` выполняет только `validate`: lockfile verification, `npm ci`, Chromium install, source tests, production build, dist manifest verification и Chromium E2E.
+- Проверенный `dist/` сохраняется как artifact `budget-capture-dist-<commit SHA>` для инспекции.
+- `deploy` изолирован в отдельный job и требует ручного `workflow_dispatch` с boolean input `deploy=true`. Значение по умолчанию — `false`.
+- Только deploy job получает `pages: write` и `id-token: write`; validation job имеет только `contents: read`.
+- Добавлен pinned `actions/download-artifact@v8.0.2` (`9000827ccba6bdab643e8b6fd33ac0654aef8333`) с Node 24 runtime; action refs в двух workflows теперь 10/10 полных SHA.
+- `tests/lockfile_workflow_contract.mjs` проверяет, что push не может вызвать deploy, input по умолчанию false и deploy зависит от успешного validate job.
+
+Повторный `npm test` после изменения: 9/9 PASS, включая новый publication-gate contract. Оба YAML файла разбираются, immutable pins — 10/10 PASS. Реальный GitHub runner всё ещё не запускался; автоматической публикации теперь нет.
+
+Действующий следующий шаг: загрузить этот ZIP в GitHub, выполнить manual lockfile bootstrap, проверить artifact и добавить lockfile в `main`. Это вызовет CI validation/build, но не опубликует сайт. Публикация возможна только отдельным ручным запуском с `deploy=true` и пока не требуется.

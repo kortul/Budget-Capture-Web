@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root=path.resolve(new URL('..',import.meta.url).pathname);
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+assert.equal(new Set(ids).size,ids.length,'HTML IDs must be unique');
+assert.match(html,/<b id="app-version">0\.1\.6\.0<\/b>/,'visible footer version must match the current web build');
+const known=new Set(ids);
+const used=new Set([...app.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
+const missing=[...used].filter(id=>!known.has(id));
+assert.deepEqual(missing,[],'every literal app DOM selector must exist in index.html');
+for(const name of ['saveDatabase','newDatabase','openDatabaseFile','importFiles','renderTransactions','renderNumbers','renderAccounts','renderRecovery','exportCsv']) {
+  assert.match(app,new RegExp(`function\\s+${name}\\s*\\(`),`${name} handler must be defined`);
+}
+assert.match(app,/function\s+saveDatabase\s*\(/,'database save function is wired and defined');
+assert.match(app,/databaseNeedsSave\(db\)/,'SQLite migration state must be checked after opening');
+assert.match(app,/loadGlobal\('initSqlJs'/,'SQLite library loader must be available');
+assert.doesNotMatch(app,/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i,'browser runtime must not fall back to third-party CDNs');
+assert.match(app,/same-origin \/vendor folder/,'missing local vendor files must produce an explicit same-origin runtime error');
+assert.doesNotMatch(html,/<script[^>]+src=["']https?:\/\//i,'external dependencies must load lazily, not block the initial page render');
+assert.match(app,/upsertRecognizedAccount\(state\.db/,'manual account edit must use an explicit upsert');
+assert.match(app,/owner:'Unverified'/,'newly detected cards must not assume a personal owner');
+const runtimeSource=['core.js','db.js','app.js','profile.js','index.html'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+assert.doesNotMatch(runtimeSource,/DEFAULT_RECOGNIZED_ACCOUNTS|ACCOUNT_CARD_SEEDS/i,'recognized account/card identifiers must be loaded from the local SQLite file, not seeded in public runtime code');
+assert.match(app,/addRecognizedAccount\(state\.db/,'automatic account discovery must use non-destructive insert');
+assert.match(app,/applyOwnSbpNameMarkers\(parsed\.rows,ownSbpNameMarkers\(\)\)/,'own SBP names must come from local database settings');
+assert.match(html,/id="own-sbp-markers"/,'own SBP name markers must be editable in Data & Backup');
+assert.doesNotMatch(app,/павел игоревич/i,'personal SBP counterparty name must not be hard-coded in public app JS');
+assert.doesNotMatch(fs.readFileSync(path.join(root,'core.js'),'utf8'),/павел игоревич/i,'personal SBP counterparty name must not be hard-coded in public core JS');
+assert.match(html,/id="app-version"/,'visible app version marker must exist');
+assert.match(app,/saveBudgetProfile\(state\.db/,'the profile editor must persist changes into SQLite metadata');
+assert.match(app,/exportBudgetProfile\(state\.db/,'profile export must be separate from transaction backups');
+assert.match(html,/id="profile-expenses"/,'profile editor must expose category groups');
+assert.match(html,/id="profile-special-input-category"/,'profile editor must expose special Numbers labels');
+assert.match(html,/Yandex Bank/,'Yandex bank import instructions must be visible');
+assert.match(html,/Yandex Bank payment-account and Сейв savings statement PDFs/i,'both supported Yandex PDF layouts must be listed in Data');
+assert.match(html,/id="open-file"[^>]+accept="[^"]*\.sqlite3/,'database file input must accept the Windows SQLite database');
+assert.match(html,/id="account-owner"[^>]*list="owner-suggestions"/,'account owner labels should be locally editable rather than hard-coded personal names');
+assert.doesNotMatch(html,/id="account-owner"[^<]*<option>(?:Owner A|Owner B)<\/option>/i,'account owners must not be embedded in the public source');
+assert(fs.existsSync(path.join(root,'.github/workflows/pages.yml')),'GitHub Pages workflow must exist');
+assert.match(html,/Content-Security-Policy/,'static app must set a same-origin CSP');
+assert(!fs.existsSync(path.join(root,'REAL_WINDOWS_BACKUP_PARITY_2026-11-18.md')),'private validation report must not be present in project source');
+for(const file of ['README_RU.md','CHECKPOINT_2026-11-18_RU.md','CHECKPOINT_CURRENT_RU.md','TEST_REPORT.md','RESUME_NEXT_STEPS_RU.md','LOCAL_VALIDATION_SCOPE.md','CHANGELOG_0.1.3.md','CHANGELOG_0.1.4.md','CHANGELOG_0.1.5.1.md','CHANGELOG_0.1.6.0.md']) { const doc=fs.readFileSync(path.join(root,file),'utf8'); assert.doesNotMatch(doc,/₽\s*\d/ ,`personal bank amounts must not be stored in ${file}`); }
+console.log(`App contract checks: PASS · ${ids.length} unique DOM IDs · ${used.size} selectors · required handlers present`);

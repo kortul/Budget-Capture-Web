@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(new URL('..',import.meta.url).pathname);
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+const workflow=fs.readFileSync(path.join(root,'.github/workflows/pages.yml'),'utf8');
+const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+assert.equal(pkg.version,'0.1.6.0');
+assert.equal(pkg.devDependencies['sql.js'],'1.16.0');
+assert.equal(pkg.devDependencies['pdfjs-dist'],'6.5.438');
+assert.equal(pkg.devDependencies.xlsx,'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz');
+assert.notEqual(pkg.devDependencies.xlsx,'0.18.5','vulnerable stale npm registry release must not be used');
+assert(fs.existsSync(path.join(root,'scripts/build-pages.mjs')),'deterministic static Pages builder must exist');
+assert.match(workflow,/npm run verify:lock/);
+assert.match(workflow,/npm ci --ignore-scripts --no-audit --no-fund/);
+assert(fs.existsSync(path.join(root,'scripts/verify-lockfile.mjs')),'release must verify a committed npm lockfile before installation');
+assert.match(workflow,/playwright install --with-deps chromium/);
+assert.match(workflow,/npm run test:e2e/);
+assert.equal(pkg.devDependencies.playwright,'1.65.1');
+assert.match(workflow,/npm test/);
+assert.match(workflow,/npm run build:pages/);
+assert.match(workflow,/path: dist/);
+assert.match(fs.readFileSync(path.join(root,'package.json'),'utf8'),/tests\/yandex_pdf\.mjs/,'Yandex PDF parser tests must run in CI');
+assert.match(app,/\.\/vendor\/sql\.js\/sql-wasm\.js/);
+assert.match(app,/useOldExtensionFunctions:true/,'sql.js 1.16 must preserve legacy SQLite math/string function semantics');
+assert.match(app,/\.\/vendor\/pdfjs\/pdf\.mjs/);
+assert.match(app,/isEvalSupported:false/,'PDF.js must disable dynamic evaluation while parsing untrusted PDFs');
+assert.match(app,/\.\/vendor\/xlsx\/xlsx\.full\.min\.js/);
+const builder=fs.readFileSync(path.join(root,'scripts/build-pages.mjs'),'utf8');
+assert.match(builder,/['"]profile\.js['"]/,'profile module must be copied to the static Pages build');
+assert.match(builder,/legacy\/build\/pdf\.mjs/,'PDF.js must be vendored from its maintained legacy ESM build');
+assert.match(builder,/node_modules\/pdfjs-dist/,'PDF.js package assets must be sourced from the pinned dependency');
+for (const folder of ['cmaps','standard_fonts','wasm','iccs']) {
+  assert.match(builder,new RegExp(`'${folder}'`),`PDF.js ${folder} resources must be copied to dist`);
+  assert.match(app,new RegExp(`${folder}\/`),`PDF parsing must use same-origin ${folder} resources`);
+}
+assert.match(app,/useWorkerFetch:true/,'PDF.js auxiliary resources must be fetched from same-origin URLs in the worker');
+assert.match(fs.readFileSync(path.join(root,'tests/e2e.mjs'),'utf8'),/PDF.js \${label} is missing from the asset manifest/,'Chromium E2E must fetch representative auxiliary PDF.js assets');
+assert.match(fs.readFileSync(path.join(root,'tests/e2e.mjs'),'utf8'),/standardFontDataUrl:[^\n]*standard_fonts/,'Chromium E2E must use the same local PDF.js auxiliary URLs as the app');
+assert.match(builder,/xlsx-0\.20\.3/,'SheetJS must use the official security-fixed distribution');
+assert.match(builder,/packages: versionPayload\.packages/,'asset manifest must expose exact package versions to dist verification');
+assert.match(builder,/xlsx_source: versionPayload\.xlsx_source/,'asset manifest must document the official SheetJS source');
+assert.match(builder,/installedVersion !== expectedVersions\[name\]/,'the build must verify the actual installed package version');
+assert.match(builder,/smallAllowedFiles\.has\(relative\)/,'small PDF resources and license files may be non-empty without a runtime-size threshold');
+for (const license of ['node_modules/sql.js/LICENSE','node_modules/pdfjs-dist/LICENSE','node_modules/xlsx/LICENSE']) {
+  assert.match(builder,new RegExp(license.replaceAll('/','\\/')),`production build must preserve ${license}`);
+}
+assert.match(workflow,/npm run test:dist/,'the deploy workflow must validate generated static assets');
+assert.match(pkg.scripts.test,/tests\/lockfile_guard\.mjs/,'source regression must test lockfile validation logic');
+console.log('GitHub Pages build contract checks: PASS');

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#11151b">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="description" content="Budget Capture — private, browser-based finance workspace. Your database stays in your own file.">
+  <title>Budget Capture</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">B</div><div><div class="brand-title">Budget Capture</div><div class="brand-subtitle">Private browser workspace</div></div></div>
+    <div class="database-status"><span id="db-dot" class="status-dot"></span><div><strong id="db-name">No database open</strong><small id="db-state">Create a database or open your existing SQLite file</small></div></div>
+    <div class="top-actions">
+      <button id="new-db" class="button secondary">New</button>
+      <button id="open-db" class="button secondary">Open database</button>
+      <button id="save-db" class="button primary" disabled>Save database</button>
+      <input id="open-file" type="file" accept=".budget,.sqlite,.sqlite3,.db,.json,application/json,application/vnd.sqlite3" hidden>
+    </div>
+  </header>
+
+  <div id="global-warning" class="notice warning hidden"></div>
+  <div id="dependency-warning" class="notice warning hidden"></div>
+
+  <nav class="main-tabs" aria-label="Main sections">
+    <button class="main-tab active" data-tab="import">01 / IMPORT</button>
+    <button class="main-tab" data-tab="review">02 / REVIEW <span id="review-tab-count" class="tab-count">0</span></button>
+    <button class="main-tab" data-tab="numbers">03 / NUMBERS</button>
+    <button class="main-tab" data-tab="accounts">04 / ACCOUNTS</button>
+    <button class="main-tab" data-tab="data">05 / DATA & BACKUP</button>
+  </nav>
+
+  <main>
+    <section id="tab-import" class="tab-panel active">
+      <div class="section-heading"><div><div class="eyebrow">STATEMENT INTAKE</div><h1>Import bank statements</h1><p>Files are read and parsed in this browser. They are never uploaded to a server.</p></div><div class="privacy-chip"><span>●</span> Local processing</div></div>
+      <div class="import-layout">
+        <div class="panel import-panel">
+          <div id="drop-zone" class="drop-zone">
+            <div class="drop-icon">⇧</div><h2>Drop statement files here</h2><p>or choose files from this device</p>
+            <label class="button primary" for="statement-files">Select statements</label>
+            <input id="statement-files" type="file" multiple accept=".pdf,.xlsx,.xls,.csv" hidden>
+            <div class="drop-formats">SBER History PDF · Yandex Bank PDF · T-Bank XLSX · Raiffeisen CSV</div>
+          </div>
+          <div class="import-settings">
+            <label>Import group <input id="import-account" value="" placeholder="Detected from statement"></label>
+            <label>Statement month <input id="import-month" type="month"></label>
+          </div>
+          <div id="selected-files" class="selected-files muted">No files selected</div>
+          <div class="actions-row"><button id="run-import" class="button primary" disabled>Analyze and import</button><button id="clear-files" class="button quiet" disabled>Clear</button></div>
+          <div id="import-activity" class="activity-feed hidden"></div>
+          <div id="import-result" class="import-result hidden"></div>
+        </div>
+        <aside class="panel support-panel">
+          <div class="panel-title">Browser import support</div>
+          <div class="support-item"><span class="support-badge sber">S</span><div><strong>Sber Online History</strong><small>iPhone Safari → History → Print PDF. The newer 23-page history layout is supported.</small></div></div>
+          <div class="support-item"><span class="support-badge yandex">Y</span><div><strong>Yandex Bank</strong><small>Payment-account statement PDF and Сейв savings statement PDF. Printed incoming/outgoing totals are checked.</small></div></div>
+          <div class="support-item"><span class="support-badge tbank">T</span><div><strong>T-Bank</strong><small>Website on PC → Transactions → month range → Download Excel.</small></div></div>
+          <div class="support-item"><span class="support-badge raif">R</span><div><strong>Raiffeisen</strong><small>Each used card → History → Download statement → CSV.</small></div></div>
+          <div class="notice info compact"><strong>Not ported yet</strong><p>Legacy Sber card PDFs, scanned/image-only PDFs, OCR and the local Ollama recovery engine are not included in this browser release. They remain available in your Windows app.</p></div>
+        </aside>
+      </div>
+      <div class="panel how-panel"><div class="panel-title">How your data works here</div><div class="how-grid"><div><b>1. Open one file</b><span>Your existing SQLite database or a new `.budget` file.</span></div><div><b>2. Work in browser</b><span>Import, review, edit categories and copy Numbers totals.</span></div><div><b>3. Save your file</b><span>Save the updated database back to your iCloud Drive, Google Drive or local disk.</span></div></div></div>
+    </section>
+
+    <section id="tab-review" class="tab-panel">
+      <div class="section-heading review-heading"><div><div class="eyebrow">02 / REVIEW</div><h1>Your transactions <span id="transaction-count" class="heading-count">0</span></h1><p><strong id="awaiting-count">0 awaiting review</strong> · Correct a merchant once; category rules are remembered per exact bank description.</p></div><div class="review-heading-actions"><button id="show-recovery" class="button quiet">↶ Recently deleted</button><button id="export-csv" class="button secondary">Export CSV</button></div></div>
+      <details id="recovery-panel" class="panel recovery-panel"><summary>Recently deleted <span class="muted">· last 10 deletion actions</span></summary><div id="recovery-list" class="recovery-list muted">Open to load recent deletions.</div></details>
+      <div class="panel filter-panel">
+        <div class="filters-grid">
+          <label>Month<input id="filter-month" type="month"></label>
+          <label>Bank / group<select id="filter-bank"><option value="">All banks</option></select></label>
+          <label>Review<select id="filter-status"><option value="">All transactions</option><option value="Needs review">Needs review</option><option value="Confirmed">Completed</option></select></label>
+          <label>Category<select id="filter-category"><option value="">All categories</option></select></label>
+          <label class="search-label">Search<input id="filter-search" placeholder="Merchant, text, account…"></label>
+          <label>Sort<select id="filter-sort"><option value="date">Date · newest first</option><option value="amount_asc">Amount · lowest first</option><option value="amount_desc">Amount · highest first</option></select></label>
+        </div>
+        <div class="filter-bottom"><label class="check-label"><input id="show-internal" type="checkbox"> Show own transfers</label><button id="clear-filters" class="button quiet button-small">Clear filters</button><span class="muted" id="visible-count">0 rows</span></div>
+      </div>
+      <div class="panel table-panel"><div class="table-scroll"><table class="transactions-table"><thead><tr><th></th><th>Date</th><th>Bank</th><th>Merchant / description</th><th>Signed amount</th><th>Category</th><th>Done</th><th>♥</th><th></th></tr></thead><tbody id="transactions-body"><tr><td colspan="9" class="empty-cell">Open a database to review transactions.</td></tr></tbody></table></div></div>
+      <div class="bulk-bar"><label class="check-label"><input id="select-all-visible" type="checkbox"> Select visible</label><span id="selected-count" class="muted">0 selected</span><button id="bulk-delete" class="button danger button-small" disabled>Delete selected</button></div>
+    </section>
+
+    <section id="tab-numbers" class="tab-panel">
+      <div class="section-heading"><div><div class="eyebrow">03 / MONTH WORKSPACE</div><h1>Numbers category totals</h1><p>Choose a bank tab or TOTAL to build copy-ready monthly values.</p></div></div>
+      <div class="panel totals-toolbar"><label>Month<input id="totals-month" type="month"></label><div id="totals-bank-tabs" class="bank-tabs"></div><label id="currency-wrapper">Currency<select id="totals-currency"><option value="">Auto</option></select></label><label class="check-label"><input id="totals-show-internal" type="checkbox"> Include own transfers</label></div>
+      <div id="numbers-integrity" class="integrity-banner muted">Open a database to calculate monthly totals.</div>
+      <div class="numbers-columns"><div class="panel numbers-panel"><div class="numbers-title"><h2 id="expenses-title">РАСХОДЫ</h2><button id="copy-expenses" class="button secondary button-small">Copy expenses</button></div><div id="expenses-list" class="numbers-list"></div></div><div class="panel numbers-panel"><div class="numbers-title"><h2 id="incomes-title">ДОХОДЫ</h2><button id="copy-incomes" class="button secondary button-small">Copy income</button></div><div id="incomes-list" class="numbers-list"></div></div></div>
+      <div class="panel special-panel"><div class="panel-title">ДОПОЛНИТЕЛЬНЫЕ ТАБЛИЦЫ NUMBERS</div><p class="muted">Assign transactions to these categories in Review to populate their copy lists.</p><div class="special-grid"><div class="special-card" data-profile-role="special-input"><div class="special-heading"><div><h2 id="special-input-title">Дополнительные поступления</h2><span id="special-input-count" class="muted">0 transactions</span></div><button id="copy-special-input-total" class="button primary button-small">Copy total</button></div><div class="special-total"><strong id="special-input-total">0</strong><span>RUB</span></div><button id="copy-special-inputs" class="button secondary button-small">Copy one-cell amounts</button><div id="special-input-rows" class="special-rows"></div></div><div class="special-card" data-profile-role="special-output"><div class="special-heading"><div><h2 id="special-output-title">Дополнительные списания</h2><span id="special-output-count" class="muted">0 transactions</span></div><button id="copy-special-output-total" class="button primary button-small">Copy total</button></div><div class="special-total"><strong id="special-output-total">0</strong><span>RUB</span></div><button id="copy-special-outputs" class="button secondary button-small">Copy one-cell amounts</button><div id="special-output-rows" class="special-rows"></div></div></div></div>
+      <div class="panel highlighted-panel"><div class="numbers-title"><div><h2 id="highlighted-title">Отмеченные расходы</h2><span id="highlighted-count" class="muted">0 transactions</span></div><button id="copy-highlighted" class="button secondary button-small">Copy marked expenses</button></div><strong id="highlighted-total" class="highlighted-total">0</strong><div id="highlighted-rows" class="special-rows"></div></div>
+    </section>
+
+    <section id="tab-accounts" class="tab-panel">
+      <div class="section-heading"><div><div class="eyebrow">04 / RECOGNITION</div><h1>Recognized accounts & cards</h1><p>Label masked account and card identifiers to help explain transactions.</p></div></div>
+      <div class="panel"><div class="table-scroll"><table><thead><tr><th>Bank</th><th>Identifier</th><th>Label</th><th>Owner</th><th>Type</th><th></th></tr></thead><tbody id="accounts-body"><tr><td colspan="6" class="empty-cell">No recognized accounts yet.</td></tr></tbody></table></div>
+        <form id="account-form" class="account-form"><label>Bank<select id="account-bank"><option>SBER</option><option>TBANK</option><option>YANDEX</option><option>RAIFFEISEN</option></select></label><label>Identifier<input id="account-identifier" required placeholder="Last 4 digits"></label><label>Label<input id="account-label" placeholder="Card / account label"></label><label>Owner<input id="account-owner" list="owner-suggestions" value="Unverified" placeholder="Owner / shared / unverified"><datalist id="owner-suggestions"><option value="Shared"></option><option value="Unverified"></option></datalist></label><label>Type<select id="account-type"><option>card</option><option>account</option><option>loan</option></select></label><button class="button primary" type="submit">Add account</button></form>
+      </div>
+    </section>
+
+    <section id="tab-data" class="tab-panel">
+      <div class="section-heading"><div><div class="eyebrow">05 / PORTABILITY</div><h1>Data & backup</h1><p>Your finance data is contained in the database file you open and save. The website has no account and no server-side storage.</p></div></div>
+      <div class="panel profile-editor">
+        <h2>Categories & Numbers profile</h2>
+        <p>Your category groups and Numbers table captions are stored inside the open `.budget` database. They are not part of the website code.</p>
+        <div class="profile-category-grid">
+          <label>Expense categories · one per line<textarea id="profile-expenses" rows="9" spellcheck="false"></textarea></label>
+          <label>Income categories · one per line<textarea id="profile-incomes" rows="6" spellcheck="false"></textarea></label>
+          <label>Other categories · one per line<textarea id="profile-other" rows="6" spellcheck="false"></textarea></label>
+        </div>
+        <div class="profile-number-grid">
+          <label>Expenses table heading<input id="profile-expense-title" maxlength="80"></label>
+          <label>Income table heading<input id="profile-income-title" maxlength="80"></label>
+          <label>Special input category<input id="profile-special-input-category" maxlength="100" placeholder="Leave blank to hide this table"></label>
+          <label>Special input table heading<input id="profile-special-input-title" maxlength="100"></label>
+          <label>Special output category<input id="profile-special-output-category" maxlength="100" placeholder="Leave blank to hide this table"></label>
+          <label>Special output table heading<input id="profile-special-output-title" maxlength="100"></label>
+          <label>Marked transactions table heading<input id="profile-highlighted-title" maxlength="100"></label>
+        </div>
+        <div class="data-actions profile-actions">
+          <button id="save-profile" class="button primary" type="button">Save profile in database</button>
+          <button id="export-profile" class="button secondary" type="button">Export profile JSON</button>
+          <label class="button secondary file-button">Import profile JSON<input id="profile-json" type="file" accept=".json,application/json" hidden></label>
+        </div>
+        <p class="muted">Categories already used by transactions are retained as Other if removed from a group, so existing records and rules are not deleted.</p>
+      </div>
+      <div class="data-grid"><div class="panel"><h2>Own SBP transfer name markers</h2><p>Names in your own outgoing/incoming SBP transfers. These markers are stored only inside this database file. Existing Windows databases are pre-filled from already recognised internal transfers.</p><label>One exact counterparty name per line<textarea id="own-sbp-markers" rows="3" placeholder="Add a name exactly as it appears in the bank statement"></textarea></label><button id="save-own-sbp-markers" class="button secondary button-small" type="button">Save transfer markers</button></div><div class="panel"><h2>Database file</h2><p>Open the existing Windows SQLite database directly, or create a new `.budget` file. All changes stay in browser memory until you save.</p><div class="data-actions"><button class="button secondary" id="data-open">Open database</button><button class="button primary" id="data-save" disabled>Save database</button></div><div id="db-statistics" class="statistics muted">No database open.</div></div>
+      <div class="panel"><h2>Import an old Windows JSON backup</h2><p>Use this only if you exported <em>Download database JSON</em> from Windows. This merges the rows into the open web database. Direct SQLite opening is preferred.</p><label class="button secondary file-button">Choose JSON backup<input id="legacy-json" type="file" accept=".json,application/json" hidden></label></div>
+      <div class="panel"><h2>Privacy</h2><ul class="privacy-list"><li>Statements are parsed inside this browser.</li><li>The `.budget` SQLite file stays on your device / chosen cloud drive.</li><li>GitHub Pages serves only the app code and static assets.</li><li>Pinned runtime libraries load only from this GitHub Pages origin; there are no third-party CDN fallbacks or external data connections.</li><li>Do not add `.budget`, `.sqlite3`, `.db`, PDF or XLSX financial files to the Git repository.</li></ul></div>
+      <div class="panel"><h2>Supported files in this browser release</h2><ul class="privacy-list"><li>Sber Online History print PDF (the newer iPhone/Safari export).</li><li>Yandex Bank payment-account and Сейв savings statement PDFs.</li><li>T-Bank transaction-history Excel (.xlsx).</li><li>Raiffeisen statement CSV.</li><li>Existing Budget Capture SQLite database and v1.x database JSON backup.</li></ul><p class="muted">Legacy Sber card PDFs, scanned/image-only PDFs, OCR and local Ollama are not yet ported to this static web build.</p></div></div>
+    </section>
+  </main>
+
+  <footer class="footer"><span>Budget Capture Web · <b id="app-version">0.1.6.0</b></span><span>Financial data stays in your database file.</span></footer>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body></html>
