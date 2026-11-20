@@ -136,7 +136,7 @@ try {
   const file={name:'Budget-Capture-E2E.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer};
   await page.locator('#statement-files').setInputFiles(file);
   await page.locator('#run-import').click();
-  await page.waitForFunction(()=>document.querySelector('#import-result')?.textContent.includes('Import complete'));
+  await page.waitForFunction(()=>{const result=document.querySelector('#import-result');return !!result&&!result.classList.contains('hidden')&&result.textContent.includes('Import complete');});
   assert.match(await page.locator('#import-result').innerText(),/1\s*Imported/i);
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
@@ -146,7 +146,7 @@ try {
   await page.locator('[data-tab="import"]').click();
   await page.locator('#statement-files').setInputFiles(file);
   await page.locator('#run-import').click();
-  await page.waitForFunction(()=>document.querySelector('#import-result')?.textContent.includes('Import complete'));
+  await page.waitForFunction(()=>{const result=document.querySelector('#import-result');return !!result&&!result.classList.contains('hidden')&&result.textContent.includes('Import complete');});
   const duplicateResult=await page.locator('#import-result').innerText();
   assert.match(duplicateResult,/0\s*Imported/i);
   assert.match(duplicateResult,/1\s*Duplicates skipped/i);
