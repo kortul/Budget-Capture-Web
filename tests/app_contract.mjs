@@ -54,8 +54,8 @@ assert(app.includes("function categoryOptionGroups(selected='')"),'category drop
 assert(app.includes("render('expense','РАСХОДЫ')+render('income','ДОХОДЫ')"),'dropdown order must be Expenses followed by Income only');
 assert(!app.includes("label:'Other'")&&!app.includes("label:'Numbers · extra input'"),'dropdown must not add Other or special third groups');
 assert(app.includes('<optgroup label='),'Review and filter dropdowns must use visible category groups');
-assert(app.includes('sortCategoriesAlphabetically(items)'),'dropdown categories must be alphabetically sorted within groups');
+assert(app.includes('categoryDropdownGroups(categoryItems(selected))'),'dropdown categories must use the shared alphabetically sorted group helper');
 assert(app.includes('categoryOptionGroups(old)'),'category filter must use grouped options');
 assert(app.includes('categoryOptionGroups(r.category)'),'transaction editor must use grouped category options');
-assert(app.includes('function profileLines(kind){return sortCategoriesAlphabetically'),'category profile editor must list each group alphabetically');
+assert(app.includes('function profileLines(kind){return (state.profile?.categories||[]).filter(item=>item.kind===kind)'),'profile editor keeps stored category order; alphabetical sorting is limited to dropdowns');
 console.log(`App contract checks: PASS · ${ids.length} unique DOM IDs · ${used.size} selectors · required handlers present`);
