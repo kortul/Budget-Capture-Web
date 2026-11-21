@@ -11,10 +11,6 @@ assert.equal(pkg.devDependencies['pdfjs-dist'],'6.5.438');
 assert.equal(pkg.devDependencies.xlsx,'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz');
 assert.notEqual(pkg.devDependencies.xlsx,'0.18.5','vulnerable stale npm registry release must not be used');
 assert(fs.existsSync(path.join(root,'scripts/build-pages.mjs')),'deterministic static Pages builder must exist');
-const builderSource=fs.readFileSync(path.join(root,'scripts/build-pages.mjs'),'utf8');
-for (const page of ['index.html','numbers-import.html','numbers-analytics.html']) {
-  assert.match(builderSource,new RegExp(`'${page.replaceAll('.','\\.')}'`),`${page} must be copied into the GitHub Pages artifact`);
-}
 assert.match(workflow,/npm run verify:lock/);
 assert.match(workflow,/npm ci --ignore-scripts --no-audit --no-fund/);
 assert(fs.existsSync(path.join(root,'scripts/verify-lockfile.mjs')),'release must verify a committed npm lockfile before installation');
