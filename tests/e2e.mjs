@@ -140,7 +140,18 @@ try {
 
   await page.evaluate(()=>Object.defineProperty(window,'showSaveFilePicker',{value:undefined,configurable:true}));
   await page.locator('#new-db').click();
-  await page.waitForFunction(()=>document.querySelector('#db-state')?.textContent.includes('Unsaved changes'));
+  try {
+    await page.waitForFunction(()=>document.querySelector('#db-state')?.textContent.includes('Unsaved changes'),null,{timeout:10000});
+  } catch(error) {
+    const uiState=await page.evaluate(()=>({
+      databaseState:document.querySelector('#db-state')?.textContent||'',
+      toast:document.querySelector('#toast')?.textContent||'',
+      dependencyWarning:document.querySelector('#dependency-warning')?.textContent||'',
+      statistics:document.querySelector('#db-statistics')?.textContent||'',
+      newDatabaseDisabled:document.querySelector('#new-db')?.disabled??null
+    }));
+    throw new Error(`Creating a new browser test database failed: ${JSON.stringify({uiState,pageErrors})}; ${error.message}`);
+  }
 
   const headers=['Имя счёта','Дата операции','Сумма операции','Валюта операции','Сумма в валюте счёта','Валюта счёта','Статус','Описание','Сообщение','Учёт в аналитике','Номер карты'];
   await page.addScriptTag({url:origin+basePath+'vendor/xlsx/xlsx.full.min.js'});
