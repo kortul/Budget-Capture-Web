@@ -53,6 +53,24 @@ function collectFiles(directory, prefix = '') {
 collectFiles(dist);
 if (!outputFiles.includes('asset-manifest.json')) throw new Error('Build manifest is not present in dist/.');
 
+// The manifest is an allow-list, not merely a checksum list: reject every
+// unmanifested file so a stray or injected file can never reach the Pages root.
+const allowedOutputFiles = new Set([
+  ...Object.keys(manifest.assets || {}),
+  'asset-manifest.json',
+  '.nojekyll',
+]);
+for (const relative of outputFiles) {
+  if (!allowedOutputFiles.has(relative)) {
+    throw new Error(`Unmanifested file in build output; refusing to publish: ${relative}`);
+  }
+}
+for (const relative of allowedOutputFiles) {
+  if (!outputFiles.includes(relative)) {
+    throw new Error(`Manifested output file is missing: ${relative}`);
+  }
+}
+
 const generatedRoots = new Set(['vendor', 'index.html', 'numbers-import.html', 'numbers-analytics.html', 'styles.css', 'app.js', 'core.js', 'db.js', 'profile.js', 'manifest.webmanifest', '.nojekyll', 'asset-manifest.json']);
 for (const relative of outputFiles) {
   const topLevel = relative.split('/')[0];
