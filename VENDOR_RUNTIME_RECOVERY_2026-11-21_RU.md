@@ -12,7 +12,7 @@ The previous production artifact from commit `e88d35326f20c610100c7aef74c072f3b6
 - `pdfjs-dist`: `6.5.438`
 - `xlsx` / SheetJS CE: `0.20.3`
 
-The runtime bundle contains 211 files under `vendor/`: SQLite JS + WASM, PDF.js ESM + worker + CMaps + standard fonts + WASM decoders + ICC profiles, SheetJS, package version metadata, and license texts.
+The runtime bundle contains 212 files under `vendor/` (211 runtime assets plus `runtime-manifest.json`): SQLite JS + WASM, PDF.js ESM + worker + CMaps + standard fonts + WASM decoders + ICC profiles, SheetJS, package version metadata, and license texts.
 
 ## Restore the vendor directory on Windows
 
@@ -24,12 +24,12 @@ The runtime bundle contains 211 files under `vendor/`: SQLite JS + WASM, PDF.js 
 .\Install-Vendor.ps1 -ProjectRoot 'C:\path\to\Budget-Capture-Web'
 ```
 
-4. The script refuses to overwrite an existing `vendor/` unless `-ReplaceExistingVendor` is explicitly supplied. It verifies SHA-256 for all 211 copied files.
+4. The script refuses to overwrite an existing `vendor/` unless `-ReplaceExistingVendor` is explicitly supplied. It verifies SHA-256 for all 212 copied files.
 5. In the project, run `git status --short`. Confirm `vendor/` is visible as new/changed content and is not ignored.
 
 Only copy `vendor/`. Do not replace `index.html`, `app.js`, `core.js`, `numbers-import.html`, `numbers-analytics.html`, or other application files with files from the older artifact.
 
-## ## Build without npm registry access
+## Build without npm registry access
 
 The current `scripts/build-pages.mjs` supports the verified root `vendor/` folder as a runtime source. It checks `vendor/versions.json`, exact paths, file sizes and SHA-256 values in `vendor/runtime-manifest.json`. It then creates a new production build and fresh asset manifests.
 
