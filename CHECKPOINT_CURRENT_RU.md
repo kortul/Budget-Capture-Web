@@ -1,3 +1,35 @@
+# Budget Capture Web — актуальная контрольная точка 0.1.6.0 (20 ноября 2026)
+
+> Этот раздел supersedes более ранние статусы ниже. Исторические заметки сохранены для истории изменений.
+
+## Текущий подтверждённый статус
+
+- Версия приложения и `package.json`: **0.1.6.0**. Не повышалась до 0.1.7.0.
+- Настоящий `package-lock.json` получен на GitHub-hosted Node `v24.22.2` / npm `11.19.1`; source ref `refs/heads/main`, bootstrap source commit `3861348f3badec8cb7f3ad109117e1b66370c967`. Его SHA-256: `1ef207fcf848ca60438a99de738ee593cbcfc700e88973d6926bc6b2b3e985b8`.
+- `npm run verify:lock` на текущем исходном архиве: PASS, 17 package entries; точные direct/transitive pins, approved HTTPS hosts и SHA-512 integrity.
+- `npm test` на текущем исходном архиве: 9/9 PASS (локальный Node `v22.16.0`, npm `10.9.2`).
+- Все JS/MJS syntax checks и YAML parsing двух workflow файлов: PASS.
+- Пользователь подтвердил успешный GitHub Actions `Build and test (no publication)` на Node 24, 48 секунд. Artifact commit identifier: `1f6ae9bd61194964c93e323d0a52045eb68a1d35`.
+- Полученный production artifact проверен на текущем контейнере: `npm run test:dist` PASS, **218/218** manifest assets по SHA-256; 219 файлов всего вместе с manifest, 8,799,044 bytes unpacked. Основные `index.html`, `styles.css`, `app.js`, `core.js`, `db.js`, `profile.js` и `manifest.webmanifest` побайтно совпадают с текущим source ZIP.
+- В artifact используются same-origin runtime assets: sql.js 1.16.0, PDF.js 6.5.438 и SheetJS 0.20.3; external CDN URLs в runtime entry files не обнаружены. Базы и банковские документы в artifact не найдены.
+- Deployment gate остаётся закрытым: `push` запускает только validation/build; Pages deploy требует отдельного `workflow_dispatch` с `deploy=true`.
+
+## Последняя корректировка E2E
+
+Проверка исходного архива выявила, что второй импорт в `tests/e2e.mjs` ждал видимый `#import-result`, но не сравнивал его с текстом первого импорта. Это могло принять старый результат за новый. Исправление теперь ждёт изменения текста результата, затем читает пары metric label/value и явно проверяет `Imported = 0`, `Duplicates skipped = 1`, `Extracted = 1`. Contract test закрепляет это поведение. Требуется новый GitHub Actions запуск после commit этой корректировки.
+
+## Оставшиеся release gates
+
+1. Применить E2E correction из patch ZIP, commit + push.
+2. Убедиться, что GitHub Actions повторно проходит все этапы, включая fresh-result duplicate-import E2E.
+3. Провести ручной тест открытия, импорта, Review, Save и Reopen пользовательской Windows-базы в целевом браузере.
+4. Проверить Safari/iPhone open/save flow на реальном устройстве.
+5. Только после этих проверок отдельно решить вопрос о публикации Pages. Не включать `deploy=true` до явного решения.
+
+**Текущий вывод:** 0.1.6.0 имеет успешный hosted CI/build artifact по сообщённому запуску и проверенный artifact integrity. Это ещё не финальный production release: повторный CI после укрепления E2E и ручные проверки браузеров остаются открытыми.
+
+---
+
 # Budget Capture Web — контрольная точка 0.1.6.0
 
 **Дата:** 19 ноября 2026  

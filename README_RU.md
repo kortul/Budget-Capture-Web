@@ -45,7 +45,7 @@
 
 Workflow `.github/workflows/pages.yml` устанавливает закреплённые зависимости, запускает исходные тесты, строит `dist/` с локальными runtime-библиотеками, проверяет SHA-256 manifest и выполняет Playwright Chromium E2E. Push в `main` запускает только job проверки и сборки; готовый `dist/` сохраняется как artifact для инспекции. **Автоматической публикации при push нет.**
 
-Job публикации отделён от проверки и запускается только при ручном `workflow_dispatch` с явно включённым параметром `deploy=true`. По умолчанию этот параметр выключен. Пока не ставь его: сначала нужно получить настоящий lockfile, пройти полный CI и отдельно решить, готов ли сайт к публикации. Когда будет принято решение о публикации, в настройках репозитория выбери **Settings → Pages → GitHub Actions** и вручную запусти workflow с `deploy=true`.
+Job публикации отделён от проверки и запускается только при ручном `workflow_dispatch` с явно включённым параметром `deploy=true`. По умолчанию этот параметр выключен. Настоящий `package-lock.json` уже получен через `Prepare verified dependency lockfile` и добавлен в `main`. Полный GitHub-hosted validation/build workflow был успешно запущен; production artifact выгружен для проверки. Публикация всё равно остаётся отдельным ручным действием и не запускается в рамках обычного push или проверки.
 
 GitHub Actions использует Node.js 24. Локальные npm scripts поддерживают Node.js 22+; для совпадения с CI используй Node 24. В сети с доступом к npm registry и `cdn.sheetjs.com` lockfile можно создать локально:
 
@@ -54,7 +54,7 @@ npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 npm run verify:lock
 ```
 
-Если локальная сеть не позволяет обратиться к реестрам, сначала отправь исходники и сам workflow в default branch GitHub (GitHub показывает `workflow_dispatch` для workflow из default branch), затем запусти **Actions → Prepare verified dependency lockfile → Run workflow**. Этот отдельный ручной workflow создаёт `package-lock.json` на GitHub runner, проверяет точные версии, источники tarball и SHA-512, а затем отдаёт lockfile и checksum как artifact. Скачай artifact, проверь `package-lock.sha256` и сверь `package-lock-build-info.txt` с commit SHA исходников. Затем положи `package-lock.json` в корень проекта и закоммить его. Workflow подготовки lockfile не устанавливает пакеты, не выполняет lifecycle scripts и не публикует сайт.
+История bootstrap сохранена в `package-lock-build-info.txt`: lockfile был разрешён на GitHub-hosted Node 24 runner, проверен `verify:lock`, а SHA-256 сверена с `package-lock.sha256`. В репозитории уже находятся `package-lock.json`, checksum и build metadata. Повторно генерировать lockfile без изменения `package.json` не нужно. Workflow подготовки lockfile не устанавливает пакеты, не выполняет lifecycle scripts и не публикует сайт.
 
 После добавления lockfile все установки выполняются строго через:
 
@@ -82,12 +82,15 @@ npm run test:e2e
 
 Не добавляй `.budget`, `.sqlite*`, `.db`, backup ZIP, PDF, XLSX, CSV, личные JSON exports или отчёты с source references в Git.
 
-## Что ещё не подтверждено
+## Текущий статус проверки — 20 ноября 2026
 
-- `npm test` проходит семь исходных suite.
-- Миграция, сохранение и повторное открытие настоящей Windows-базы проверены через совместимый SQLite adapter. Прямой запуск sql.js WASM на реальной пользовательской базе в браузере ещё не проверен.
-- Реальные банковские файлы сравнивались с Windows; production build требует доступа к npm registry и официальному SheetJS CDN tarball. После обновления парсеров необходимо подтвердить CI build и Chromium E2E.
-- Hosted GitHub Actions ещё не запускался. После добавления проверенного `package-lock.json` push в `main` должен выполнить `npm ci`, production build, проверку vendor assets и Chromium E2E; публикация при этом не запускается. Deploy остаётся отдельным ручным действием с `deploy=true`.
-- Safari/iPhone file-open/save flow требует ручной проверки на устройстве.
-- GitHub repository не подключён, Pages не опубликован.
+- `npm test`: 9/9 source suites PASS на текущем исходном архиве.
+- `npm run verify:lock`: PASS; 17 package entries, точные версии, разрешённые HTTPS hosts и SHA-512 integrity.
+- GitHub Actions на Node 24: пользователь подтвердил успешный `Build and test (no publication)`; workflow создал production `dist` artifact.
+- Production artifact `budget-capture-dist-1f6ae9bd61194964c93e323d0a52045eb68a1d35.zip`: `npm run test:dist` PASS, 218/218 assets сверены по SHA-256; семь основных runtime-файлов побайтно совпали с исходниками текущего архива.
+- Сам artifact содержит локальные sql.js, PDF.js и SheetJS runtime, PDF.js CMaps/fonts/WASM/ICC resources и тексты лицензий; `dist` не содержит SQLite/`.budget` баз, банковских выписок PDF/XLSX/CSV или резервных копий.
+- В текущем E2E тесте усилено ожидание результата повторного импорта: теперь он обязан отличаться от первого результата, а счётчики проверяются по связанным label/value элементам. Эта последняя корректировка теста требует нового GitHub Actions запуска.
+- Реальная миграция и сохранение пользовательской Windows-базы в браузере, Safari/iPhone file-open/save flow и реальная публикация Pages ещё требуют отдельной ручной проверки.
+
+Публикацию не запускать. `deploy=true` не выбирать до успешного повторного CI после E2E-корректировки и отдельного одобрения.
 GitHub Actions in both workflows are pinned to verified full-length commit SHAs; checkout runs with `persist-credentials: false`. Keep these immutable references unless a replacement SHA is checked against the official upstream release and reviewed.

@@ -29,6 +29,26 @@ function makeSyntheticPdf() {
   pdf += `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
   return Buffer.from(pdf, 'ascii');
 }
+
+// Wait for the import result to become visible and, on repeat imports, change.
+// Visibility alone can accidentally accept the previous import's still-rendered text.
+async function waitForImportResult(page, previousText = null) {
+  await page.waitForFunction(previous => {
+    const result = document.querySelector('#import-result');
+    if (!result || result.classList.contains('hidden')) return false;
+    const currentText = result.innerText.trim();
+    return currentText.length > 0 && (previous === null || currentText !== previous);
+  }, previousText, { timeout: 20000 });
+
+  return page.locator('#import-result').evaluate(result => ({
+    text: result.innerText.trim(),
+    heading: result.querySelector(':scope > b')?.textContent?.trim() || '',
+    metrics: Object.fromEntries([...result.querySelectorAll('.result-cell')].map(cell => [
+      cell.querySelector('span')?.textContent?.trim() || '',
+      cell.querySelector('b')?.textContent?.trim() || '',
+    ])),
+  }));
+}
 const server = spawn(process.execPath, ['scripts/serve-test.mjs'], {env:{...process.env,PORT:String(port),BASE_PATH:basePath},stdio:['ignore','pipe','pipe']});
 let serverOutput = '';
 server.stdout.on('data', chunk => { serverOutput += chunk.toString(); });
@@ -136,8 +156,10 @@ try {
   const file={name:'Budget-Capture-E2E.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer};
   await page.locator('#statement-files').setInputFiles(file);
   await page.locator('#run-import').click();
-  await page.waitForFunction(()=>{const result=document.querySelector('#import-result');return !!result&&!result.classList.contains('hidden')&&result.textContent.includes('Import complete');});
-  assert.match(await page.locator('#import-result').innerText(),/1\s*Imported/i);
+  const firstImportResult = await waitForImportResult(page);
+  assert.match(firstImportResult.heading,/^Import complete/i,'first import must complete successfully');
+  assert.equal(firstImportResult.metrics.Imported,'1','first import must insert one transaction');
+  assert.equal(firstImportResult.metrics['Duplicates skipped'],'0','first import must not report duplicates');
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
@@ -146,10 +168,11 @@ try {
   await page.locator('[data-tab="import"]').click();
   await page.locator('#statement-files').setInputFiles(file);
   await page.locator('#run-import').click();
-  await page.waitForFunction(()=>{const result=document.querySelector('#import-result');return !!result&&!result.classList.contains('hidden')&&result.textContent.includes('Import complete');});
-  const duplicateResult=await page.locator('#import-result').innerText();
-  assert.match(duplicateResult,/0\s*Imported/i);
-  assert.match(duplicateResult,/1\s*Duplicates skipped/i);
+  const duplicateImportResult = await waitForImportResult(page, firstImportResult.text);
+  assert.match(duplicateImportResult.heading,/^Import complete/i,'repeat import must complete successfully');
+  assert.equal(duplicateImportResult.metrics.Imported,'0','repeat import must not insert a duplicate transaction');
+  assert.equal(duplicateImportResult.metrics['Duplicates skipped'],'1','repeat import must skip the existing transaction');
+  assert.equal(duplicateImportResult.metrics.Extracted,'1','repeat import must still parse the source row');
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
 

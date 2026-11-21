@@ -114,3 +114,12 @@
 - The deployment job receives `pages: write` and `id-token: write`; the validation job receives only `contents: read`.
 - Pinned `actions/download-artifact@v8.0.2` by immutable SHA to transfer the validated `dist` artifact to the opt-in deploy job.
 - Expanded workflow contract tests to prevent accidental automatic deployment.
+
+
+## 20 ноября 2026 — GitHub-hosted CI и production artifact
+
+- На GitHub-hosted runner Node 24 был выполнен успешный `Build and test (no publication)` (успешный запуск подтверждён пользователем; 48 секунд).
+- Настоящий `package-lock.json` создан workflow `Prepare verified dependency lockfile`; SHA-256: `1ef207fcf848ca60438a99de738ee593cbcfc700e88973d6926bc6b2b3e985b8`; lockfile verifier на текущем source archive проверяет 17 package entries.
+- Production artifact `budget-capture-dist-1f6ae9bd61194964c93e323d0a52045eb68a1d35.zip` независимо проверен: ZIP integrity PASS, `test:dist` PASS, 218/218 asset SHA-256 совпали; основные runtime-файлы byte-identical к предоставленному исходному архиву.
+- Повторный импорт в E2E укреплён: ожидание теперь требует нового текста результата, а счетчики извлекаются по label/value парам; добавлен regression contract. Нужен новый hosted CI run после commit этой корректировки.
+- Версия приложения остаётся `0.1.6.0`. GitHub Pages deployment не запускался; ручные Windows и Safari/iPhone проверки остаются открытыми.

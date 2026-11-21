@@ -5,6 +5,7 @@ import path from 'node:path';
 const root=path.resolve(new URL('..',import.meta.url).pathname);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+const e2e=fs.readFileSync(path.join(root,'tests/e2e.mjs'),'utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'HTML IDs must be unique');
 assert.match(html,/<b id="app-version">0\.1\.6\.0<\/b>/,'visible footer version must match the current web build');
@@ -26,6 +27,8 @@ assert.match(app,/owner:'Unverified'/,'newly detected cards must not assume a pe
 const runtimeSource=['core.js','db.js','app.js','profile.js','index.html'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 assert.doesNotMatch(runtimeSource,/DEFAULT_RECOGNIZED_ACCOUNTS|ACCOUNT_CARD_SEEDS/i,'recognized account/card identifiers must be loaded from the local SQLite file, not seeded in public runtime code');
 assert.match(app,/addRecognizedAccount\(state\.db/,'automatic account discovery must use non-destructive insert');
+assert.match(e2e,/currentText !== previous/,'repeat-import E2E must wait for a fresh result, not stale visible text');
+assert.match(e2e,/duplicateImportResult\.metrics\['Duplicates skipped'\]/,'repeat-import E2E must verify the duplicate counter by its label');
 assert.match(app,/applyOwnSbpNameMarkers\(parsed\.rows,ownSbpNameMarkers\(\)\)/,'own SBP names must come from local database settings');
 assert.match(html,/id="own-sbp-markers"/,'own SBP name markers must be editable in Data & Backup');
 assert.doesNotMatch(app,/павел игоревич/i,'personal SBP counterparty name must not be hard-coded in public app JS');
