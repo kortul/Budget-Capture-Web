@@ -37,7 +37,7 @@
 
 ## Следующий шаг
 
-На локальной Windows-машине из корня клонированного проекта выполнить команды из `RESUME_NEXT_STEPS_RU.md`: `npm ci`, `npm run verify:lock`, `npx playwright install chromium`, `npm test`, `npm run publish:root`, `npm run test:dist`, `npm run test:e2e`. Затем проверить `git status --short`, изучить Changes, сделать обычный commit и Push origin. Это стандартная публикация из ветки `main`; workflow не нужен.
+На локальной Windows-машине скачать vendor ZIP из текущего разговора, установить `vendor/` командой `Install-Vendor.ps1 -ProjectRoot 'C:\path\to\Budget-Capture-Web'`, затем выполнить `npm test`, `npm run publish:root`, `npm run test:dist`, `git status --short`. Это работает без npm registry: builder проверит все файлы из `vendor/runtime-manifest.json`. Chromium E2E запускается отдельно только при установленном Playwright (`npm run test:e2e`). После проверки изучить Changes, сделать обычный commit и Push origin.
 
 После публикации проверить Pages в браузере и пройти import → download `.budget` → повторное открытие → Analytics на синтетической тестовой базе. Пользовательскую финансовую базу не использовать для первого теста.
 
