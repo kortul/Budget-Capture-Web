@@ -25,7 +25,8 @@
 <script>
 const $=id=>document.getElementById(id);let dataset=[],dbCategories=[];
 const monthMap={'январь':1,'февраль':2,'март':3,'апрель':4,'май':5,'июнь':6,'июль':7,'август':8,'сентябрь':9,'октябрь':10,'ноябрь':11,'декабрь':12};
-function escapeHtml(value){return String(value??'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));}\nfunction money(n){return Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';}
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,character=>{switch(character){case '&':return '&amp;';case '<':return '&lt;';case '>':return '&gt;';case '"':return '&quot;';default:return '&#39;';}});}
+function money(n){return Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';}
 function monthName(name){const m=name.match(/^(.+?)\s+(\d{4})\s+-\s+(Income|Расходы)$/i);if(!m)return null;const month=monthMap[m[1].toLowerCase()];return month?{year:Number(m[2]),month,kind:m[3].toLowerCase()==='income'?'income':'expense',key:m[2]+'-'+String(month).padStart(2,'0')}:null;}
 function isTotal(label){return /^(общ|итог|доходы|расходы|выводы из|вводы в)/i.test(String(label).trim());}
 function parseWorkbook(file){const wb=XLSX.read(file,{type:'array',cellDates:true});const records=[];for(const name of wb.SheetNames){const meta=monthName(name);if(!meta)continue;const sheet=wb.Sheets[name];const rows=XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:null});for(const row of rows){const category=String(row?.[0]??'').trim();const value=row?.[1];if(!category||isTotal(category)||typeof value!=='number'||!Number.isFinite(value))continue;records.push({...meta,category,amount:value});}}return records;}
