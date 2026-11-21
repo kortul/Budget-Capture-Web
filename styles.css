@@ -16,13 +16,10 @@
 @media(max-width:900px){.profile-category-grid{grid-template-columns:1fr 1fr}.profile-category-grid label:first-child{grid-column:span 2}.profile-number-grid{grid-template-columns:repeat(2,minmax(130px,1fr))}}
 @media(max-width:700px){.profile-category-grid,.profile-number-grid{grid-template-columns:1fr}.profile-category-grid label:first-child{grid-column:auto}.profile-actions .button,.profile-actions .file-button{width:100%;text-align:center}}
 
-.numbers-panel.full-width{grid-column:1/-1}
 .number-total{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);font-size:10px;font-weight:800;letter-spacing:.06em}
 .number-total strong{font-size:15px;font-variant-numeric:tabular-nums;letter-spacing:0}
 .number-total.expense strong{color:var(--red)}
 .number-total.income strong{color:var(--green)}
-.number-total.other strong{color:var(--blue)}
-.numbers-note{font-size:10px;margin:7px 0 0;line-height:1.45}
 
 /* Desktop-style category dropdown: two groups only, expenses first. */
 .category-select optgroup.expense-group,#filter-category optgroup.expense-group{color:var(--red);font-weight:800}

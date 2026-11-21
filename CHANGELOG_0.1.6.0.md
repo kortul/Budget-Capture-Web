@@ -148,3 +148,10 @@
 - Existing profile kinds are preserved for Numbers calculations. Special input/output categories are shown under Income/Expenses respectively; unclassified legacy categories default to Expenses, except clearly named incoming categories (such as Приход от работы Дима).
 - The earlier three-group dropdown (Other / special input / special output) is removed. Numbers category ordering and profile-editor ordering remain as stored in the database; only dropdown contents are alphabetized.
 - Regression and Chromium E2E tests now assert exactly two dropdown groups, their order, alphabetical entries and red/green option classes.
+
+
+## Unreleased — Restore the original two-table Numbers layout
+
+- Removed the additional Other / Прочее panel from the Numbers screen. The two primary Numbers tables are Expenses and Income; special input/output and marked-expense panels remain separate.
+- Numbers category rows keep their stored profile order. Alphabetical sorting applies only to the two red/green category dropdown groups.
+- Unclassified categories remain in the local database and profile editor; they are not presented as a third main Numbers table.
