@@ -81,6 +81,9 @@ if (installedCount !== Object.keys(expectedSpecs).length) {
   }
   const vendorVersions = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
   const runtimeManifest = JSON.parse(fs.readFileSync(runtimeManifestPath, 'utf8'));
+  if (vendorVersions.app_version !== pkg.version || runtimeManifest.app_version !== pkg.version) {
+    throw new Error(`Vendor bundle was built for app ${vendorVersions.app_version || 'unknown'}; current app is ${pkg.version}.`);
+  }
   const runtimePackages = Object.fromEntries(Object.entries(expectedVersions).filter(([name]) => name !== 'playwright'));
   for (const [name, version] of Object.entries(runtimePackages)) {
     if (vendorVersions.packages?.[name] !== version || runtimeManifest.packages?.[name] !== version) {
