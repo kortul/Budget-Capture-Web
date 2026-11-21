@@ -151,11 +151,11 @@ for (const [file, html] of htmlPages) {
   if (!html.includes("default-src 'self'") || !html.includes("script-src 'self'")) {
     throw new Error(`Content Security Policy is missing or not same-origin in ${file}.`);
   }
-  if (/https?:\\/\\/(?:cdn\\.|cdnjs\\.|unpkg\\.|jsdelivr\\.)/i.test(html)) {
+  if (/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i.test(html)) {
     throw new Error(`An external CDN reference remains in ${file}.`);
   }
 }
-if (/https?:\\/\\/(?:cdn\\.|cdnjs\\.|unpkg\\.|jsdelivr\\.)/i.test(appJs)) {
+if (/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i.test(appJs)) {
   throw new Error('An external CDN reference remains in the production app runtime.');
 }
 fs.rmSync(output, { recursive: true, force: true });
