@@ -39,7 +39,7 @@ assert.match(app,/exportBudgetProfile\(state\.db/,'profile export must be separa
 assert.match(html,/id="profile-expenses"/,'profile editor must expose category groups');
 for(const id of ['expenses-total','incomes-total','other-list','other-total','copy-other']) assert(known.has(id),`Numbers view must expose ${id}`);
 assert.match(app,/numbersCategoryTotals\(rows,profile\.categories\)/,'Numbers must calculate totals across every profile category group');
-assert.match(app,/numberPayloads\.other/,'Other category values must be available for copy');
+assert.match(app,/other:makeListValues\(rows,'other'\)/,'Other category values must be available for copy');
 assert.match(html,/id="profile-special-input-category"/,'profile editor must expose special Numbers labels');
 assert.match(html,/Yandex Bank/,'Yandex bank import instructions must be visible');
 assert.match(html,/Yandex Bank payment-account and Сейв savings statement PDFs/i,'both supported Yandex PDF layouts must be listed in Data');
