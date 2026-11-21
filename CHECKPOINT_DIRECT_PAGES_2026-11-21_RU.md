@@ -132,3 +132,64 @@ git status --short
 
 Начать следующий чат с этого файла и `RESUME_NEXT_STEPS_RU.md`. Последний подтверждённый source HEAD на момент checkpoint: `38c53d62ad680dd97da1b360ccbd0a34f7c24d46`.
 
+
+
+---
+
+## Follow-up work after the initial checkpoint — 21 November 2026
+
+### Verified vendor runtime bundle prepared
+
+- Retrieved the earlier successful Pages build artifact from commit `e88d35326f20c610100c7aef74c072f3b6d11a29`.
+- Rechecked its complete 218-asset SHA-256/size manifest: **218/218 PASS**, zero missing files, zero mismatches.
+- Created a separate vendor-only ZIP attachment in the development conversation. It contains 212 vendor files: sql.js 1.16.0, PDF.js 6.5.438 including worker/CMaps/fonts/WASM/ICC resources, SheetJS 0.20.3, version metadata, runtime manifest and licenses.
+- Rechecked the ZIP CRC and SHA-256 for every included vendor file: **212/212 PASS**. No finance databases or bank documents included.
+- ZIP includes `Install-Vendor.ps1`, which refuses to overwrite an existing `vendor/` unless explicitly requested.
+
+### Static build can now run without npm registry access
+
+- `scripts/build-pages.mjs` now supports two sources:
+  1. installed exact/pinned `node_modules`;
+  2. checked-in `vendor/` when no package modules are installed.
+- Fallback requires `vendor/versions.json` and `vendor/runtime-manifest.json`, matches exact package versions and file lists, and rechecks byte sizes + SHA-256 for all vendor files before build.
+- Build generates a fresh `vendor/runtime-manifest.json` and includes it in the Pages asset manifest.
+- Build continues to include all three HTML pages and the same-origin CSP/no-CDN checks.
+- Test contracts now require fallback support and production runtime manifest.
+
+### Publisher hardening
+
+- `scripts/publish-root.mjs` now treats `asset-manifest.json` as an exact allow-list: all generated files must be listed and all listed files must exist. Unmanifested or missing output is rejected.
+- `tests/root_publish_contract.mjs` asserts these guardrails.
+
+### New relevant commits
+
+- `9c11a967` — reject unmanifested files from direct publishing.
+- `f70e751d` — test exact output allow-list enforcement.
+- `4be59bb9` — add verified root vendor fallback for no-npm static builds.
+- `a9dc0533` — remove duplicate vendor declaration after fallback refactor.
+- `2690c72d` — test the verified vendor-only fallback.
+- `ce1b1790` — require vendor runtime manifest in builder contract.
+- `ac6a1ef4` — verify runtime manifest in production dist test.
+- `18303629` — add vendor recovery documentation.
+- `d160f58f` — document vendor fallback in README.
+- `8f5d3c7f` — refresh resume instructions.
+
+### Still unverified
+
+- No local execution of current HEAD's `npm test`, `npm run build:pages`, `npm run publish:root`, `npm run test:dist` or Chromium E2E has been performed in this session.
+- The vendor ZIP is an attachment and is not yet extracted/committed into the user's main branch.
+- Settings → Pages still needs manual confirmation: `Deploy from a branch`, `main`, `/(root)`.
+- Current public site and real Numbers import/export flow still need browser verification.
+
+### Updated next step
+
+Download `Budget-Capture-vendor-runtime-0.1.6.0.zip` from this conversation, install its `vendor/` into the local clone using `Install-Vendor.ps1`, then in PowerShell run:
+
+```powershell
+npm test
+npm run publish:root
+npm run test:dist
+git status --short
+```
+
+This path does not need npm registry access. Add `npm run test:e2e` only on a machine with Playwright installed. Review all generated files and then commit/push `main` normally.
