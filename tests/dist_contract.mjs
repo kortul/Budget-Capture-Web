@@ -26,8 +26,8 @@ const importPage = fs.readFileSync(path.join(root, 'numbers-import.html'), 'utf8
 const analyticsPage = fs.readFileSync(path.join(root, 'numbers-analytics.html'), 'utf8');
 assert.match(importPage, /id=\"import-history\"/);
 assert.match(importPage, /id=\"export-history\"/);
-assert.match(importPage, /vendor\\/sql\\.js\\/sql-wasm\\.js/);
-assert.match(importPage, /vendor\\/xlsx\\/xlsx\\.full\\.min\\.js/);
+assert.match(importPage, /vendor\/sql\.js\/sql-wasm\.js/);
+assert.match(importPage, /vendor\/xlsx\/xlsx\.full\.min\.js/);
 assert.match(analyticsPage, /numbers_history/);
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 assert(!/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i.test(app), 'production app must not call external CDNs');
