@@ -27,6 +27,7 @@ Date: 2026-11-21
 - 6e66c5ecea62f6f53581397f450377bdbe6421fb — workflow clarification
 - 8c5aeb76d220220ce29a5b6519c6d0fc17f7c501 — JSON backup support
 - 57bf88e3034ec3d3a64cde2b54cbb90235177b59 — category wording
+- c0be3efa17afb47322b5bf00ba1b8de805a44ab3 — WebAssembly CSP for SQLite
 
 ## Not verified
 - No browser runtime test, local build, or GitHub Actions run was performed. Test on Pages before relying on the import.
