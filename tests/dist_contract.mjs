@@ -8,6 +8,17 @@ assert(fs.existsSync(manifestPath), 'build must emit asset-manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 assert.equal(manifest.app_version, '0.1.6.0');
 assert.equal(manifest.runtime_origin, 'self');
+for (const page of ['index.html','numbers-import.html','numbers-analytics.html']) {
+  assert(fs.existsSync(path.join(root, page)), `missing published page ${page}`);
+}
+const importPage = fs.readFileSync(path.join(root, 'numbers-import.html'), 'utf8');
+const analyticsPage = fs.readFileSync(path.join(root, 'numbers-analytics.html'), 'utf8');
+assert.match(importPage, /id="import-history"/);
+assert.match(importPage, /id="export-history"/);
+assert.match(importPage, /vendor\/sql\.js\/sql-wasm\.js/);
+assert.match(importPage, /vendor\/xlsx\/xlsx\.full\.min\.js/);
+assert.match(analyticsPage, /numbers_history/);
+assert.match(analyticsPage, /vendor\/sql\.js\/sql-wasm\.js/);
 assert.equal(manifest.packages?.['sql.js'], '1.16.0');
 assert.equal(manifest.packages?.['pdfjs-dist'], '6.5.438');
 assert.equal(manifest.packages?.xlsx, '0.20.3');
