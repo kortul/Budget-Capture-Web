@@ -65,6 +65,8 @@ npx playwright install chromium
 
 Зависимости закреплены в `package-lock.json`; не генерируй новый lockfile без изменения `package.json`.
 
+**Когда npm registry недоступен:** извлеки проверенный `vendor/` из приложенного в разговоре архива `Budget-Capture-vendor-runtime-0.1.6.0.zip` (внутри есть `Install-Vendor.ps1`). Текущий `scripts/build-pages.mjs` умеет собрать `dist/` из этого vendor bundle без `node_modules`: проверяет `vendor/versions.json`, список файлов и каждый SHA-256 из `vendor/runtime-manifest.json`. Тогда можно выполнить `npm test`, `npm run publish:root` и `npm run test:dist` без установки пакетов. Chromium E2E требует Playwright; не считать его пройденным, пока тест действительно не запущен.
+
 ### Каждое обновление сайта
 
 ```powershell
