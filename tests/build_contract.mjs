@@ -31,6 +31,8 @@ for (const folder of ['cmaps','standard_fonts','wasm','iccs']) {
 assert.match(app,/useWorkerFetch:true/,'PDF.js auxiliary resources must be fetched from same-origin URLs in the worker');
 assert.match(fs.readFileSync(path.join(root,'tests/e2e.mjs'),'utf8'),/PDF.js \${label} is missing from the asset manifest/,'Chromium E2E must fetch representative auxiliary PDF.js assets');
 assert.match(fs.readFileSync(path.join(root,'tests/e2e.mjs'),'utf8'),/standardFontDataUrl:[^\n]*standard_fonts/,'Chromium E2E must use the same local PDF.js auxiliary URLs as the app');
+assert.match(pkg.scripts['test:e2e'],/numbers_import_e2e\.mjs/,'browser test command must include Numbers import/export and analytics coverage');
+assert(fs.existsSync(path.join(root,'tests/numbers_import_e2e.mjs')),'Numbers history browser E2E must be present');
 assert.match(builder,/xlsx-0\.20\.3/,'SheetJS must use the official security-fixed distribution');
 assert.match(builder,/packages: versionPayload\.packages/,'asset manifest must expose exact package versions to dist verification');
 assert.match(builder,/xlsx_source: versionPayload\.xlsx_source/,'asset manifest must document the official SheetJS source');
