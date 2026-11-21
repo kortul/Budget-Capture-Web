@@ -57,22 +57,22 @@
 
 Открой PowerShell в корне клонированного `Budget-Capture-Web`:
 
-\`\`\`powershell
+```powershell
 npm ci --ignore-scripts --no-audit --no-fund
 npm run verify:lock
-\`\`\`
+```
 
 Зависимости закреплены в `package-lock.json`; не генерируй новый lockfile без изменения `package.json`.
 
 ### Каждое обновление сайта
 
-\`\`\`powershell
+```powershell
 npm test
 npm run publish:root
 npm run test:dist
 npm run test:e2e
 git status --short
-\`\`\`
+```
 
 `publish:root` выполняет production build, сверяет SHA-256 каждого asset, проверяет обязательные страницы и отсутствие финансовых файлов, затем копирует только готовые production-файлы из `dist/` в корень репозитория. Исходники, документы и тесты не удаляются. Если проверка сборки или хешей не проходит, копирование прекращается.
 
