@@ -61,7 +61,7 @@ export function categoryDropdownGroup(category={}) {
   if(kind==='expense'||kind==='special_output')return 'expense';
   if(kind==='income'||kind==='special_input')return 'income';
   const name=String(category?.name??'').trim().toLocaleLowerCase('ru-RU');
-  return /^(?:приход|возврат|поступлен|внесен|вводы|зарплат|доход|salary|income|deposit|refund)\b/u.test(name)
+  return /^(?:приход|возврат|поступлен|внесен|вводы|зарплат|доход|salary|income|deposit|refund)(?:\s|$)/u.test(name)
     ? 'income'
     : 'expense';
 }
