@@ -107,13 +107,6 @@ function populateCategoryFilter(){
   el.innerHTML='<option value="">All categories</option>'+categoryOptionGroups(old);
   el.value=old;
 }
-function allCategories(){return categoryItems().map(item=>item.name);}
-function populateCategoryFilter(){
-  if(!state.db)return;
-  const el=$('filter-category'),old=el.value;
-  el.innerHTML='<option value="">All categories</option>'+categoryOptionGroups(old);
-  el.value=old;
-}
 function populateBankFilter(){if(!state.db)return;const el=$('filter-bank'),old=el.value;const banks=all(state.db,`SELECT name FROM accounts UNION SELECT DISTINCT account AS name FROM transactions WHERE account<>'' ORDER BY name COLLATE NOCASE`).map(r=>r.name).filter(Boolean);el.innerHTML='<option value="">All banks</option>'+banks.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');el.value=banks.includes(old)?old:'';}
 function existingRuleMaps(){const labels=new Map(all(state.db,'SELECT merchant_key,merchant FROM merchant_labels').map(r=>[r.merchant_key,r.merchant]));const rules=new Map(all(state.db,'SELECT merchant_key,category FROM category_rules').map(r=>[r.merchant_key,r.category]));return {labels,rules};}
 function groupLines(items){const out=[];for(const item of items){const top=Number(item.transform?.[5]??0),x=Number(item.transform?.[4]??0);let line=out.find(l=>Math.abs(l.y-top)<2.8);if(!line){line={y:top,x,text:''};out.push(line);}line.x=Math.min(line.x,x);line.items??=[];line.items.push({x,text:item.str||''});}return out.map(l=>({x:l.x,top:-l.y,text:l.items.sort((a,b)=>a.x-b.x).map(x=>x.text).join(' ').replace(/\s+/g,' ').trim()})).sort((a,b)=>a.top-b.top||a.x-b.x);}
@@ -379,3 +372,10 @@ function handleEvents(){
 
 async function init(){try{handleEvents();window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});$('filter-month').value=monthNowPrevious();$('totals-month').value=monthNowPrevious();$('import-month').value=monthNowPrevious();$('dependency-warning').classList.remove('hidden');$('dependency-warning').textContent='Loading SQLite database engine…';const SQL=await loadSql();if(!SQL)throw new Error('SQLite engine unavailable');$('dependency-warning').classList.add('hidden');$('new-db').disabled=false;renderSelectedFiles();if(location.protocol==='file:'){$('global-warning').classList.remove('hidden');$('global-warning').textContent='For PDF worker and database features, open this folder through a local web server or GitHub Pages (not by double-clicking index.html).';}toast('Budget Capture Web loaded · open a database to begin');}catch(e){$('dependency-warning').classList.remove('hidden');$('dependency-warning').textContent=e.message;showError(e.message);}}
 init();
+function allCategories(){return categoryItems().map(item=>item.name);}
+function populateCategoryFilter(){
+  if(!state.db)return;
+  const el=$('filter-category'),old=el.value;
+  el.innerHTML='<option value="">All categories</option>'+categoryOptionGroups(old);
+  el.value=old;
+}
