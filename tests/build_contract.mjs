@@ -40,6 +40,7 @@ assert.match(builder,/installedVersion !== expectedVersions\[name\]/,'the build 
 assert.match(builder,/runtimeSource = 'vendor'/,'the static build must support a verified checked-in vendor bundle without npm registry access');
 assert.match(builder,/vendor\/runtime-manifest\.json/,'the no-npm fallback must validate the vendor runtime manifest');
 assert.match(builder,/Vendored runtime integrity check failed/,'the fallback must verify vendor SHA-256 hashes');
+assert.match(builder,/vendorVersions\.app_version !== pkg\.version/,'the vendor fallback must match the current app version');
 assert.match(builder,/smallAllowedFiles\.has\(relative\)/,'small PDF resources and license files may be non-empty without a runtime-size threshold');
 for (const license of ['node_modules/sql.js/LICENSE','node_modules/pdfjs-dist/LICENSE','node_modules/xlsx/LICENSE']) {
   assert.match(builder,new RegExp(license.replaceAll('/','\\/')),`production build must preserve ${license}`);
