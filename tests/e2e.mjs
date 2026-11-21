@@ -164,6 +164,28 @@ try {
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
 
+  // Category dropdowns mirror the desktop workflow: grouped by category type,
+  // with Russian/Latin names naturally alphabetized inside each group.
+  const categoryUi = await page.evaluate(() => {
+    const transactionSelect = document.querySelector('#transactions-body select[data-action="category"]');
+    const filterSelect = document.querySelector('#filter-category');
+    const readGroups = select => [...select.querySelectorAll(':scope > optgroup')].map(group => {
+      const names = [...group.options].map(option => option.textContent.trim());
+      const collator = new Intl.Collator('ru-RU',{sensitivity:'base',numeric:true});
+      return {
+        label: group.label,
+        names,
+        alphabetized: names.every((name,index) => index===0 || collator.compare(names[index-1],name)<=0)
+      };
+    });
+    return {transaction:readGroups(transactionSelect),filter:readGroups(filterSelect)};
+  });
+  const categoryGroupNames = categoryUi.transaction.map(group => group.label.split(' · ')[0]);
+  assert.deepEqual(categoryGroupNames,['Expenses','Income','Other'],'Review category dropdown must separate expense, income and other categories');
+  assert(categoryUi.transaction.every(group => group.alphabetized),'each Review category group must be alphabetically sorted');
+  assert.deepEqual(categoryUi.filter.map(group => group.label),categoryUi.transaction.map(group => group.label),'category filter must use the same groups as transaction editing');
+  assert(categoryUi.filter.every(group => group.alphabetized),'each filter category group must be alphabetically sorted');
+
   // Reimport the same bytes. Stable source refs must prevent a duplicate row.
   await page.locator('[data-tab="import"]').click();
   await page.locator('#statement-files').setInputFiles(file);
