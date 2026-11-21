@@ -21,7 +21,7 @@ assert.match(publisher, /process\.argv\.includes\('--publish'\)/, 'root publishe
 assert.match(publisher, /Next: inspect git status, commit the generated vendor/, 'publisher must explain the final manual commit/push step');
 assert.doesNotMatch(ignore, /^vendor\/$/m, 'runtime vendor assets must be committable');
 assert.match(ignore, /^dist\/$/m, 'intermediate dist output must remain ignored');
-assert.match(readme, /main branch root/i, 'README must document direct branch publishing');
+assert.match(readme, /корня ветки `main`/i, 'README must document direct branch publishing');
 assert.doesNotMatch(readme, /\.github\/workflows\/pages\.yml/, 'README must not depend on a Pages Actions workflow');
 
 console.log('Direct GitHub Pages publishing contract: PASS · build, hash verification, root copy, no Actions');
