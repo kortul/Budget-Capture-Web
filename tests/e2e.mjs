@@ -170,7 +170,7 @@ try {
     const transactionSelect = document.querySelector('#transactions-body select[data-action="category"]');
     const filterSelect = document.querySelector('#filter-category');
     const readGroups = select => [...select.querySelectorAll(':scope > optgroup')].map(group => {
-      const names = [...group.options].map(option => option.textContent.trim());
+      const names = [...group.querySelectorAll(':scope > option')].map(option => option.textContent.trim());
       const collator = new Intl.Collator('ru-RU',{sensitivity:'base',numeric:true});
       return {
         label: group.label,
