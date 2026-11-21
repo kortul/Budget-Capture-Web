@@ -1,15 +1,9 @@
-name: Validate and optionally deploy Budget Capture Web
+name: Validate and deploy Budget Capture Web
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      deploy:
-        description: 'Publish the already-validated site to GitHub Pages'
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -20,7 +14,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Build and test (no publication)
+    name: Build and test
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -32,7 +26,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0 · Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babce0c15c1 # v7.1.0 · Node 24
         with:
           node-version: 24
 
@@ -73,13 +67,11 @@ jobs:
           path: dist
 
   deploy:
-    name: Publish to GitHub Pages (manual opt-in only)
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    name: Publish validated site to GitHub Pages
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
       pages: write
       id-token: write
     environment:
