@@ -3,6 +3,8 @@
 
 ## Текущая архитектура публикации
 
+**Подробная точка продолжения:** [`CHECKPOINT_DIRECT_PAGES_2026-11-21_RU.md`](CHECKPOINT_DIRECT_PAGES_2026-11-21_RU.md).
+
 **GitHub Pages: Deploy from a branch → main → /(root). GitHub Actions не используются.** Оба workflow удалены из `.github/workflows/`; в `npm test` нет теста, требующего этих workflow. Не восстанавливать Actions.
 
 ## Что изменено после перехода на прямую публикацию
