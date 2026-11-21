@@ -47,7 +47,7 @@ assert.match(html,/Yandex Bank payment-account and Сейв savings statement PD
 assert.match(html,/id="open-file"[^>]+accept="[^"]*\.sqlite3/,'database file input must accept the Windows SQLite database');
 assert.match(html,/id="account-owner"[^>]*list="owner-suggestions"/,'account owner labels should be locally editable rather than hard-coded personal names');
 assert.doesNotMatch(html,/id="account-owner"[^<]*<option>(?:Owner A|Owner B)<\/option>/i,'account owners must not be embedded in the public source');
-assert(fs.existsSync(path.join(root,'.github/workflows/pages.yml')),'GitHub Pages workflow must exist');
+assert(fs.existsSync(path.join(root,'scripts/publish-root.mjs')),'GitHub Pages must use the direct main-branch publisher, not Actions');
 assert.match(html,/Content-Security-Policy/,'static app must set a same-origin CSP');
 assert(!fs.existsSync(path.join(root,'REAL_WINDOWS_BACKUP_PARITY_2026-11-18.md')),'private validation report must not be present in project source');
 for(const file of ['README_RU.md','CHECKPOINT_2026-11-18_RU.md','CHECKPOINT_CURRENT_RU.md','TEST_REPORT.md','RESUME_NEXT_STEPS_RU.md','LOCAL_VALIDATION_SCOPE.md','CHANGELOG_0.1.3.md','CHANGELOG_0.1.4.md','CHANGELOG_0.1.5.1.md','CHANGELOG_0.1.6.0.md']) { const doc=fs.readFileSync(path.join(root,file),'utf8'); assert.doesNotMatch(doc,/₽\s*\d/ ,`personal bank amounts must not be stored in ${file}`); }
