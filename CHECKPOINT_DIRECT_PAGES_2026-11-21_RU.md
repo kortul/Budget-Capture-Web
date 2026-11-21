@@ -4,7 +4,7 @@
 **Текущая ветка:** `main`  
 **HEAD на момент фиксации:** `38c53d62ad680dd97da1b360ccbd0a34f7c24d46`  
 **Версия приложения:** `0.1.6.0`  
-**Статус:** source/configuration checkpoint saved; runtime assets and local validation still pending.
+**Статус:** source/configuration checkpoint saved; verified vendor bundle attached to the conversation but not yet committed to main; local validation still pending.
 
 ## 1. Главная договорённость
 
