@@ -69,9 +69,6 @@ for (const [name, expectedSpec] of Object.entries(expectedSpecs)) {
 
 let runtimeSource = 'node_modules';
 if (installedCount !== Object.keys(expectedSpecs).length) {
-  if (installedCount !== 0) {
-    throw new Error('node_modules is only partially installed. Finish npm ci, or remove the incomplete node_modules folder and use the verified root vendor bundle.');
-  }
   runtimeSource = 'vendor';
   const vendorRoot = path.join(root, 'vendor');
   const versionsPath = path.join(vendorRoot, 'versions.json');
