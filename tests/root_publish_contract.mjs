@@ -15,6 +15,9 @@ assert.match(builder, /'numbers-import\.html'/, 'Numbers import page must be inc
 assert.match(builder, /'numbers-analytics\.html'/, 'Numbers analytics page must be included in static build');
 assert.match(publisher, /asset-manifest\.json/, 'root publisher must require the generated asset manifest');
 assert.match(publisher, /SHA-256 mismatch/, 'root publisher must recheck every asset hash before copying');
+assert.match(publisher, /allowedOutputFiles/, 'root publisher must treat the manifest as an exact output allow-list');
+assert.match(publisher, /Unmanifested file in build output/, 'root publisher must reject extra files not covered by the manifest');
+assert.match(publisher, /Manifested output file is missing/, 'root publisher must reject missing manifest files');
 assert.match(publisher, /requiredPages/, 'root publisher must require all three app pages');
 assert.match(publisher, /forbiddenExtensions/, 'root publisher must reject private financial files');
 assert.match(publisher, /process\.argv\.includes\('--publish'\)/, 'root publisher must require explicit publish intent');
