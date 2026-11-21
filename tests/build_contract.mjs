@@ -14,7 +14,7 @@ assert(fs.existsSync(path.join(root,'scripts/verify-lockfile.mjs')),'release mus
 assert(fs.existsSync(path.join(root,'scripts/publish-root.mjs')),'direct main-branch publisher must exist');
 assert.match(pkg.scripts['publish:root'],/publish-root\.mjs --publish/);
 assert.equal(pkg.devDependencies.playwright,'1.65.1');
-assert.match(fs.readFileSync(path.join(root,'package.json'),'utf8'),/tests\/yandex_pdf\.mjs/,'Yandex PDF parser tests must run in CI');
+assert.match(fs.readFileSync(path.join(root,'package.json'),'utf8'),/tests\/yandex_pdf\.mjs/,'Yandex PDF parser tests must run in the local regression suite');
 assert.match(app,/\.\/vendor\/sql\.js\/sql-wasm\.js/);
 assert.match(app,/useOldExtensionFunctions:true/,'sql.js 1.16 must preserve legacy SQLite math/string function semantics');
 assert.match(app,/\.\/vendor\/pdfjs\/pdf\.mjs/);
