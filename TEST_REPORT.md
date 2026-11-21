@@ -75,3 +75,20 @@ Artifact totals: 219 files including `asset-manifest.json`; 8,799,044 unpacked b
 - GitHub Pages publication: **не запускалась** и не входит в текущую проверку.
 
 Не повышать версию до 0.1.7.0 и не публиковать до закрытия оставшихся release gates.
+
+
+---
+
+## Direct Pages + vendor fallback update — 21 November 2026
+
+- Publishing remains direct: GitHub Pages `main/(root)`; no Actions workflows.
+- The previous successful artifact was independently revalidated: 218/218 assets matched their recorded byte sizes and SHA-256 values.
+- A separate vendor-only ZIP has been created and CRC/SHA-256 verified: 212/212 vendor files, package versions sql.js 1.16.0 / PDF.js 6.5.438 / SheetJS 0.20.3. No financial data files are included.
+- `scripts/build-pages.mjs` now supports a verified root-vendor fallback when `node_modules` is absent; it checks exact versions, file list, sizes and SHA-256.
+- Builder produces `vendor/runtime-manifest.json` and the Pages manifest includes it.
+- `scripts/publish-root.mjs` now enforces the exact manifest allow-list: extra or missing output files stop publication.
+- Contract tests were expanded for vendor-only fallback and exact manifest allow-list.
+- These are source-level changes only. Current local source tests/build/dist/browser E2E have **not** been run after the changes. Do not report PASS.
+- The ZIP is attached to the development conversation but not yet extracted or committed to `main`. GitHub Pages settings and public browser tests remain unconfirmed.
+
+Recommended next local verification without npm registry access: install the vendor ZIP, run `npm test`, `npm run publish:root`, `npm run test:dist`, inspect `git status --short`. Run `npm run test:e2e` only on a machine with Playwright installed.
