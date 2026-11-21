@@ -35,7 +35,7 @@ assert(pagesWorkflow.includes('actions/deploy-pages@368f82528645a54fb793d4d04e34
 assert(pagesWorkflow.includes('actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'), 'Pages checkout must be Node 24 v7.0.1 pinned by immutable SHA');
 assert(pagesWorkflow.includes('actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1'), 'Pages setup-node must be Node 24 v7.1.0 pinned by immutable SHA');
 assert(pagesWorkflow.includes('actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f'), 'validation artifact export must use reviewed upload-artifact v6.0.0 by SHA');
-assert(pagesWorkflow.includes('actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333'), 'manual deploy must use reviewed download-artifact v8.0.2 by SHA');
+assert(pagesWorkflow.includes('actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9'), 'GitHub Pages artifact must be uploaded by the validation job');
 
 // Publishing must be opt-in: pushes and manual validation runs never deploy by default.
 assert(pagesWorkflow.includes('workflow_dispatch:'), 'Pages workflow must remain manually runnable');
@@ -51,7 +51,8 @@ const deploymentJob = pagesWorkflow.slice(deployStart);
 assert(!validationJob.includes('actions/deploy-pages@'), 'validation job must never deploy');
 assert(!validationJob.includes('pages: write') && !validationJob.includes('id-token: write'), 'validation job must not receive Pages deployment permissions');
 assert(validationJob.includes('actions/upload-artifact@') && validationJob.includes('path: dist/'), 'validation job must export its tested dist artifact');
-assert(deploymentJob.includes('actions/download-artifact@') && deploymentJob.includes('path: dist/'), 'manual deployment must use the exact validated dist artifact');
+assert(validationJob.includes('actions/upload-pages-artifact@') && validationJob.includes('path: dist'), 'validation job must upload the Pages artifact only after tests');
+assert(!deploymentJob.includes('actions/download-artifact@') && !deploymentJob.includes('actions/upload-pages-artifact@'), 'deployment job must reuse the artifact from the completed validation job without uploading a duplicate');
 assert(deploymentJob.includes('pages: write') && deploymentJob.includes('id-token: write'), 'only the deployment job may request Pages deployment permissions');
 assert(deploymentJob.includes('actions/deploy-pages@'), 'manual deployment job must deploy after validation');
 
