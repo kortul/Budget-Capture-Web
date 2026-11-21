@@ -12,7 +12,7 @@
 - `scripts/build-pages.mjs` создаёт production `dist/` и включает `index.html`, `numbers-import.html`, `numbers-analytics.html`, приложение, стили, локальные runtime assets, PDF.js CMaps/fonts/WASM/ICC и лицензии. Build проверяет same-origin CSP и отсутствие CDN-ссылок на всех трёх HTML-страницах.
 - `scripts/publish-root.mjs` копирует проверенный production build из `dist/` в корень репозитория. Перед копированием он проверяет manifest, версию приложения, SHA-256 и размеры всех assets, обязательные HTML-страницы и отсутствие финансовых файлов. Требует явный флаг `--publish`.
 - `scripts/publish-root.mjs` теперь дополнительно требует точное совпадение всех файлов сборки с allow-list из manifest: лишние или пропущенные файлы блокируют публикацию.
-- `scripts/build-pages.mjs` поддерживает fallback на проверенный `vendor/` без `node_modules`: проверяет точный набор из 212 runtime-файлов, версии и SHA-256 из `vendor/runtime-manifest.json`.
+- `scripts/build-pages.mjs` поддерживает fallback на проверенный `vendor/` без `node_modules`: проверяет точный набор из 212 runtime-файлов, версии и SHA-256 из `vendor/runtime-manifest.json`. Если `node_modules` установлен частично, но найденные версии правильные, builder также безопасно переходит на vendor fallback; если обнаружена неверная установленная версия — останавливается.
 - Создан проверенный vendor-only ZIP в текущем разговоре: `Budget-Capture-vendor-runtime-0.1.6.0.zip`. Проверены 218/218 исходных production assets и 212/212 файлов runtime bundle. Сам архив ещё не извлечён и не закоммичен в `main`.
 - `package.json` содержит `npm run publish:root`: build + safe copy to repository root.
 - `.gitignore` игнорирует `dist/`, но не `vendor/`. При прямой публикации `vendor/` должен быть закоммичен.
@@ -31,7 +31,7 @@
 - Существующий `package-lock.json` не изменён.
 - Исторический vendor artifact от более ранней сборки содержит проверенные версии sql.js 1.16.0, PDF.js 6.5.438, SheetJS 0.20.3; он послужил ориентиром, но его файлы ещё не перенесены в корень `main`.
 - `vendor/` **ещё не присутствует в корне main**. Поэтому прямую публикацию с готовыми runtime assets пока нельзя считать завершённой.
-- Настройку Settings → Pages подключение не позволило прочитать. Требуется вручную подтвердить `Deploy from a branch`, Branch `main`, Folder `/(root)`.
+- GitHub API metadata подтверждает `has_pages: true` и default branch `main`; точный source mode не удалось прочитать через подключение. Требуется вручную подтвердить `Deploy from a branch`, Branch `main`, Folder `/(root)`.
 - После последних изменений не выполнялись локально `npm ci`, `npm test`, `npm run build:pages`, `npm run publish:root`, `npm run test:dist` и Chromium E2E. Результаты этих тестов не заявлять как PASS.
 - Опубликованный сайт и Numbers-страницы в браузере ещё не проверены.
 
