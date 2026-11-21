@@ -115,13 +115,7 @@ for (const file of runtimeFiles) copyRequired(path.join(root, file), path.join(s
 
 // All executable browser libraries are served from the same origin as the app.
 // This keeps statement parsing local and avoids CDN/script supply-chain fallbacks.
-const vendors = [
-  ['node_modules/sql.js/dist/sql-wasm.js', 'vendor/sql.js/sql-wasm.js'],
-  ['node_modules/sql.js/dist/sql-wasm.wasm', 'vendor/sql.js/sql-wasm.wasm'],
-  ['node_modules/pdfjs-dist/legacy/build/pdf.mjs', 'vendor/pdfjs/pdf.mjs'],
-  ['node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs', 'vendor/pdfjs/pdf.worker.mjs'],
-  ['node_modules/xlsx/dist/xlsx.full.min.js', 'vendor/xlsx/xlsx.full.min.js'],
-];
+
 // Use exact installed packages when available. A fully verified, committed
 // vendor/ bundle is also sufficient for a local static build without npm access.
 const vendors = [
