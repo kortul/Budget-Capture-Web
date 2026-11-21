@@ -1,5 +1,5 @@
 import {
-  APP_VERSION, categoryKind, numbersCategoryTotals, sortCategoriesAlphabetically,
+  APP_VERSION, categoryKind, numbersCategoryTotals, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups,
   isInternalTransfer, applyOwnSbpNameMarkers, uuid, monthNowPrevious, monthOf, amountCents,
   numbersValue, displayMoney, sha256Hex, parseSberLinePages,
   parseTbankRows, parseRaiffeisenCSV, parseYandexWordPages, pdfJsItemsToYandexWords, decodeStatementBytes, inferMonth, categoryRuleKey
@@ -84,29 +84,28 @@ async function saveDatabase(){
 }
 
 function activateTab(tab){document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===`tab-${tab}`));if(tab==='review')renderTransactions();if(tab==='numbers')renderNumbers();if(tab==='accounts')renderAccounts();if(tab==='data'){updateStats();renderOwnSbpMarkers();}}
-const CATEGORY_GROUPS=[
-  {kind:'expense',label:'Expenses'},
-  {kind:'income',label:'Income'},
-  {kind:'other',label:'Other'},
-  {kind:'special_input',label:'Numbers · extra input'},
-  {kind:'special_output',label:'Numbers · extra output'}
-];
 function categoryItems(extraName=''){
   if(!state.db)return[];
   state.profile=readBudgetProfile(state.db);
   const items=[...state.profile.categories];
   if(extraName&&!items.some(item=>item.name===extraName))items.push({name:extraName,kind:'other'});
-  return sortCategoriesAlphabetically(items);
+  return items;
 }
 function categoryOptionGroups(selected=''){
-  const items=categoryItems(selected);
-  return CATEGORY_GROUPS.map(group=>{
-    const members=items.filter(item=>item.kind===group.kind);
-    if(!members.length)return'';
-    return `<optgroup label="${group.label} · ${members.length}">`+members.map(item=>
-      `<option value="${esc(item.name)}" ${item.name===selected?'selected':''}>${esc(item.name)}</option>`
-    ).join('')+'</optgroup>';
-  }).join('');
+  const groups=categoryDropdownGroups(categoryItems(selected));
+  const render=(kind,label)=>groups[kind].length
+    ? `<optgroup label="${label}" class="${kind}-group">`+groups[kind].map(item=>
+        `<option class="${kind}-option" value="${esc(item.name)}" ${item.name===selected?'selected':''}>${esc(item.name)}</option>`
+      ).join('')+'</optgroup>'
+    : '';
+  return render('expense','РАСХОДЫ')+render('income','ДОХОДЫ');
+}
+function allCategories(){return categoryItems().map(item=>item.name);}
+function populateCategoryFilter(){
+  if(!state.db)return;
+  const el=$('filter-category'),old=el.value;
+  el.innerHTML='<option value="">All categories</option>'+categoryOptionGroups(old);
+  el.value=old;
 }
 function allCategories(){return categoryItems().map(item=>item.name);}
 function populateCategoryFilter(){
@@ -204,7 +203,7 @@ async function importFiles(){
   finally{importBtn.disabled=false;renderSelectedFiles();}
 }
 function filteredTransactions(){if(!state.db)return[];const month=$('filter-month').value,bank=$('filter-bank').value,status=$('filter-status').value,category=$('filter-category').value,search=$('filter-search').value.trim().toLowerCase(),showInternal=$('show-internal').checked,sort=$('filter-sort').value;let rows=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL');rows=rows.filter(r=>{if(month&&monthOf(r.tx_date)!==month)return false;if(bank&&r.account!==bank)return false;if(status&&r.status!==status)return false;if(category&&r.category!==category)return false;if(!showInternal&&isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text))return false;if(search&&!`${r.description} ${r.merchant} ${r.account} ${r.notes} ${r.raw_text}`.toLowerCase().includes(search))return false;return true;});rows.sort((a,b)=>{if(sort==='amount_asc'||sort==='amount_desc'){const av=Number(a.amount),bv=Number(b.amount);if(av!==bv)return sort==='amount_asc'?av-bv:bv-av;}return String(b.tx_date).localeCompare(String(a.tx_date))||String(a.merchant).localeCompare(String(b.merchant),'ru');});return rows;}
-function transactionRow(r){const kind=categoryKind(r.category,state.profile);const opts=categoryOptionGroups(r.category);const internal=isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text);const signed=Number(r.amount)||0;const amountClass=signed>0?'positive':signed<0?'negative':'';return `<tr data-id="${esc(r.id)}"><td><input class="row-check" type="checkbox" data-action="select" ${state.selected.has(r.id)?'checked':''}></td><td>${esc(r.tx_date)}</td><td><span class="bank-pill">${esc(r.account)}</span>${internal?'<small class="internal-tag">Own transfer</small>':''}</td><td><input class="merchant-input" data-action="merchant" value="${esc(r.merchant||r.description)}" aria-label="Merchant"><small class="description-text">${esc(r.description)}${r.notes?` · ${esc(r.notes)}`:''}</small></td><td class="amount-cell ${amountClass}">${esc(displayMoney(amountCents(r.amount),r.currency))}</td><td><select class="category-select ${kind}" data-action="category">${opts}</select><label class="remember-line"><input type="checkbox" data-action="remember" checked> Remember category</label></td><td><input type="checkbox" data-action="done" ${r.status==='Confirmed'?'checked':''} aria-label="Completed"></td><td><button class="heart-button ${r.highlighted_flag?'active':''}" data-action="heart" title="Add to custom Numbers list">${r.highlighted_flag?'♥':'♡'}</button></td><td><button class="delete-button" data-action="delete" title="Delete transaction">×</button></td></tr>`;}
+function transactionRow(r){const kind=categoryDropdownGroup(state.profile?.categories?.find(item=>item.name===r.category)||{name:r.category,kind:'other'});const opts=categoryOptionGroups(r.category);const internal=isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text);const signed=Number(r.amount)||0;const amountClass=signed>0?'positive':signed<0?'negative':'';return `<tr data-id="${esc(r.id)}"><td><input class="row-check" type="checkbox" data-action="select" ${state.selected.has(r.id)?'checked':''}></td><td>${esc(r.tx_date)}</td><td><span class="bank-pill">${esc(r.account)}</span>${internal?'<small class="internal-tag">Own transfer</small>':''}</td><td><input class="merchant-input" data-action="merchant" value="${esc(r.merchant||r.description)}" aria-label="Merchant"><small class="description-text">${esc(r.description)}${r.notes?` · ${esc(r.notes)}`:''}</small></td><td class="amount-cell ${amountClass}">${esc(displayMoney(amountCents(r.amount),r.currency))}</td><td><select class="category-select ${kind}" data-action="category">${opts}</select><label class="remember-line"><input type="checkbox" data-action="remember" checked> Remember category</label></td><td><input type="checkbox" data-action="done" ${r.status==='Confirmed'?'checked':''} aria-label="Completed"></td><td><button class="heart-button ${r.highlighted_flag?'active':''}" data-action="heart" title="Add to custom Numbers list">${r.highlighted_flag?'♥':'♡'}</button></td><td><button class="delete-button" data-action="delete" title="Delete transaction">×</button></td></tr>`;}
 function renderTransactions(){if(!state.db){$('transactions-body').innerHTML='<tr><td colspan="9" class="empty-cell">Open a database to review transactions.</td></tr>';return;}populateCategoryFilter();populateBankFilter();const rows=filteredTransactions();state.transactions=rows;$('transactions-body').innerHTML=rows.length?rows.map(transactionRow).join(''):'<tr><td colspan="9" class="empty-cell">No transactions match these filters.</td></tr>';$('transaction-count').textContent=rows.length.toLocaleString('ru-RU');const awaiting=rows.filter(r=>r.status!=='Confirmed').length;$('awaiting-count').textContent=`${awaiting} awaiting review`;$('review-tab-count').textContent=awaiting;$('visible-count').textContent=`${rows.length} rows`;$('selected-count').textContent=`${state.selected.size} selected`;$('bulk-delete').disabled=!state.selected.size;$('select-all-visible').checked=rows.length>0&&rows.every(r=>state.selected.has(r.id));}
 function saveTransaction(id,changes){const keys=Object.keys(changes);if(!keys.length)return;const sql=`UPDATE transactions SET ${keys.map(k=>`${k}=?`).join(',')} WHERE id=?`;state.db.run(sql,[...Object.values(changes),id]);setDirty(true);renderTransactions();renderNumbers();updateStats();}
 function rememberRule(row,merchant,category){const key=row.merchant_key||`${row.account.toLowerCase()}:`+String(row.description).toLowerCase().trim();const now=nowIso();state.db.run('INSERT OR REPLACE INTO merchant_labels(merchant_key,merchant,updated_at) VALUES(?,?,?)',[key,merchant,now]);state.db.run('INSERT OR REPLACE INTO category_rules(merchant_key,category,updated_at) VALUES(?,?,?)',[key,category,now]);state.db.run('INSERT OR REPLACE INTO merchant_rules(merchant_key,merchant,category,updated_at) VALUES(?,?,?,?)',[key,merchant,category,now]);}
@@ -295,7 +294,7 @@ function makeListValues(rows,kind){
   return (summary[kind]?.items||[]).map(item=>formatCell(item.cents)).join('\n');
 }
 function specialRow(r){return `<div class="special-row"><span>${esc(r.tx_date)} · ${esc(r.merchant||r.description)}</span><b>${esc(displayMoney(Math.abs(amountCents(r.amount)||0),r.currency||''))}</b></div>`;}
-function profileLines(kind){return sortCategoriesAlphabetically((state.profile?.categories||[]).filter(item=>item.kind===kind)).map(item=>item.name).join('\n');}
+function profileLines(kind){return (state.profile?.categories||[]).filter(item=>item.kind===kind).map(item=>item.name).join('\n');}
 function renderProfileEditor(){
   if(!state.db)return;
   state.profile=readBudgetProfile(state.db);

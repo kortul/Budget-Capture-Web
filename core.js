@@ -56,13 +56,35 @@ export function sortCategoriesAlphabetically(categories=[]) {
   );
 }
 
+export function categoryDropdownGroup(category={}) {
+  const kind=category?.kind;
+  if(kind==='expense'||kind==='special_output')return 'expense';
+  if(kind==='income'||kind==='special_input')return 'income';
+  const name=String(category?.name??'').trim().toLocaleLowerCase('ru-RU');
+  return /^(?:приход|возврат|поступлен|внесен|вводы|зарплат|доход|salary|income|deposit|refund)\b/u.test(name)
+    ? 'income'
+    : 'expense';
+}
+
+export function categoryDropdownGroups(categories=[]) {
+  const groups={expense:[],income:[]};
+  for(const category of Array.isArray(categories)?categories:[]) {
+    if(!category?.name)continue;
+    const group=categoryDropdownGroup(category);
+    groups[group].push(category);
+  }
+  groups.expense=sortCategoriesAlphabetically(groups.expense);
+  groups.income=sortCategoriesAlphabetically(groups.income);
+  return groups;
+}
+
 export function numbersCategoryTotals(rows=[], categories=[]) {
   const totals={
     expense:{items:[],cents:0},
     income:{items:[],cents:0},
     other:{items:[],cents:0}
   };
-  for(const category of sortCategoriesAlphabetically(categories)) {
+  for(const category of categories) {
     const group=totals[category?.kind];
     if(!group||!category?.name)continue;
     let cents=0,count=0;

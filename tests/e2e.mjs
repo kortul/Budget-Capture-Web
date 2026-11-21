@@ -180,11 +180,17 @@ try {
     });
     return {transaction:readGroups(transactionSelect),filter:readGroups(filterSelect)};
   });
-  const categoryGroupNames = categoryUi.transaction.map(group => group.label.split(' · ')[0]);
-  assert.deepEqual(categoryGroupNames,['Expenses','Income','Other'],'Review category dropdown must separate expense, income and other categories');
+  const categoryGroupNames = categoryUi.transaction.map(group => group.label);
+  assert.deepEqual(categoryGroupNames,['РАСХОДЫ','ДОХОДЫ'],'Review category dropdown must show exactly Expenses then Income');
   assert(categoryUi.transaction.every(group => group.alphabetized),'each Review category group must be alphabetically sorted');
-  assert.deepEqual(categoryUi.filter.map(group => group.label),categoryUi.transaction.map(group => group.label),'category filter must use the same groups as transaction editing');
+  assert(categoryUi.transaction.every((group,index) => group.names.length>0),'each category group must contain options');
+  assert.deepEqual(categoryUi.filter.map(group => group.label),categoryUi.transaction.map(group => group.label),'category filter must use the same two groups as transaction editing');
   assert(categoryUi.filter.every(group => group.alphabetized),'each filter category group must be alphabetically sorted');
+  const optionColors = await page.locator('#transactions-body select[data-action="category"]').evaluate(select => ({
+    expense:select.querySelector('optgroup.expense-group option')?.classList.contains('expense-option')||false,
+    income:select.querySelector('optgroup.income-group option')?.classList.contains('income-option')||false
+  }));
+  assert.deepEqual(optionColors,{expense:true,income:true},'expense and income options must carry their distinct red/green styles');
 
   // Reimport the same bytes. Stable source refs must prevent a duplicate row.
   await page.locator('[data-tab="import"]').click();

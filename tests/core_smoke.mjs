@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseSberLinePages, parseTbankRows, parseRaiffeisenCSV, decodeStatementBytes, defaultCategory,
-  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, sortCategoriesAlphabetically, parseDate
+  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
 } from '../core.js';
 
 const sberLines=[{x:20,top:10,text:'25 октября,'}];
@@ -103,6 +103,21 @@ assert.equal(new Set(alphaNames).size,7,'alphabetical sort does not merge catego
 assert(alphaNames.indexOf('Авиабилеты')<alphaNames.indexOf('Еда'),'Cyrillic categories sort alphabetically');
 assert(alphaNames.indexOf('Еда')<alphaNames.indexOf('Кафе'),'Cyrillic categories sort alphabetically');
 assert(alphaNames.indexOf('food 2')<alphaNames.indexOf('food 10'),'numeric suffixes use natural alphabetical ordering');
+const dropdownGroups=categoryDropdownGroups([
+  {name:'Кафе',kind:'expense'},
+  {name:'Приход магазин',kind:'income'},
+  {name:'Авиабилеты',kind:'other'},
+  {name:'Возвраты',kind:'income'},
+  {name:'ВВОДЫ ДИМА СПЕЦ',kind:'special_input'},
+  {name:'ВЫВОДЫ ДИМА СПЕЦ',kind:'special_output'},
+  {name:'Внутренний перевод (не расход)',kind:'other'},
+  {name:'Такси',kind:'expense'}
+]);
+assert.deepEqual(Object.keys(dropdownGroups),['expense','income'],'the dropdown has exactly two groups');
+assert.deepEqual(dropdownGroups.expense.map(item=>item.name),['Авиабилеты','ВЫВОДЫ ДИМА СПЕЦ','Внутренний перевод (не расход)','Кафе','Такси'],'expenses come first and all entries sort alphabetically');
+assert.deepEqual(dropdownGroups.income.map(item=>item.name),['ВВОДЫ ДИМА СПЕЦ','Возвраты','Приход магазин'],'income categories use the green group');
+assert.equal(categoryDropdownGroup({name:'Приход от работы Дима',kind:'other'}),'income','unused legacy income categories can be placed in Income from their explicit name');
+assert.equal(categoryDropdownGroup({name:'Траты по работе',kind:'other'}),'expense','unclassified legacy categories default to Expenses');
 assert.equal(parseDate(46326.52072916667),'2026-10-31','Excel date serials must be handled by browser T-Bank import.');
 assert.equal(parseDate('46326.52072916667'),'2026-10-31','Excel date serial strings must be handled by browser T-Bank import.');
 const cp1251=await decodeStatementBytes(new Uint8Array([0xC4,0xE0,0xF2,0xE0]));

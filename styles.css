@@ -23,3 +23,11 @@
 .number-total.income strong{color:var(--green)}
 .number-total.other strong{color:var(--blue)}
 .numbers-note{font-size:10px;margin:7px 0 0;line-height:1.45}
+
+/* Desktop-style category dropdown: two groups only, expenses first. */
+.category-select optgroup.expense-group,#filter-category optgroup.expense-group{color:var(--red);font-weight:800}
+.category-select optgroup.income-group,#filter-category optgroup.income-group{color:var(--green);font-weight:800}
+.category-select option.expense-option,#filter-category option.expense-option{color:var(--red)}
+.category-select option.income-option,#filter-category option.income-option{color:var(--green)}
+.category-select.expense{color:var(--red);border-color:#773a39;background:#2b1d20}
+.category-select.income{color:var(--green);border-color:#28644e;background:#1a2d28}

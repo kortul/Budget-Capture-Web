@@ -139,3 +139,12 @@
 - The profile editor and Numbers category lists use the same alphabetical order.
 - The selected transaction category remains selected even when it is absent from the profile, and is displayed under Other until the profile is corrected.
 - Added regression checks for group rendering and alphabetical ordering. The supplied backup contains the SQLite database and source statements, but no Windows executable/UI source or screenshots, so exact pixel-level parity with the desktop dropdown still needs visual confirmation.
+
+
+## Unreleased — Two-color desktop category dropdown
+
+- Review transaction and category-filter dropdowns now have exactly two groups, in this order: **РАСХОДЫ** (red) and **ДОХОДЫ** (green).
+- Names are sorted alphabetically inside each group using Russian-aware, case-insensitive natural sorting.
+- Existing profile kinds are preserved for Numbers calculations. Special input/output categories are shown under Income/Expenses respectively; unclassified legacy categories default to Expenses, except clearly named incoming categories (such as Приход от работы Дима).
+- The earlier three-group dropdown (Other / special input / special output) is removed. Numbers category ordering and profile-editor ordering remain as stored in the database; only dropdown contents are alphabetized.
+- Regression and Chromium E2E tests now assert exactly two dropdown groups, their order, alphabetical entries and red/green option classes.
