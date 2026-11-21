@@ -1,3 +1,35 @@
+# Test report — актуальное состояние на 21 ноября 2026
+
+**Текущий publishing path:** GitHub Pages → Deploy from a branch → `main` → `/(root)`. GitHub Actions удалены и не являются частью тестового или publishing процесса.
+
+## Изменения с последнего отчёта
+
+- Build включает все три HTML-страницы, включая обе Numbers-страницы.
+- Добавлен безопасный скрипт `publish:root`, который после SHA-256 проверки копирует готовый production build из `dist/` в корень репозитория.
+- `vendor/` переведён в tracked content (убран из `.gitignore`); `dist/` остаётся ignored.
+- Build проверяет same-origin CSP и отсутствие CDN на всех трёх страницах.
+- Добавлен новый Numbers Chromium E2E: история в отдельной таблице, exported `.budget`, повторная замена истории, защита live transactions/categories, reopen analytics.
+- Добавлено HTML escaping для названий категорий в Numbers preview/matching/analytics.
+- Workflow contract test удалён из `npm test`; проверки root publishing закрепляют отсутствие Pages workflows.
+
+## Фактический статус
+
+| Проверка | Состояние |
+|---|---|
+| GitHub source updates | Записаны в `main` |
+| Actions workflows | Удалены |
+| Numbers pages in production build | Включены в builder; локальный build ещё не выполнялся после изменений |
+| Local vendor assets in root | **Отсутствуют до локального publish:root** |
+| `npm ci` / `npm test` after latest changes | Не запускались |
+| `npm run test:dist` after latest changes | Не запускался |
+| App Chromium E2E | Не запускался после последних изменений |
+| Numbers Chromium E2E | Добавлен, но не запускался |
+| Direct Pages source Settings | Не подтверждены из подключения; проверить вручную |
+| Public browser smoke test | Не выполнен |
+
+Исторические результаты artifact validation, source tests и прошлых Actions runs ниже относятся к прежней сборке и не подтверждают текущие изменения.
+
+---
 # Test report — Budget Capture Web 0.1.6.0
 
 **Обновлено:** 20 ноября 2026.
