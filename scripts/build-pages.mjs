@@ -51,16 +51,59 @@ const expectedSpecs = {
   'xlsx': 'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz',
   'playwright': '1.65.1',
 };
+let installedCount = 0;
 for (const [name, expectedSpec] of Object.entries(expectedSpecs)) {
   const actualSpec = pkg.devDependencies?.[name];
   if (actualSpec !== expectedSpec) {
     throw new Error(`Unexpected pinned dependency ${name}: expected ${expectedSpec}, got ${actualSpec || 'missing'}`);
   }
   const installedPackage = path.join(root, 'node_modules', name, 'package.json');
-  if (!fs.existsSync(installedPackage)) throw new Error(`Dependency ${name} is not installed. Run npm install first.`);
-  const installedVersion = JSON.parse(fs.readFileSync(installedPackage, 'utf8')).version;
-  if (installedVersion !== expectedVersions[name]) {
-    throw new Error(`Installed dependency ${name} has version ${installedVersion}; expected ${expectedVersions[name]}.`);
+  if (fs.existsSync(installedPackage)) {
+    installedCount++;
+    const installedVersion = JSON.parse(fs.readFileSync(installedPackage, 'utf8')).version;
+    if (installedVersion !== expectedVersions[name]) {
+      throw new Error(`Installed dependency ${name} has version ${installedVersion}; expected ${expectedVersions[name]}.`);
+    }
+  }
+}
+
+let runtimeSource = 'node_modules';
+if (installedCount !== Object.keys(expectedSpecs).length) {
+  if (installedCount !== 0) {
+    throw new Error('node_modules is only partially installed. Finish npm ci, or remove the incomplete node_modules folder and use the verified root vendor bundle.');
+  }
+  runtimeSource = 'vendor';
+  const vendorRoot = path.join(root, 'vendor');
+  const versionsPath = path.join(vendorRoot, 'versions.json');
+  const runtimeManifestPath = path.join(vendorRoot, 'runtime-manifest.json');
+  if (!fs.existsSync(versionsPath) || !fs.existsSync(runtimeManifestPath)) {
+    throw new Error('Dependencies are not installed and the verified vendor bundle is missing. Run npm ci or extract the verified vendor runtime bundle into the repository root.');
+  }
+  const vendorVersions = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
+  const runtimeManifest = JSON.parse(fs.readFileSync(runtimeManifestPath, 'utf8'));
+  const runtimePackages = Object.fromEntries(Object.entries(expectedVersions).filter(([name]) => name !== 'playwright'));
+  for (const [name, version] of Object.entries(runtimePackages)) {
+    if (vendorVersions.packages?.[name] !== version || runtimeManifest.packages?.[name] !== version) {
+      throw new Error(`Vendored ${name} version mismatch. Expected ${version}; bundle has ${vendorVersions.packages?.[name] || 'missing'}.`);
+    }
+  }
+  if (runtimeManifest.format_version !== 1 || !runtimeManifest.assets || typeof runtimeManifest.assets !== 'object') {
+    throw new Error('The vendor runtime manifest is missing or has an unsupported format.');
+  }
+  const declaredFiles = Object.keys(runtimeManifest.assets).sort();
+  const actualFiles = listFiles(vendorRoot).filter(file => file !== 'runtime-manifest.json').sort();
+  if (JSON.stringify(declaredFiles) !== JSON.stringify(actualFiles)) {
+    throw new Error('The vendor bundle file list does not match runtime-manifest.json.');
+  }
+  for (const [relative, meta] of Object.entries(runtimeManifest.assets)) {
+    if (relative.startsWith('/') || relative.split(/[\\\\/]/).includes('..')) {
+      throw new Error(`Unsafe path in vendor runtime manifest: ${relative}`);
+    }
+    const full = path.join(vendorRoot, relative);
+    const bytes = fs.readFileSync(full);
+    if (bytes.length !== meta.bytes || sha256(full) !== meta.sha256) {
+      throw new Error(`Vendored runtime integrity check failed: ${relative}`);
+    }
   }
 }
 
@@ -79,25 +122,33 @@ const vendors = [
   ['node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs', 'vendor/pdfjs/pdf.worker.mjs'],
   ['node_modules/xlsx/dist/xlsx.full.min.js', 'vendor/xlsx/xlsx.full.min.js'],
 ];
-for (const [source, destination] of vendors) copyRequired(path.join(root, source), path.join(staging, destination));
-
-// Keep third-party license texts beside the vendored browser runtimes.
+// Use exact installed packages when available. A fully verified, committed
+// vendor/ bundle is also sufficient for a local static build without npm access.
+const vendors = [
+  ['node_modules/sql.js/dist/sql-wasm.js', 'vendor/sql.js/sql-wasm.js'],
+  ['node_modules/sql.js/dist/sql-wasm.wasm', 'vendor/sql.js/sql-wasm.wasm'],
+  ['node_modules/pdfjs-dist/legacy/build/pdf.mjs', 'vendor/pdfjs/pdf.mjs'],
+  ['node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs', 'vendor/pdfjs/pdf.worker.mjs'],
+  ['node_modules/xlsx/dist/xlsx.full.min.js', 'vendor/xlsx/xlsx.full.min.js'],
+];
 const licenseFiles = [
   ['node_modules/sql.js/LICENSE', 'vendor/licenses/sql.js.txt'],
   ['node_modules/pdfjs-dist/LICENSE', 'vendor/licenses/pdfjs-dist.txt'],
   ['node_modules/xlsx/LICENSE', 'vendor/licenses/sheetjs-ce.txt'],
 ];
-for (const [source, destination] of licenseFiles) copyRequired(path.join(root, source), path.join(staging, destination));
-
-// PDF.js may request auxiliary assets for predefined CMaps, standard fonts,
-// WebAssembly decoders and ICC profiles. Vendor them from the exact same pinned
-// package so strict same-origin CSP and offline statement parsing remain valid.
 const pdfResources = ['cmaps', 'standard_fonts', 'wasm', 'iccs'];
-for (const directory of pdfResources) {
-  copyRequiredDirectory(
-    path.join(root, 'node_modules/pdfjs-dist', directory),
-    path.join(staging, 'vendor/pdfjs', directory),
-  );
+
+if (runtimeSource === 'node_modules') {
+  for (const [source, destination] of vendors) copyRequired(path.join(root, source), path.join(staging, destination));
+  for (const [source, destination] of licenseFiles) copyRequired(path.join(root, source), path.join(staging, destination));
+  for (const directory of pdfResources) {
+    copyRequiredDirectory(
+      path.join(root, 'node_modules/pdfjs-dist', directory),
+      path.join(staging, 'vendor/pdfjs', directory),
+    );
+  }
+} else {
+  copyRequiredDirectory(path.join(root, 'vendor'), path.join(staging, 'vendor'));
 }
 
 const versionPayload = {
@@ -108,6 +159,22 @@ const versionPayload = {
   delivery: 'same-origin GitHub Pages assets; no third-party CDN runtime fallback',
 };
 fs.writeFileSync(path.join(staging, 'vendor', 'versions.json'), JSON.stringify(versionPayload, null, 2) + '\n');
+
+// Regenerate a vendor-only integrity manifest for this exact production build.
+// It is included in the Pages asset manifest, but does not hash itself.
+const runtimeAssetFiles = listFiles(path.join(staging, 'vendor')).filter(file => file !== 'runtime-manifest.json');
+const runtimeAssets = {};
+for (const relative of runtimeAssetFiles) {
+  const full = path.join(staging, 'vendor', relative);
+  const stat = fs.statSync(full);
+  runtimeAssets[relative] = { bytes: stat.size, sha256: sha256(full) };
+}
+fs.writeFileSync(path.join(staging, 'vendor', 'runtime-manifest.json'), JSON.stringify({
+  format_version: 1,
+  app_version: pkg.version,
+  packages: versionPayload.packages,
+  assets: runtimeAssets,
+}, null, 2) + '\n');
 fs.writeFileSync(path.join(staging, '.nojekyll'), '');
 
 const requiredFiles = [
@@ -116,6 +183,7 @@ const requiredFiles = [
   ...vendors.map(([, destination]) => destination),
   ...licenseFiles.map(([, destination]) => destination),
   'vendor/versions.json',
+  'vendor/runtime-manifest.json',
 ];
 const resourceFiles = pdfResources.flatMap(directory =>
   listFiles(path.join(staging, 'vendor/pdfjs', directory), `vendor/pdfjs/${directory}`),
