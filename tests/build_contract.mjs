@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 const root=path.resolve(new URL('..',import.meta.url).pathname);
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
-const workflow=fs.readFileSync(path.join(root,'.github/workflows/pages.yml'),'utf8');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 assert.equal(pkg.version,'0.1.6.0');
 assert.equal(pkg.devDependencies['sql.js'],'1.16.0');
@@ -11,15 +10,10 @@ assert.equal(pkg.devDependencies['pdfjs-dist'],'6.5.438');
 assert.equal(pkg.devDependencies.xlsx,'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz');
 assert.notEqual(pkg.devDependencies.xlsx,'0.18.5','vulnerable stale npm registry release must not be used');
 assert(fs.existsSync(path.join(root,'scripts/build-pages.mjs')),'deterministic static Pages builder must exist');
-assert.match(workflow,/npm run verify:lock/);
-assert.match(workflow,/npm ci --ignore-scripts --no-audit --no-fund/);
 assert(fs.existsSync(path.join(root,'scripts/verify-lockfile.mjs')),'release must verify a committed npm lockfile before installation');
-assert.match(workflow,/playwright install --with-deps chromium/);
-assert.match(workflow,/npm run test:e2e/);
+assert(fs.existsSync(path.join(root,'scripts/publish-root.mjs')),'direct main-branch publisher must exist');
+assert.match(pkg.scripts['publish:root'],/publish-root\.mjs --publish/);
 assert.equal(pkg.devDependencies.playwright,'1.65.1');
-assert.match(workflow,/npm test/);
-assert.match(workflow,/npm run build:pages/);
-assert.match(workflow,/path: dist/);
 assert.match(fs.readFileSync(path.join(root,'package.json'),'utf8'),/tests\/yandex_pdf\.mjs/,'Yandex PDF parser tests must run in CI');
 assert.match(app,/\.\/vendor\/sql\.js\/sql-wasm\.js/);
 assert.match(app,/useOldExtensionFunctions:true/,'sql.js 1.16 must preserve legacy SQLite math/string function semantics');
@@ -45,6 +39,6 @@ assert.match(builder,/smallAllowedFiles\.has\(relative\)/,'small PDF resources a
 for (const license of ['node_modules/sql.js/LICENSE','node_modules/pdfjs-dist/LICENSE','node_modules/xlsx/LICENSE']) {
   assert.match(builder,new RegExp(license.replaceAll('/','\\/')),`production build must preserve ${license}`);
 }
-assert.match(workflow,/npm run test:dist/,'the deploy workflow must validate generated static assets');
 assert.match(pkg.scripts.test,/tests\/lockfile_guard\.mjs/,'source regression must test lockfile validation logic');
-console.log('GitHub Pages build contract checks: PASS');
+for (const page of ['index.html','numbers-import.html','numbers-analytics.html']) assert.match(builder,new RegExp(`'${page.replaceAll('.','\\.')}'`),`${page} must be included in the built static site`);
+console.log('Static Pages build contract checks: PASS · app and Numbers pages');
