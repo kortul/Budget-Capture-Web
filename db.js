@@ -262,6 +262,7 @@ export function importLegacyJson(SQL,payload) {
   for(const r of payload.recognized_accounts||[])if(r?.bank_code&&r?.identifier)upsertRecognizedAccount(db,r);
   for(const a of payload.transaction_delete_actions||[])if(a?.id)db.run('INSERT OR REPLACE INTO transaction_delete_actions(id,transaction_ids,created_at,undone_at) VALUES(?,?,?,?)',[a.id,a.transaction_ids||'[]',a.created_at||now,a.undone_at||'']);
   for(const m of payload.web_metadata||[])if(m?.key)db.run('INSERT OR REPLACE INTO web_metadata(key,value) VALUES(?,?)',[m.key,m.value||'']);
+  for(const r of payload.numbers_history||[])if(r?.id&&r?.month_key&&r?.kind&&r?.category)db.run('INSERT OR REPLACE INTO numbers_history(id,source,month_key,year,month,kind,category,amount,imported_at) VALUES(?,?,?,?,?,?,?,?,?)',[r.id,r.source||'numbers',r.month_key,r.year||0,r.month||0,r.kind,r.category,Number(r.amount)||0,r.imported_at||now]);
   initializeDatabase(db);
   DATABASES_REQUIRING_SAVE.add(db);
   return db;
@@ -272,6 +273,7 @@ export function exportLegacyJson(db) {
   payload.transactions=all(db,'SELECT * FROM transactions ORDER BY created_at');
   payload.accounts=all(db,'SELECT name FROM accounts').map(x=>x.name);
   payload.categories=all(db,'SELECT name FROM categories').map(x=>x.name);
+  payload.numbers_history=all(db,'SELECT * FROM numbers_history ORDER BY month_key,kind,category');
   for(const t of ['import_batches','merchant_rules','merchant_labels','category_rules','recognized_accounts','transaction_delete_actions','web_metadata'])payload[t]=all(db,`SELECT * FROM ${t}`);
   return payload;
 }
