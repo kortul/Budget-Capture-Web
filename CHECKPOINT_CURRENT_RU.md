@@ -1,3 +1,42 @@
+<!-- CURRENT STATUS: DIRECT MAIN ROOT PUBLISHING -->
+# Budget Capture Web — актуальная контрольная точка 0.1.6.0 · 21 ноября 2026
+
+## Текущая архитектура публикации
+
+**GitHub Pages: Deploy from a branch → main → /(root). GitHub Actions не используются.** Оба workflow удалены из `.github/workflows/`; в `npm test` нет теста, требующего этих workflow. Не восстанавливать Actions.
+
+## Что изменено после перехода на прямую публикацию
+
+- `scripts/build-pages.mjs` создаёт production `dist/` и включает `index.html`, `numbers-import.html`, `numbers-analytics.html`, приложение, стили, локальные runtime assets, PDF.js CMaps/fonts/WASM/ICC и лицензии. Build проверяет same-origin CSP и отсутствие CDN-ссылок на всех трёх HTML-страницах.
+- `scripts/publish-root.mjs` копирует проверенный production build из `dist/` в корень репозитория. Перед копированием он проверяет manifest, версию приложения, SHA-256 и размеры всех assets, обязательные HTML-страницы и отсутствие финансовых файлов. Требует явный флаг `--publish`.
+- `package.json` содержит `npm run publish:root`: build + safe copy to repository root.
+- `.gitignore` игнорирует `dist/`, но не `vendor/`. При прямой публикации `vendor/` должен быть закоммичен.
+- README и resume-инструкция обновлены под branch-root publishing.
+- `numbers-import.html`: исправлены состояния disabled для Import/Export при смене файлов; невалидная SQLite-копия закрывается; категории из Excel/SQLite экранируются перед вставкой в HTML.
+- `numbers-analytics.html`: категории экранируются перед вставкой в HTML.
+- Добавлен `tests/numbers_import_e2e.mjs`: проверяет загрузку XLSX, preview, запись в `numbers_history`, экспорт `.budget`, повторный импорт без накопления дублей, неизменность `transactions` и live categories и последующее чтение Financial Analytics.
+- `npm run test:e2e` теперь включает app E2E и Numbers E2E.
+
+## Текущий проверенный статус
+
+- Код и конфигурация этих изменений сохранены непосредственно в `main`.
+- Приложение остаётся версии **0.1.6.0**.
+- Существующий `package-lock.json` не изменён.
+- Исторический vendor artifact от более ранней сборки содержит проверенные версии sql.js 1.16.0, PDF.js 6.5.438, SheetJS 0.20.3; он послужил ориентиром, но его файлы ещё не перенесены в корень `main`.
+- `vendor/` **ещё не присутствует в корне main**. Поэтому прямую публикацию с готовыми runtime assets пока нельзя считать завершённой.
+- Настройку Settings → Pages подключение не позволило прочитать. Требуется вручную подтвердить `Deploy from a branch`, Branch `main`, Folder `/(root)`.
+- После последних изменений не выполнялись локально `npm ci`, `npm test`, `npm run build:pages`, `npm run publish:root`, `npm run test:dist` и Chromium E2E. Результаты этих тестов не заявлять как PASS.
+- Опубликованный сайт и Numbers-страницы в браузере ещё не проверены.
+
+## Следующий шаг
+
+На локальной Windows-машине из корня клонированного проекта выполнить команды из `RESUME_NEXT_STEPS_RU.md`: `npm ci`, `npm run verify:lock`, `npx playwright install chromium`, `npm test`, `npm run publish:root`, `npm run test:dist`, `npm run test:e2e`. Затем проверить `git status --short`, изучить Changes, сделать обычный commit и Push origin. Это стандартная публикация из ветки `main`; workflow не нужен.
+
+После публикации проверить Pages в браузере и пройти import → download `.budget` → повторное открытие → Analytics на синтетической тестовой базе. Пользовательскую финансовую базу не использовать для первого теста.
+
+---
+> Всё ниже этой строки сохранено как исторический контекст прежней архитектуры Actions и не описывает текущий publishing plan.
+
 # Budget Capture Web — актуальная контрольная точка 0.1.6.0 (20 ноября 2026)
 
 > Этот раздел supersedes более ранние статусы ниже. Исторические заметки сохранены для истории изменений.
