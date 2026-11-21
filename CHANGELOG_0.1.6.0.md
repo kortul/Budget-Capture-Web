@@ -123,3 +123,10 @@
 - Production artifact `budget-capture-dist-1f6ae9bd61194964c93e323d0a52045eb68a1d35.zip` независимо проверен: ZIP integrity PASS, `test:dist` PASS, 218/218 asset SHA-256 совпали; основные runtime-файлы byte-identical к предоставленному исходному архиву.
 - Повторный импорт в E2E укреплён: ожидание теперь требует нового текста результата, а счетчики извлекаются по label/value парам; добавлен regression contract. Нужен новый hosted CI run после commit этой корректировки.
 - Версия приложения остаётся `0.1.6.0`. GitHub Pages deployment не запускался; ручные Windows и Safari/iPhone проверки остаются открытыми.
+
+
+## Unreleased — Numbers category visibility and totals
+
+- Numbers now lists all three profile groups: Expenses, Income and Other. Legacy categories without reliable transaction history remain visible instead of disappearing from the Numbers screen.
+- Each group shows its calculated total; the Other total is signed net, while expense and income totals follow the existing copy-list sign convention.
+- Added integer-cent regression checks for mixed-sign expense categories, income totals and unused categories with zero transactions.

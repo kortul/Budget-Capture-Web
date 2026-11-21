@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseSberLinePages, parseTbankRows, parseRaiffeisenCSV, decodeStatementBytes, defaultCategory,
-  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, parseDate
+  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, parseDate
 } from '../core.js';
 
 const sberLines=[{x:20,top:10,text:'25 октября,'}];
@@ -71,6 +71,23 @@ assert.equal(defaultCategory('Перевод со счёта', 'internal_transfe
 assert.equal(defaultCategory('Перевод со счёта', 'transfer'),'Внутренний перевод (не расход)');
 assert.equal(defaultCategory('ATM cash deposit', 'income'),'Внесение наличных','ATM deposit suggestions use a generic category label, not a user-specific one.');
 assert.equal(numbersValue(amountCents(474164.51)),'474164,51');
+const numberGroups=numbersCategoryTotals([
+  {category:'Food',amount:-100.25},
+  {category:'Food',amount:20},
+  {category:'Salary',amount:500},
+  {category:'Unassigned',amount:-8.5}
+],[
+  {name:'Food',kind:'expense'},
+  {name:'Salary',kind:'income'},
+  {name:'No history yet',kind:'other'},
+  {name:'Unassigned',kind:'other'}
+]);
+assert.equal(numberGroups.expense.items[0].cents,8025,'expense category values use the same net-outflow sign as the Numbers table');
+assert.equal(numberGroups.expense.cents,8025,'expense group total is calculated from integer cents');
+assert.equal(numberGroups.income.cents,50000,'income group total is calculated from integer cents');
+assert.equal(numberGroups.other.items[0].count,0,'unused legacy categories remain visible with zero transactions');
+assert.equal(numberGroups.other.items[0].cents,0,'unused legacy categories retain a zero total');
+assert.equal(numberGroups.other.items[1].cents,-850,'Other group preserves the signed net of its transactions');
 assert.equal(parseDate(46326.52072916667),'2026-10-31','Excel date serials must be handled by browser T-Bank import.');
 assert.equal(parseDate('46326.52072916667'),'2026-10-31','Excel date serial strings must be handled by browser T-Bank import.');
 const cp1251=await decodeStatementBytes(new Uint8Array([0xC4,0xE0,0xF2,0xE0]));

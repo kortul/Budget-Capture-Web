@@ -48,6 +48,30 @@ export function displayMoney(cents, currency='RUB') {
   const sign=whole.startsWith('-')?'-':''; const grouped=whole.replace('-','').replace(/\B(?=(\d{3})+(?!\d))/g,' ');
   return `${sign}${grouped}${frac?','+frac:''}${currency?' '+currency:''}`;
 }
+
+export function numbersCategoryTotals(rows=[], categories=[]) {
+  const totals={
+    expense:{items:[],cents:0},
+    income:{items:[],cents:0},
+    other:{items:[],cents:0}
+  };
+  for(const category of categories) {
+    const group=totals[category?.kind];
+    if(!group||!category?.name)continue;
+    let cents=0,count=0;
+    for(const row of rows) {
+      if(row?.category!==category.name)continue;
+      const value=amountCents(row.amount);
+      if(value===null)continue;
+      cents+=value;
+      count++;
+    }
+    const valueCents=category.kind==='expense'?-cents:cents;
+    group.items.push({name:category.name,count,cents:valueCents});
+    group.cents+=valueCents;
+  }
+  return totals;
+}
 export function defaultCategory(description, type) {
   const t=fold(description);
   if (type==='transfer' || type==='internal_transfer' || isInternalTransfer(description)) return 'Внутренний перевод (не расход)';

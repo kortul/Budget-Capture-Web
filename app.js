@@ -1,5 +1,5 @@
 import {
-  APP_VERSION, categoryKind,
+  APP_VERSION, categoryKind, numbersCategoryTotals,
   isInternalTransfer, applyOwnSbpNameMarkers, uuid, monthNowPrevious, monthOf, amountCents,
   numbersValue, displayMoney, sha256Hex, parseSberLinePages,
   parseTbankRows, parseRaiffeisenCSV, parseYandexWordPages, pdfJsItemsToYandexWords, decodeStatementBytes, inferMonth, categoryRuleKey
@@ -189,7 +189,16 @@ function fallbackCopy(value){const ta=document.createElement('textarea');ta.valu
 function formatCell(cents){return numbersValue(cents);}
 function numberRows(month,bank,currency,includeInternal){let rows=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL');rows=rows.filter(r=>(!month||monthOf(r.tx_date)===month)&&(!bank||bank==='TOTAL'||r.account===bank)&&(!currency||r.currency===currency)&&(includeInternal||!isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text)));return rows;}
 function renderNumbers(){
-  if(!state.db){$('expenses-list').innerHTML='';$('incomes-list').innerHTML='';return;}
+  if(!state.db){
+    $('expenses-list').innerHTML='';
+    $('incomes-list').innerHTML='';
+    $('other-list').innerHTML='';
+    $('expenses-total').textContent='—';
+    $('incomes-total').textContent='—';
+    $('other-total').textContent='—';
+    state.numberPayloads=null;
+    return;
+  }
   state.profile=readBudgetProfile(state.db);
   const profile=state.profile,numbers=profile.numbers;
   $('expenses-title').textContent=numbers.expenseTitle;
@@ -210,14 +219,16 @@ function renderNumbers(){
   if(currencies.includes(prev))curr.value=prev;
   const currency=curr.value||(currencies.length===1?currencies[0]:'');
   const rows=bankRows.filter(r=>!currency||r.currency===currency);
-  const makeList=(kind)=>profile.categories.filter(item=>item.kind===kind).map(item=>{
-    const matches=rows.filter(r=>r.category===item.name);
-    const cents=matches.reduce((sum,row)=>sum+(amountCents(row.amount)||0),0);
-    const total=kind==='expense'?-cents:cents;
-    return `<div class="number-row"><span>${esc(item.name)}</span><span class="kind">${matches.length||''}</span><span class="value ${kind}">${displayMoney(total,currency||'')}</span></div>`;
-  }).join('');
+  const summary=numbersCategoryTotals(rows,profile.categories);
+  const makeList=(kind)=>summary[kind].items.map(item=>
+    `<div class="number-row"><span>${esc(item.name)}</span><span class="kind">${item.count||''}</span><span class="value ${kind}">${displayMoney(item.cents,currency||'')}</span></div>`
+  ).join('');
   $('expenses-list').innerHTML=makeList('expense');
   $('incomes-list').innerHTML=makeList('income');
+  $('other-list').innerHTML=makeList('other');
+  $('expenses-total').textContent=displayMoney(summary.expense.cents,currency||'');
+  $('incomes-total').textContent=displayMoney(summary.income.cents,currency||'');
+  $('other-total').textContent=displayMoney(summary.other.cents,currency||'');
   const specialInCategory=numbers.specialInput.category;
   const specialOutCategory=numbers.specialOutput.category;
   const specialIn=specialInCategory?rows.filter(r=>r.category===specialInCategory):[];
@@ -243,14 +254,16 @@ function renderNumbers(){
   $('highlighted-count').textContent=`${highlighted.length} transactions`;
   $('highlighted-total').textContent=displayMoney(sumAbs(highlighted),currency||'RUB');
   $('highlighted-rows').innerHTML=highlighted.map(row=>specialRow(row)).join('')||'<div class="muted">No transactions</div>';
-  state.numberPayloads={expense:makeListValues(rows,'expense'),income:makeListValues(rows,'income'),specialIn,specialOut,highlighted};
+  state.numberPayloads={
+    expense:makeListValues(rows,'expense'),
+    income:makeListValues(rows,'income'),
+    other:makeListValues(rows,'other'),
+    specialIn,specialOut,highlighted
+  };
 }
 function makeListValues(rows,kind){
-  const names=(state.profile?.categories||[]).filter(item=>item.kind===kind).map(item=>item.name);
-  return names.map(name=>{
-    const cents=rows.filter(row=>row.category===name).reduce((sum,row)=>sum+(amountCents(row.amount)||0),0);
-    return formatCell(kind==='expense'?-cents:cents);
-  }).join('\n');
+  const summary=numbersCategoryTotals(rows,state.profile?.categories||[]);
+  return (summary[kind]?.items||[]).map(item=>formatCell(item.cents)).join('\n');
 }
 function specialRow(r){return `<div class="special-row"><span>${esc(r.tx_date)} · ${esc(r.merchant||r.description)}</span><b>${esc(displayMoney(Math.abs(amountCents(r.amount)||0),r.currency||''))}</b></div>`;}
 function profileLines(kind){return (state.profile?.categories||[]).filter(item=>item.kind===kind).map(item=>item.name).join('\n');}
@@ -331,7 +344,7 @@ function handleEvents(){
   const fileInput=$('statement-files');fileInput.addEventListener('change',e=>{state.selectedFiles=[...(e.target.files||[])];renderSelectedFiles();});const drop=$('drop-zone');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');state.selectedFiles=[...e.dataTransfer.files];renderSelectedFiles();});$('clear-files').addEventListener('click',()=>{state.selectedFiles=[];fileInput.value='';renderSelectedFiles();});$('run-import').addEventListener('click',importFiles);
   ['filter-month','filter-bank','filter-status','filter-category','filter-search','filter-sort','show-internal'].forEach(id=>$(id).addEventListener('input',()=>{state.selected.clear();renderTransactions();}));$('clear-filters').addEventListener('click',()=>{$('filter-month').value=monthNowPrevious();$('filter-bank').value='';$('filter-status').value='';$('filter-category').value='';$('filter-search').value='';$('filter-sort').value='date';$('show-internal').checked=false;state.selected.clear();renderTransactions();});
   $('transactions-body').addEventListener('change',handleTransactionAction);$('transactions-body').addEventListener('focusout',e=>{if(e.target.matches('[data-action="merchant"]'))handleTransactionAction(e);});$('transactions-body').addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a&&['delete','heart'].includes(a.dataset.action))handleTransactionAction(e);});$('select-all-visible').addEventListener('change',e=>{for(const r of state.transactions){if(e.target.checked)state.selected.add(r.id);else state.selected.delete(r.id);}renderTransactions();});$('bulk-delete').addEventListener('click',()=>deleteTransactions([...state.selected],true));$('recovery-panel').addEventListener('toggle',()=>{if($('recovery-panel').open)renderRecovery();});$('recovery-list').addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(b)restoreAction(b.dataset.restore);});$('show-recovery').addEventListener('click',()=>$('recovery-panel').open=!$('recovery-panel').open);$('export-csv').addEventListener('click',exportCsv);
-  $('totals-month').addEventListener('change',renderNumbers);$('totals-currency').addEventListener('change',renderNumbers);$('totals-show-internal').addEventListener('change',renderNumbers);$('totals-bank-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-bank]');if(b){state.activeBank=b.dataset.bank;renderNumbers();}});$('copy-expenses').addEventListener('click',()=>copyText(state.numberPayloads?.expense||''));$('copy-incomes').addEventListener('click',()=>copyText(state.numberPayloads?.income||''));$('copy-special-input-total').addEventListener('click',()=>copyText(numbersValue((state.numberPayloads?.specialIn||[]).reduce((s,r)=>s+Math.abs(amountCents(r.amount)||0),0))));$('copy-special-output-total').addEventListener('click',()=>copyText(numbersValue((state.numberPayloads?.specialOut||[]).reduce((s,r)=>s+Math.abs(amountCents(r.amount)||0),0))));$('copy-special-inputs').addEventListener('click',()=>copyText((state.numberPayloads?.specialIn||[]).map(r=>numbersValue(Math.abs(amountCents(r.amount)||0))).join('\n')));$('copy-special-outputs').addEventListener('click',()=>copyText((state.numberPayloads?.specialOut||[]).map(r=>numbersValue(Math.abs(amountCents(r.amount)||0))).join('\n')));$('copy-highlighted').addEventListener('click',()=>copyText((state.numberPayloads?.highlighted||[]).map(r=>`${r.tx_date}\t${r.merchant||r.description}\t${numbersValue(Math.abs(amountCents(r.amount)||0))}`).join('\n')));
+  $('totals-month').addEventListener('change',renderNumbers);$('totals-currency').addEventListener('change',renderNumbers);$('totals-show-internal').addEventListener('change',renderNumbers);$('totals-bank-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-bank]');if(b){state.activeBank=b.dataset.bank;renderNumbers();}});$('copy-expenses').addEventListener('click',()=>copyText(state.numberPayloads?.expense||''));$('copy-incomes').addEventListener('click',()=>copyText(state.numberPayloads?.income||''));$('copy-other').addEventListener('click',()=>copyText(state.numberPayloads?.other||''));$('copy-special-input-total').addEventListener('click',()=>copyText(numbersValue((state.numberPayloads?.specialIn||[]).reduce((s,r)=>s+Math.abs(amountCents(r.amount)||0),0))));$('copy-special-output-total').addEventListener('click',()=>copyText(numbersValue((state.numberPayloads?.specialOut||[]).reduce((s,r)=>s+Math.abs(amountCents(r.amount)||0),0))));$('copy-special-inputs').addEventListener('click',()=>copyText((state.numberPayloads?.specialIn||[]).map(r=>numbersValue(Math.abs(amountCents(r.amount)||0))).join('\n')));$('copy-special-outputs').addEventListener('click',()=>copyText((state.numberPayloads?.specialOut||[]).map(r=>numbersValue(Math.abs(amountCents(r.amount)||0))).join('\n')));$('copy-highlighted').addEventListener('click',()=>copyText((state.numberPayloads?.highlighted||[]).map(r=>`${r.tx_date}\t${r.merchant||r.description}\t${numbersValue(Math.abs(amountCents(r.amount)||0))}`).join('\n')));
   $('save-own-sbp-markers').addEventListener('click',saveOwnSbpMarkers);$('save-profile').addEventListener('click',saveProfileFromEditor);$('export-profile').addEventListener('click',exportProfileFile);$('profile-json').addEventListener('change',importProfileFile);$('account-form').addEventListener('submit',e=>{e.preventDefault();if(!state.db)return;upsertRecognizedAccount(state.db,{bank_code:$('account-bank').value,identifier:$('account-identifier').value.trim(),label:$('account-label').value.trim(),owner:$('account-owner').value,account_type:$('account-type').value});setDirty(true);e.target.reset();renderAccounts();updateStats();});$('accounts-body').addEventListener('click',e=>{const b=e.target.closest('[data-delete-account]');if(!b)return;if(!confirm('Delete this recognized account?'))return;state.db.run('DELETE FROM recognized_accounts WHERE id=?',[Number(b.dataset.deleteAccount)]);setDirty(true);renderAccounts();});
   $('legacy-json').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f||!state.db)return;try{const payload=JSON.parse(await f.text());if(payload.app!=='Budget Capture'||!Array.isArray(payload.transactions))throw new Error('Unsupported Budget Capture JSON backup.');const imported=payload.transactions.filter(r=>r?.id&&r?.created_at&&'amount'in r).length;for(const c of payload.categories||[])state.db.run('INSERT OR IGNORE INTO categories(name,created_at) VALUES(?,?)',[c,nowIso()]);for(const row of payload.transactions){if(!row?.id||!row?.created_at||!('amount'in row))continue;insertTransaction(state.db,{...row,deleted_at:null,delete_action_id:''});}for(const r of payload.merchant_labels||[])if(r.merchant_key)state.db.run('INSERT OR REPLACE INTO merchant_labels(merchant_key,merchant,updated_at) VALUES(?,?,?)',[r.merchant_key,r.merchant||'',r.updated_at||nowIso()]);for(const r of payload.category_rules||[])if(r.merchant_key)state.db.run('INSERT OR REPLACE INTO category_rules(merchant_key,category,updated_at) VALUES(?,?,?)',[r.merchant_key,r.category||'Не распределено',r.updated_at||nowIso()]);setDirty(true);renderAll();toast(`Merged ${imported} legacy transaction rows`);}catch(err){showError(err.message);}e.target.value='';});
 }
