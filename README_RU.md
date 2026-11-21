@@ -41,31 +41,46 @@
 
 Подробные пользовательские результаты сверки не входят в этот репозиторий или release ZIP.
 
-## GitHub Pages
+## GitHub Pages — прямая публикация из main, без Actions
 
-Workflow `.github/workflows/pages.yml` устанавливает закреплённые зависимости, запускает исходные тесты, строит `dist/` с локальными runtime-библиотеками, проверяет SHA-256 manifest и выполняет Playwright Chromium E2E. Push в `main` запускает только job проверки и сборки; готовый `dist/` сохраняется как artifact для инспекции. **Автоматической публикации при push нет.**
+Источник публикации — **Deploy from a branch → main → /(root)**. GitHub Pages раздаёт файлы прямо из корня ветки `main`; GitHub Actions, workflows и промежуточный deploy job не используются.
 
-Job публикации отделён от проверки и запускается только при ручном `workflow_dispatch` с явно включённым параметром `deploy=true`. По умолчанию этот параметр выключен. Настоящий `package-lock.json` уже получен через `Prepare verified dependency lockfile` и добавлен в `main`. Полный GitHub-hosted validation/build workflow был успешно запущен; production artifact выгружен для проверки. Публикация всё равно остаётся отдельным ручным действием и не запускается в рамках обычного push или проверки.
+В корне должны присутствовать:
+- `index.html`, `numbers-import.html`, `numbers-analytics.html`;
+- `app.js`, `core.js`, `db.js`, `profile.js`, `styles.css`;
+- `vendor/` с закреплёнными runtime-библиотеками sql.js 1.16.0, PDF.js 6.5.438 и SheetJS 0.20.3, включая WASM и ресурсы PDF.js;
+- `.nojekyll` и `asset-manifest.json`.
 
-GitHub Actions использует Node.js 24. Локальные npm scripts поддерживают Node.js 22+; для совпадения с CI используй Node 24. В сети с доступом к npm registry и `cdn.sheetjs.com` lockfile можно создать локально:
+Каталог `vendor/` намеренно отслеживается Git. **Не удаляй и не добавляй его в `.gitignore`**: при прямой публикации это часть production-сайта, а не временная сборка. `dist/` остаётся локальным промежуточным build output и в Git не попадает.
 
-```bash
-npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-npm run verify:lock
-```
+### Первоначальная подготовка на Windows
 
-История bootstrap сохранена в `package-lock-build-info.txt`: lockfile был разрешён на GitHub-hosted Node 24 runner, проверен `verify:lock`, а SHA-256 сверена с `package-lock.sha256`. В репозитории уже находятся `package-lock.json`, checksum и build metadata. Повторно генерировать lockfile без изменения `package.json` не нужно. Workflow подготовки lockfile не устанавливает пакеты, не выполняет lifecycle scripts и не публикует сайт.
+Открой PowerShell в корне клонированного `Budget-Capture-Web`:
 
-После добавления lockfile все установки выполняются строго через:
-
-```bash
+\`\`\`powershell
 npm ci --ignore-scripts --no-audit --no-fund
 npm run verify:lock
+\`\`\`
+
+Зависимости закреплены в `package-lock.json`; не генерируй новый lockfile без изменения `package.json`.
+
+### Каждое обновление сайта
+
+\`\`\`powershell
 npm test
-npm run build:pages
+npm run publish:root
 npm run test:dist
 npm run test:e2e
-```
+git status --short
+\`\`\`
+
+`publish:root` выполняет production build, сверяет SHA-256 каждого asset, проверяет обязательные страницы и отсутствие финансовых файлов, затем копирует только готовые production-файлы из `dist/` в корень репозитория. Исходники, документы и тесты не удаляются. Если проверка сборки или хешей не проходит, копирование прекращается.
+
+Затем в GitHub Desktop проверь Changes: должны появиться обновлённые runtime-файлы и `vendor/`. Сделай commit и Push origin. После push GitHub Pages обновит сайт из `main` автоматически — **без GitHub Actions**.
+
+Проверить настройки источника можно в Settings → Pages: должно быть `Deploy from a branch`, Branch `main`, Folder `/(root)`. Настройку нужно подтвердить в самом репозитории; из текущего подключения её чтение недоступно.
+
+Node.js 22+ требуется для локальных scripts; зависимости устанавливаются строго через `npm ci`. Библиотеки браузера не загружаются с внешних CDN: они обслуживаются с того же GitHub Pages origin.
 
 ## Работа на разных устройствах
 
@@ -82,15 +97,15 @@ npm run test:e2e
 
 Не добавляй `.budget`, `.sqlite*`, `.db`, backup ZIP, PDF, XLSX, CSV, личные JSON exports или отчёты с source references в Git.
 
-## Текущий статус проверки — 20 ноября 2026
+## Текущий статус — 21 ноября 2026
 
-- `npm test`: 9/9 source suites PASS на текущем исходном архиве.
-- `npm run verify:lock`: PASS; 17 package entries, точные версии, разрешённые HTTPS hosts и SHA-512 integrity.
-- GitHub Actions на Node 24: пользователь подтвердил успешный `Build and test (no publication)`; workflow создал production `dist` artifact.
-- Production artifact `budget-capture-dist-1f6ae9bd61194964c93e323d0a52045eb68a1d35.zip`: `npm run test:dist` PASS, 218/218 assets сверены по SHA-256; семь основных runtime-файлов побайтно совпали с исходниками текущего архива.
-- Сам artifact содержит локальные sql.js, PDF.js и SheetJS runtime, PDF.js CMaps/fonts/WASM/ICC resources и тексты лицензий; `dist` не содержит SQLite/`.budget` баз, банковских выписок PDF/XLSX/CSV или резервных копий.
-- В текущем E2E тесте усилено ожидание результата повторного импорта: теперь он обязан отличаться от первого результата, а счётчики проверяются по связанным label/value элементам. Эта последняя корректировка теста требует нового GitHub Actions запуска.
-- Реальная миграция и сохранение пользовательской Windows-базы в браузере, Safari/iPhone file-open/save flow и реальная публикация Pages ещё требуют отдельной ручной проверки.
+- GitHub Actions workflows удалены. Рабочая схема — прямой GitHub Pages deploy из `main` и корня репозитория.
+- Добавлена команда `npm run publish:root` и контрактные тесты для безопасного копирования build output в корень.
+- Build включает приложение и обе страницы Numbers; runtime dependencies остаются same-origin и закреплены в lockfile.
+- В Numbers Import исправлено состояние кнопок при смене файлов/баз, закрытие ошибочной SQLite-копии и экранирование названий категорий из Excel/базы перед вставкой в HTML.
+- В Financial Analytics экранируются названия категорий перед вставкой в HTML.
+- **Публикация ещё не завершена:** локальная команда `npm run publish:root` пока не запускалась в клонированном репозитории, поэтому `vendor/` пока отсутствует в корне `main`. До генерации и commit runtime assets Numbers Import не заработает в branch-root deployment.
+- Исторический Actions artifact содержит проверенные версии vendor assets, но он не является частью текущей ветки `main`.
+- Не подтверждены актуальная настройка Settings → Pages и ручной браузерный тест импорт → export → повторное открытие `.budget`.
 
-Публикацию не запускать. `deploy=true` не выбирать до успешного повторного CI после E2E-корректировки и отдельного одобрения.
-GitHub Actions in both workflows are pinned to verified full-length commit SHAs; checkout runs with `persist-credentials: false`. Keep these immutable references unless a replacement SHA is checked against the official upstream release and reviewed.
+Не добавляй `.budget`, SQLite базы, backup ZIP, банковские PDF/XLSX/CSV или личные JSON exports в Git.
