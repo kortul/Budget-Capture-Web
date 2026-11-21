@@ -193,3 +193,13 @@ git status --short
 ```
 
 This path does not need npm registry access. Add `npm run test:e2e` only on a machine with Playwright installed. Review all generated files and then commit/push `main` normally.
+
+
+---
+
+### Final follow-up — partial npm installs and Pages metadata
+
+- Builder fallback was made resilient to a partially installed `node_modules`: if any installed package is wrong, build stops; if some exact packages are present but the set is incomplete, it uses the verified vendor bundle. This avoids being blocked by a failed partial npm install.
+- GitHub repository metadata confirms `has_pages: true` and default branch `main`. The connected GitHub interface still does not expose the active Pages source mode; manually confirm `Deploy from a branch → main → /(root)`.
+- Relevant commits: `882aadfe` (partial-install fallback), `ea10a6b2` (checkpoint status and Pages metadata).
+- Local source tests, fallback build, dist checks and Chromium E2E are still not executed on the current source. Do not claim PASS.
