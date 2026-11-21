@@ -60,6 +60,7 @@
 ```powershell
 npm ci --ignore-scripts --no-audit --no-fund
 npm run verify:lock
+npx playwright install chromium
 ```
 
 Зависимости закреплены в `package-lock.json`; не генерируй новый lockfile без изменения `package.json`.
