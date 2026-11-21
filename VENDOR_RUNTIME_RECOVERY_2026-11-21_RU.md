@@ -29,9 +29,24 @@ The runtime bundle contains 211 files under `vendor/`: SQLite JS + WASM, PDF.js 
 
 Only copy `vendor/`. Do not replace `index.html`, `app.js`, `core.js`, `numbers-import.html`, `numbers-analytics.html`, or other application files with files from the older artifact.
 
-## After vendor recovery
+## ## Build without npm registry access
 
-Run the standard local checks and build:
+The current `scripts/build-pages.mjs` supports the verified root `vendor/` folder as a runtime source. It checks `vendor/versions.json`, exact paths, file sizes and SHA-256 values in `vendor/runtime-manifest.json`. It then creates a new production build and fresh asset manifests.
+
+After installing the ZIP bundle, you can build and validate the static site without downloading npm packages:
+
+```powershell
+npm test
+npm run publish:root
+npm run test:dist
+git status --short
+```
+
+The app's source tests use Node built-ins. Chromium E2E additionally requires Playwright; only run/report E2E as passed on a machine where Playwright is installed and the browser test actually completes.
+
+## Preferred build with npm registry access
+
+When the network allows npm installs, the fully reproducible route remains:
 
 ```powershell
 npm ci --ignore-scripts --no-audit --no-fund
@@ -43,12 +58,4 @@ npm run test:dist
 npm run test:e2e
 git status --short
 ```
-
-`npm run publish:root` rebuilds using the pinned installed package versions and refreshes the production files in the root. Review changes before commit. Do not add `dist/`, `.budget`, SQLite databases, bank statements, backups, or personal JSON.
-
-Commit the runtime/root updates and push `main`. With Settings → Pages configured as `Deploy from a branch → main → /(root)`, GitHub Pages will publish without Actions.
-
-## Important
-
-The historical artifact proves the vendor bundle's byte integrity; it does **not** prove the current application pages or new Numbers import E2E tests. Those must still pass on the current source after restoring vendor and running the local test commands.
 
