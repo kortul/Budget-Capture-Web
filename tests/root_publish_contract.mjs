@@ -23,5 +23,8 @@ assert.doesNotMatch(ignore, /^vendor\/$/m, 'runtime vendor assets must be commit
 assert.match(ignore, /^dist\/$/m, 'intermediate dist output must remain ignored');
 assert.match(readme, /корня ветки `main`/i, 'README must document direct branch publishing');
 assert.doesNotMatch(readme, /\.github\/workflows\/pages\.yml/, 'README must not depend on a Pages Actions workflow');
+assert.equal(fs.existsSync(path.join(root, '.github/workflows/pages.yml')), false, 'Pages Actions workflow must stay deleted');
+assert.equal(fs.existsSync(path.join(root, '.github/workflows/prepare-lockfile.yml')), false, 'lockfile Actions workflow must stay deleted');
+assert.doesNotMatch(pkg.scripts.test, /lockfile_workflow_contract/, 'local regression suite must not depend on Actions workflow tests');
 
 console.log('Direct GitHub Pages publishing contract: PASS · build, hash verification, root copy, no Actions');
