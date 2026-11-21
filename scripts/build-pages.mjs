@@ -67,7 +67,7 @@ for (const [name, expectedSpec] of Object.entries(expectedSpecs)) {
 fs.rmSync(staging, { recursive: true, force: true });
 fs.mkdirSync(staging, { recursive: true });
 
-const runtimeFiles = ['index.html', 'styles.css', 'app.js', 'core.js', 'db.js', 'profile.js', 'manifest.webmanifest'];
+const runtimeFiles = ['index.html', 'numbers-import.html', 'numbers-analytics.html', 'styles.css', 'app.js', 'core.js', 'db.js', 'profile.js', 'manifest.webmanifest'];
 for (const file of runtimeFiles) copyRequired(path.join(root, file), path.join(staging, file));
 
 // All executable browser libraries are served from the same origin as the app.
