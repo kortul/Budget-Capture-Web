@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS merchant_labels(merchant_key TEXT PRIMARY KEY,merchan
 CREATE TABLE IF NOT EXISTS category_rules(merchant_key TEXT PRIMARY KEY,category TEXT NOT NULL DEFAULT 'Не распределено',updated_at TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS transaction_delete_actions(id TEXT PRIMARY KEY,transaction_ids TEXT NOT NULL,created_at TEXT NOT NULL,undone_at TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS numbers_history (id TEXT PRIMARY KEY, source TEXT NOT NULL DEFAULT 'numbers', month_key TEXT NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('income','expense')), category TEXT NOT NULL, amount REAL NOT NULL DEFAULT 0, imported_at TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS idx_numbers_history_month ON numbers_history(month_key);
 `;
 
 export function createDatabase(SQL) {
