@@ -1,29 +1,57 @@
 # Продолжение работы — Budget Capture Web 0.1.6.0
 
-Начинай с `CHECKPOINT_CURRENT_RU.md` и `TEST_REPORT.md`. Приложение остаётся на версии 0.1.6.0; персональная база не включается в репозиторий или dist.
+**Актуальная архитектура на 21 ноября 2026:** GitHub Pages публикует напрямую из `main` → `/(root)`. GitHub Actions не используются. Не создавать workflow и не возвращать Actions без отдельной просьбы пользователя.
 
 ## Что уже сделано
 
-- Настоящий `package-lock.json` создан и проверен на GitHub-hosted Node 24; SHA-256 и source commit metadata сохранены рядом.
-- Пользователь подтвердил успешный GitHub Actions `Build and test (no publication)`.
-- Production `dist` artifact получен; его 218 assets сверены с SHA-256 manifest, а 7 основных runtime-файлов совпали с исходниками.
-- Source regression `npm test` — 9/9 PASS; `verify:lock` — PASS, 17 package entries.
-- Автоматическая публикация при push отключена. Ручной deploy возможен только при `workflow_dispatch` и `deploy=true`.
+- Удалены `.github/workflows/pages.yml` и `.github/workflows/prepare-lockfile.yml`.
+- Удалён устаревший `tests/lockfile_workflow_contract.mjs`; `npm test` больше не зависит от Actions.
+- В `scripts/build-pages.mjs` в production build включены все три HTML-страницы: `index.html`, `numbers-import.html`, `numbers-analytics.html`.
+- Добавлен безопасный `scripts/publish-root.mjs` и команда `npm run publish:root`. Скрипт проверяет manifest, версии, SHA-256, обязательные страницы и запрещённые финансовые файлы перед копированием production assets из `dist/` в корень.
+- `vendor/` удалён из `.gitignore` и должен быть закоммичен: GitHub Pages раздаёт локальные runtime-библиотеки из корня `main`.
+- Numbers Import исправлен: при смене базы/Excel сбрасывается состояние Export; ошибочная SQLite-копия закрывается; категории из Excel/SQLite экранируются перед выводом в HTML.
+- Financial Analytics также экранирует категории перед выводом.
+- Добавлен `tests/numbers_import_e2e.mjs`: проверяет XLSX preview, импорт истории в отдельную таблицу, Download `.budget`, повторный импорт без дублей, неизменность `transactions`, неизменность live categories и чтение аналитикой.
+- `npm run test:e2e` включает обычный app E2E и новый Numbers E2E.
+- `README_RU.md` переписан под прямую публикацию из `main` без Actions.
+- Существующий `package-lock.json` не менялся; версия приложения остаётся 0.1.6.0.
 
-## Следующие шаги
+## Следующий обязательный шаг на локальной Windows-машине
 
-1. Применить `tests/e2e.mjs` из `Budget-Capture-Web-E2E-RESULT-SYNC-FIX-2026-11-20.zip` к корню локального репозитория.
-2. Вместе с ним применить `tests/app_contract.mjs`, `CHECKPOINT_CURRENT_RU.md`, `TEST_REPORT.md`, `README_RU.md`, `RESUME_NEXT_STEPS_RU.md` и `CHANGELOG_0.1.6.0.md` из того же patch ZIP.
-3. В GitHub Desktop проверить Changes, commit с сообщением `Harden E2E repeat-import result synchronization`, затем Push origin.
-4. Дождаться нового `Build and test (no publication)` и проверить, что Chromium E2E проходит с ожиданием свежего результата повторного импорта.
-5. После CI вручную пройти Open → Import → Review → Save → Reopen на копии актуальной пользовательской Windows-базы.
-6. Проверить Safari/iPhone open/save отдельно на реальном устройстве.
-7. Только после этих проверок решать, повышать ли версию до 0.1.7.0 и публиковать ли Pages.
+В PowerShell из корня клонированного репозитория:
+
+```powershell
+npm ci --ignore-scripts --no-audit --no-fund
+npm run verify:lock
+npx playwright install chromium
+npm test
+npm run publish:root
+npm run test:dist
+npm run test:e2e
+git status --short
+```
+
+`npm run publish:root` копирует проверенные production-файлы из `dist/` в корень проекта. Команда не делает commit и не отправляет данные в Git сама. После её выполнения открыть GitHub Desktop и внимательно проверить список изменений.
+
+Ожидается появление/обновление `vendor/`, `.nojekyll`, `asset-manifest.json`, `numbers-import.html`, `numbers-analytics.html` и runtime-файлов. Не добавлять `.budget`, `.sqlite*`, `.db`, PDF, XLSX, CSV, backup ZIP или личные JSON.
+
+Затем сделать обычный commit и Push origin в `main`. При корректной настройке GitHub Pages `Deploy from a branch → main → /(root)` сайт опубликуется без Actions.
+
+## Что ещё не подтверждено
+
+- `vendor/` ещё отсутствует в корне ветки `main`: пока не выполнен локальный `npm run publish:root` с реальными `node_modules`.
+- Настройка Settings → Pages не прочитана текущим GitHub-коннектором; проверить вручную `Deploy from a branch`, `main`, `/(root)`.
+- Актуальный публичный сайт и две Numbers-страницы не проверены через настоящий браузер.
+- Новые тесты `npm test`, `test:dist`, app Chromium E2E и Numbers Chromium E2E в этой сессии не запускались. Нельзя заявлять PASS до реального локального запуска.
+- После публикации нужно проверить на тестовой копии базы полный цикл Excel → import → download `.budget` → повторное открытие → Financial Analytics. Проверить отдельно, что `transactions` не меняется.
+- Safari/iPhone open/save flow остаётся отдельной ручной проверкой.
 
 ## Не делать
 
-- Не менять `package-lock.json` без изменения `package.json`.
-- Не откатывать `sql.js@1.16.0`, `pdfjs-dist@6.5.438`, SheetJS `0.20.3`, Playwright `1.65.1` и Node 24 Action pins.
-- Не включать `deploy=true` и не публиковать Pages до отдельного одобрения.
-- Не добавлять `.budget`, SQLite, backup ZIP, PDF, XLSX, CSV, личные JSON или персональные категории/подписи в Git.
-
+- Не использовать GitHub Actions для сборки или публикации.
+- Не запускать и не восстанавливать `deploy=true`, workflow_dispatch или Pages workflow.
+- Не коммитить `dist/`: это временный build output, он игнорируется.
+- Не игнорировать и не удалять `vendor/`: эти файлы обязательны для прямой публикации.
+- Не менять версии зависимостей или `package-lock.json` без необходимости.
+- Не повышать приложение до 0.1.7.0, пока импорт/экспорт и Analytics не проверены на тестовой базе.
+- Не работать с единственной пользовательской базой; все проверки выполнять на отдельной копии.
