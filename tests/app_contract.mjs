@@ -50,4 +50,10 @@ assert(fs.existsSync(path.join(root,'.github/workflows/pages.yml')),'GitHub Page
 assert.match(html,/Content-Security-Policy/,'static app must set a same-origin CSP');
 assert(!fs.existsSync(path.join(root,'REAL_WINDOWS_BACKUP_PARITY_2026-11-18.md')),'private validation report must not be present in project source');
 for(const file of ['README_RU.md','CHECKPOINT_2026-11-18_RU.md','CHECKPOINT_CURRENT_RU.md','TEST_REPORT.md','RESUME_NEXT_STEPS_RU.md','LOCAL_VALIDATION_SCOPE.md','CHANGELOG_0.1.3.md','CHANGELOG_0.1.4.md','CHANGELOG_0.1.5.1.md','CHANGELOG_0.1.6.0.md']) { const doc=fs.readFileSync(path.join(root,file),'utf8'); assert.doesNotMatch(doc,/₽\s*\d/ ,`personal bank amounts must not be stored in ${file}`); }
+assert(app.includes("function categoryOptionGroups(selected='')"),'category dropdowns must share one grouped option renderer');
+assert(app.includes('<optgroup label='),'Review and filter dropdowns must use visible category groups');
+assert(app.includes('sortCategoriesAlphabetically(items)'),'dropdown categories must be alphabetically sorted within groups');
+assert(app.includes('categoryOptionGroups(old)'),'category filter must use grouped options');
+assert(app.includes('categoryOptionGroups(r.category)'),'transaction editor must use grouped category options');
+assert(app.includes('function profileLines(kind){return sortCategoriesAlphabetically'),'category profile editor must list each group alphabetically');
 console.log(`App contract checks: PASS · ${ids.length} unique DOM IDs · ${used.size} selectors · required handlers present`);

@@ -130,3 +130,12 @@
 - Numbers now lists all three profile groups: Expenses, Income and Other. Legacy categories without reliable transaction history remain visible instead of disappearing from the Numbers screen.
 - Each group shows its calculated total; the Other total is signed net, while expense and income totals follow the existing copy-list sign convention.
 - Added integer-cent regression checks for mixed-sign expense categories, income totals and unused categories with zero transactions.
+
+
+## Unreleased — Desktop-style category navigation
+
+- Review transaction category dropdowns and the category filter now use visible optgroups: Expenses, Income, Other, Numbers extra input and Numbers extra output.
+- Category names sort alphabetically inside each group using Russian-aware, case-insensitive natural sorting; numeric suffixes sort naturally.
+- The profile editor and Numbers category lists use the same alphabetical order.
+- The selected transaction category remains selected even when it is absent from the profile, and is displayed under Other until the profile is corrected.
+- Added regression checks for group rendering and alphabetical ordering. The supplied backup contains the SQLite database and source statements, but no Windows executable/UI source or screenshots, so exact pixel-level parity with the desktop dropdown still needs visual confirmation.

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseSberLinePages, parseTbankRows, parseRaiffeisenCSV, decodeStatementBytes, defaultCategory,
-  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, parseDate
+  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, sortCategoriesAlphabetically, parseDate
 } from '../core.js';
 
 const sberLines=[{x:20,top:10,text:'25 октября,'}];
@@ -88,6 +88,21 @@ assert.equal(numberGroups.income.cents,50000,'income group total is calculated f
 assert.equal(numberGroups.other.items[0].count,0,'unused legacy categories remain visible with zero transactions');
 assert.equal(numberGroups.other.items[0].cents,0,'unused legacy categories retain a zero total');
 assert.equal(numberGroups.other.items[1].cents,-850,'Other group preserves the signed net of its transactions');
+const alpha=sortCategoriesAlphabetically([
+  {name:'Такси',kind:'expense'},
+  {name:'Еда',kind:'expense'},
+  {name:'iTunes',kind:'expense'},
+  {name:'Кафе',kind:'expense'},
+  {name:'Авиабилеты',kind:'expense'},
+  {name:'food 10',kind:'expense'},
+  {name:'food 2',kind:'expense'}
+]);
+const alphaNames=alpha.map(item=>item.name);
+assert.equal(alphaNames.length,7,'alphabetical sort retains every category');
+assert.equal(new Set(alphaNames).size,7,'alphabetical sort does not merge categories');
+assert(alphaNames.indexOf('Авиабилеты')<alphaNames.indexOf('Еда'),'Cyrillic categories sort alphabetically');
+assert(alphaNames.indexOf('Еда')<alphaNames.indexOf('Кафе'),'Cyrillic categories sort alphabetically');
+assert(alphaNames.indexOf('food 2')<alphaNames.indexOf('food 10'),'numeric suffixes use natural alphabetical ordering');
 assert.equal(parseDate(46326.52072916667),'2026-10-31','Excel date serials must be handled by browser T-Bank import.');
 assert.equal(parseDate('46326.52072916667'),'2026-10-31','Excel date serial strings must be handled by browser T-Bank import.');
 const cp1251=await decodeStatementBytes(new Uint8Array([0xC4,0xE0,0xF2,0xE0]));

@@ -49,13 +49,20 @@ export function displayMoney(cents, currency='RUB') {
   return `${sign}${grouped}${frac?','+frac:''}${currency?' '+currency:''}`;
 }
 
+export function sortCategoriesAlphabetically(categories=[]) {
+  const collator=new Intl.Collator('ru-RU',{sensitivity:'base',numeric:true});
+  return [...(Array.isArray(categories)?categories:[])].sort((a,b)=>
+    collator.compare(String(a?.name??''),String(b?.name??''))
+  );
+}
+
 export function numbersCategoryTotals(rows=[], categories=[]) {
   const totals={
     expense:{items:[],cents:0},
     income:{items:[],cents:0},
     other:{items:[],cents:0}
   };
-  for(const category of categories) {
+  for(const category of sortCategoriesAlphabetically(categories)) {
     const group=totals[category?.kind];
     if(!group||!category?.name)continue;
     let cents=0,count=0;
