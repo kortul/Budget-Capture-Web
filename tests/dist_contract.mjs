@@ -21,6 +21,14 @@ for (const [relative, meta] of Object.entries(manifest.assets)) {
   assert.equal(data.length, meta.bytes, `size mismatch ${relative}`);
   assert.equal(createHash('sha256').update(data).digest('hex'), meta.sha256, `SHA-256 mismatch ${relative}`);
 }
+for (const page of ['index.html','numbers-import.html','numbers-analytics.html']) assert(fs.existsSync(path.join(root,page)), `missing built page ${page}`);
+const importPage = fs.readFileSync(path.join(root, 'numbers-import.html'), 'utf8');
+const analyticsPage = fs.readFileSync(path.join(root, 'numbers-analytics.html'), 'utf8');
+assert.match(importPage, /id=\"import-history\"/);
+assert.match(importPage, /id=\"export-history\"/);
+assert.match(importPage, /vendor\\/sql\\.js\\/sql-wasm\\.js/);
+assert.match(importPage, /vendor\\/xlsx\\/xlsx\\.full\\.min\\.js/);
+assert.match(analyticsPage, /numbers_history/);
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 assert(!/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i.test(app), 'production app must not call external CDNs');
 for (const asset of ['vendor/sql.js/sql-wasm.js','vendor/sql.js/sql-wasm.wasm','vendor/pdfjs/pdf.mjs','vendor/pdfjs/pdf.worker.mjs','vendor/xlsx/xlsx.full.min.js']) {
