@@ -11,6 +11,9 @@
 
 - `scripts/build-pages.mjs` создаёт production `dist/` и включает `index.html`, `numbers-import.html`, `numbers-analytics.html`, приложение, стили, локальные runtime assets, PDF.js CMaps/fonts/WASM/ICC и лицензии. Build проверяет same-origin CSP и отсутствие CDN-ссылок на всех трёх HTML-страницах.
 - `scripts/publish-root.mjs` копирует проверенный production build из `dist/` в корень репозитория. Перед копированием он проверяет manifest, версию приложения, SHA-256 и размеры всех assets, обязательные HTML-страницы и отсутствие финансовых файлов. Требует явный флаг `--publish`.
+- `scripts/publish-root.mjs` теперь дополнительно требует точное совпадение всех файлов сборки с allow-list из manifest: лишние или пропущенные файлы блокируют публикацию.
+- `scripts/build-pages.mjs` поддерживает fallback на проверенный `vendor/` без `node_modules`: проверяет точный набор из 212 runtime-файлов, версии и SHA-256 из `vendor/runtime-manifest.json`.
+- Создан проверенный vendor-only ZIP в текущем разговоре: `Budget-Capture-vendor-runtime-0.1.6.0.zip`. Проверены 218/218 исходных production assets и 212/212 файлов runtime bundle. Сам архив ещё не извлечён и не закоммичен в `main`.
 - `package.json` содержит `npm run publish:root`: build + safe copy to repository root.
 - `.gitignore` игнорирует `dist/`, но не `vendor/`. При прямой публикации `vendor/` должен быть закоммичен.
 - README и resume-инструкция обновлены под branch-root publishing.
@@ -21,6 +24,8 @@
 
 ## Текущий проверенный статус
 
+- Новые fallback/publisher source tests добавлены, но после последних изменений локально не запускались.
+- Следующий локальный шаг теперь не требует npm registry: установить vendor bundle, затем `npm test`, `npm run publish:root`, `npm run test:dist`; Chromium E2E требует Playwright и запускается отдельно.
 - Код и конфигурация этих изменений сохранены непосредственно в `main`.
 - Приложение остаётся версии **0.1.6.0**.
 - Существующий `package-lock.json` не изменён.
