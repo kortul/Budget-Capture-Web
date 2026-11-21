@@ -114,7 +114,7 @@ const dropdownGroups=categoryDropdownGroups([
   {name:'Такси',kind:'expense'}
 ]);
 assert.deepEqual(Object.keys(dropdownGroups),['expense','income'],'the dropdown has exactly two groups');
-assert.deepEqual(dropdownGroups.expense.map(item=>item.name),['Авиабилеты','ВЫВОДЫ ДИМА СПЕЦ','Внутренний перевод (не расход)','Кафе','Такси'],'expenses come first and all entries sort alphabetically');
+assert.deepEqual(dropdownGroups.expense.map(item=>item.name),['Авиабилеты','Внутренний перевод (не расход)','ВЫВОДЫ ДИМА СПЕЦ','Кафе','Такси'],'expenses come first and all entries sort alphabetically using Russian collation');
 assert.deepEqual(dropdownGroups.income.map(item=>item.name),['ВВОДЫ ДИМА СПЕЦ','Возвраты','Приход магазин'],'income categories use the green group');
 assert.equal(categoryDropdownGroup({name:'Приход от работы Дима',kind:'other'}),'income','unused legacy income categories can be placed in Income from their explicit name');
 assert.equal(categoryDropdownGroup({name:'Траты по работе',kind:'other'}),'expense','unclassified legacy categories default to Expenses');
