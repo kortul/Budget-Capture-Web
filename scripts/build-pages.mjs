@@ -144,10 +144,20 @@ fs.writeFileSync(path.join(staging, 'asset-manifest.json'), JSON.stringify({
   assets,
 }, null, 2) + '\n');
 
-const html = fs.readFileSync(path.join(staging, 'index.html'), 'utf8');
 const appJs = fs.readFileSync(path.join(staging, 'app.js'), 'utf8');
-if (!html.includes("script-src 'self' 'wasm-unsafe-eval'")) throw new Error('Content Security Policy is missing the same-origin/WASM script policy.');
-if (/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i.test(`${html}\n${appJs}`)) throw new Error('An external CDN reference remains in the production runtime.');
+const htmlPages = ['index.html', 'numbers-import.html', 'numbers-analytics.html']
+  .map(file => [file, fs.readFileSync(path.join(staging, file), 'utf8')]);
+for (const [file, html] of htmlPages) {
+  if (!html.includes("default-src 'self'") || !html.includes("script-src 'self'")) {
+    throw new Error(`Content Security Policy is missing or not same-origin in ${file}.`);
+  }
+  if (/https?:\\/\\/(?:cdn\\.|cdnjs\\.|unpkg\\.|jsdelivr\\.)/i.test(html)) {
+    throw new Error(`An external CDN reference remains in ${file}.`);
+  }
+}
+if (/https?:\\/\\/(?:cdn\\.|cdnjs\\.|unpkg\\.|jsdelivr\\.)/i.test(appJs)) {
+  throw new Error('An external CDN reference remains in the production app runtime.');
+}
 fs.rmSync(output, { recursive: true, force: true });
 fs.renameSync(staging, output);
 console.log(`GitHub Pages build complete: ${Object.keys(assets).length} files hashed in dist/ (app ${pkg.version}).`);
