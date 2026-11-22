@@ -117,7 +117,7 @@ try {
   assert.equal(await page.evaluate(() => window.__numbersXss || 0), 0, 'Excel category payload must not execute');
 
   await page.locator('#import-history').click();
-  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Imported 3 rows'), null, { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Imported 5 rows'), null, { timeout: 20000 });
   assert.equal(await page.locator('#export-history').isDisabled(), false, 'export must become available after successful import');
 
   const firstDownloadPromise = page.waitForEvent('download');
@@ -169,7 +169,7 @@ try {
   assert.equal(await page.locator('#export-history').isDisabled(), true, 'changing the workbook must disable export until the new data is imported');
 
   await page.locator('#import-history').click();
-  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Imported 3 rows'), null, { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Imported 5 rows'), null, { timeout: 20000 });
   const secondDownloadPromise = page.waitForEvent('download');
   await page.locator('#export-history').click();
   const secondDownload = await secondDownloadPromise;
