@@ -266,7 +266,7 @@ try {
   });
   transferredAnalytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   await transferredAnalytics.waitForFunction(() => !document.querySelector('#dashboard')?.classList.contains('hidden'), null, { timeout: 20000 });
-  assert.match(await transferredAnalytics.locator('#incomeMetric').textContent(), /260\\s?000/, 'Analytics must receive the main app database without a second file selection');
+  assert.match(await transferredAnalytics.locator('#incomeMetric').textContent(), /260\s?000/, 'Analytics must receive the main app database without a second file selection');
   assert.match(await transferredAnalytics.locator('#manual-reference-status').textContent(), /Ручные сводки загружены из выбранного \.budget/, 'the direct handoff must include manual Numbers summaries');
   assert.match(await transferredAnalytics.locator('#database-name').textContent(), /MyBudget|Budget/i, 'the transferred database name must be displayed');
   await transferredAnalytics.close();
