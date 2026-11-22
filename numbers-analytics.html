@@ -227,7 +227,7 @@
     <div class="a-manual-grid" style="margin-top:14px">
       <div><h3>Годовой ряд 1</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Значение</th></tr></thead><tbody>
         <tr><td>2021</td><td class="num">−5 657 347 ₽</td></tr><tr><td>2022</td><td class="num">4 680 068 ₽</td></tr><tr><td>2023</td><td class="num">920 879 ₽</td></tr><tr><td>2024</td><td class="num">44 662 ₽</td></tr><tr><td>2025</td><td class="num">6 775 ₽</td></tr><tr><td>2026</td><td class="num">31 479 ₽</td></tr><tr class="total-row"><td>Итого указано в Numbers</td><td class="num">−49 625 ₽</td></tr>
-      </tbody></table></div><p class="a-small">В сообщении заголовок этого ряда был неполным, поэтому здесь сохранены значения без самостоятельной трактовки.</p></div>
+      </tbody></table></div><p class="a-small">В сообщении заголовок этого ряда был неполным, поэтому здесь сохранены значения без самостоятельной трактовки.</p><p class="a-note">Проверка арифметики: перечисленные значения по годам дают 26 516 ₽, а в исходной ячейке указан итог −49 625 ₽. Разница составляет −76 141 ₽; возможно, в исходной формуле участвовали дополнительные строки.</p></div>
       <div><h3>Баланс по работе — годовые значения</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Баланс</th></tr></thead><tbody>
         <tr><td>2021</td><td class="num">2 387 056 ₽</td></tr><tr><td>2022</td><td class="num">3 347 728 ₽</td></tr><tr><td>2023</td><td class="num">−2 177 212 ₽</td></tr><tr><td>2024</td><td class="num">−452 360 ₽</td></tr><tr><td>2025</td><td class="num">973 295 ₽</td></tr><tr><td>2026</td><td class="num">1 028 092 ₽</td></tr><tr class="total-row"><td>Итого указано в Numbers</td><td class="num">4 133 304 ₽</td></tr>
       </tbody></table></div><p class="a-note">Проверка арифметики: сумма всех шести перечисленных лет составляет 5 106 599 ₽. Указанный итог 4 133 304 ₽ равен сумме без строки 2025 (+973 295 ₽). Возможно, 2025 в исходной формуле не включён.</p></div>
@@ -363,7 +363,7 @@ function renderChart(months){
  $('cashflow-chart').innerHTML=list.map(row=>{
   const label=MONTHS[row.month-1]||row.month;
   const inc=Math.max(2,Math.abs(row.income)/max*100),exp=Math.max(2,row.expense/max*100);
-  return '<div class="a-month" title="'+escapeHtml(label+' '+row.year+' · Доходы '+money(row.income)+' · Расходы '+money(row.expense))+'"><div class="a-bars"><span class="a-bar income" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></div><small>'+escapeHtml(label.slice(0,3))+'</small></div>';
+  return '<div class="a-month" title="'+escapeHtml(label+' '+row.year+' · Доходы '+money(row.income)+' · Расходы '+money(row.expense))+'"><div class="a-bars"><span class="a-bar income'+(row.income<0?' negative':'')+'" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></div><small>'+escapeHtml(label.slice(0,3))+'</small></div>';
  }).join('');
  $('chart-caption').textContent=selectedYear()==='all'?'Последние 12 месяцев истории':'Поступления и расходы за '+selectedYear()+' год';
 }
