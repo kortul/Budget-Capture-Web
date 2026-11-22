@@ -89,18 +89,19 @@
 <div class="analytics-shell">
 <header class="a-head">
   <div><div class="eyebrow">BUDGET CAPTURE · ОТЧЁТЫ</div><h1>Финансовая аналитика</h1><p>Годовой обзор, расходы на жизнь, работа, магазин и кредиты</p></div>
-  <div class="a-actions"><span class="a-local"><i class="a-dot"></i> Только в этом браузере</span><a class="button secondary" href="index.html">← Основное приложение</a><a class="button secondary" href="numbers-import.html">Импорт Numbers</a></div>
+  <div class="a-actions"><a class="button secondary" href="index.html">← Основное приложение</a><a class="button secondary" href="numbers-import.html">Импорт Numbers</a></div>
 </header>
 
 <section class="a-card">
   <div class="a-topline">
     <div class="a-controls">
-      <label>Отчётный год<select id="year"><option value="">Загрузка…</option></select></label>
-      <div class="a-file"><label>Открыть базу вручную<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
+      <label>Отчётный год<select id="year"><option value="">Сначала выбери базу</option></select></label>
+      <div class="a-file"><label>Файл базы данных Budget Capture (.budget)<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
+      <button id="download-db" class="button secondary" type="button" disabled>Скачать обновлённую базу</button>
     </div>
     <span class="a-pill" id="database-name">База не загружена</span>
   </div>
-  <div class="a-status" id="status">Проверяем локальную базу Budget Capture…</div>
+  <div class="a-status" id="status">Выбери файл .budget. В нём должны находиться история Numbers и ручные сводки.</div>
   <div class="a-status error hidden" id="error"></div>
 </section>
 
@@ -205,12 +206,9 @@
 </section>
 
 <section class="a-card" id="manual-references">
-  <div class="a-section-head"><div><h2>Сводки из старой таблицы Numbers</h2><p>Личные исторические значения хранятся отдельно от публичного кода приложения</p></div></div>
-  <div class="a-controls">
-    <label>Загрузить личный файл сводок (.json)<input id="manual-reference-file" type="file" accept=".json,application/json"></label>
-    <span class="a-pill" id="manual-reference-status">Личный файл ещё не загружен</span>
-  </div>
-  <div class="a-note">Этот JSON-файл хранится только в локальном хранилище браузера. Он не добавляется в GitHub Pages и не меняет базу .budget. Загрузить его достаточно один раз на этом устройстве и в этом браузере.</div>
+  <div class="a-section-head"><div><h2>Сводки из старой таблицы Numbers</h2><p>Ручные исторические показатели загружаются непосредственно из выбранного файла .budget</p></div></div>
+  <div class="a-pill" id="manual-reference-status">Сначала выбери базу данных</div>
+  <div class="a-note">Ручные сводки являются частью файла .budget. Чтобы перенести их на другой компьютер, достаточно перенести сам файл базы — дополнительных файлов не требуется.</div>
   <div id="manual-reference-content" class="hidden">
     <div class="a-manual-grid" style="margin-top:16px">
       <div>
@@ -266,7 +264,7 @@
     <summary>Показать категории и правила распределения</summary>
     <div class="a-controls" style="margin:14px 0"><label>Доля общих расходов для Саши, кафе и такси (%)<input id="sasha-shared-percent" type="number" min="0" max="100" step="1" value="75"></label></div>
     <div id="settings-content" class="a-settings-grid"></div>
-    <div class="a-settings-actions"><button id="save-settings" class="button primary" type="button">Сохранить настройки отчёта</button><span class="a-settings-foot">Настройки сохраняются локально в этом браузере. Они не меняют транзакции и категории в файле .budget.</span></div>
+    <div class="a-settings-actions"><button id="save-settings" class="button primary" type="button">Сохранить настройки в базу</button><span class="a-settings-foot">Правила распределения и доля Саши записываются внутрь выбранного .budget. Затем скачай обновлённую базу и используй её на остальных компьютерах.</span></div>
   </details>
 </section>
 </div>
@@ -278,7 +276,7 @@ const $ = id => document.getElementById(id);
 const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const money=n=>Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' ₽';
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let SQL=null,db=null,dbName='',data=[],years=[],settings=null,loading=false,lastCacheStamp='',unsubscribe=null;
+let SQL=null,db=null,dbName='',data=[],years=[],settings=null,loading=false,dbChanged=false;
 const GROUPS=[
  {id:'life',title:'Расходы на жизнь',types:['expense'],hint:'Личные расходы без работы, магазина и кредитных операций'},
  {id:'sasha',title:'Расходы Саши',types:['expense'],hint:'Категории Саши плюс согласованная часть кафе и такси'},
@@ -317,10 +315,11 @@ function normalizeSettings(input){
  if(Number.isFinite(percent))output.sharedPercent=Math.max(0,Math.min(100,percent));
  return output;
 }
-function settingKey(){return 'analytics-profile:'+dbName;}
-async function loadSettings(){
- let saved=null;
- try{saved=await window.BudgetSharedDb?.loadSetting(settingKey());}catch{}
+function readMetadata(database,key){try{return database.exec('SELECT value FROM web_metadata WHERE key='+JSON.stringify(key))[0]?.values?.[0]?.[0]??null;}catch{return null;}}
+function writeMetadata(database,key,value){database.run('INSERT OR REPLACE INTO web_metadata(key,value) VALUES(?,?)',[key,JSON.stringify(value)]);}
+function loadSettings(){
+ let saved=null;const raw=readMetadata(db,'analytics_report_settings_v1');
+ if(raw){try{saved=JSON.parse(String(raw));}catch{}}
  settings=normalizeSettings(saved||defaultSettings());
  $('sasha-shared-percent').value=String(settings.sharedPercent);
  renderSettings();
@@ -338,13 +337,13 @@ function readSettingsFromUi(){
  for(const group of GROUPS)next[group.id]=[...document.querySelectorAll('[data-report-group="'+group.id+'"]:checked')].map(el=>el.value);
  return normalizeSettings(next);
 }
-async function saveSettings(){
- settings=readSettingsFromUi();
+function saveSettings(){
+ if(!db){setStatus('Сначала выбери файл .budget.','error');return;}
  try{
-  await window.BudgetSharedDb?.saveSetting(settingKey(),settings);
-  renderAll();
-  setStatus('Настройки отчёта сохранены в локальном хранилище браузера. База .budget и транзакции не изменены.','ok');
- }catch(error){setStatus('Не удалось сохранить настройки: '+error.message,'error');}
+  settings=readSettingsFromUi();writeMetadata(db,'analytics_report_settings_v1',settings);dbChanged=true;
+  renderAll();$('download-db').disabled=false;
+  setStatus('Настройки записаны внутрь базы. Нажми «Скачать обновлённую базу», чтобы перенести их на другие компьютеры.','ok');
+ }catch(error){setStatus('Не удалось записать настройки в базу: '+error.message,'error');}
 }
 function totalsFor(rows){
  const ordinary=rows.filter(row=>row.role==='income'||row.role==='expense');
@@ -524,22 +523,11 @@ function renderManualReference(reference){
  $('manual-work-note').textContent='Сумма перечисленных годовых значений: '+money(workCalculated)+'. Отличие от указанного итога: '+money(workDiff)+'.';
  content.classList.remove('hidden');
 }
-async function loadManualReference(){
- try{
-  const saved=await window.BudgetSharedDb?.loadSetting('analytics-manual-reference-v1');
-  if(saved){renderManualReference(saved);$('manual-reference-status').textContent='Личная сводка загружена из локального хранилища браузера';}
- }catch(error){$('manual-reference-status').textContent='Не удалось прочитать личную сводку: '+error.message;}
-}
-async function importManualReference(event){
- const file=event.target.files?.[0];if(!file)return;
- try{
-  const payload=JSON.parse(await file.text());
-  if(payload?.schemaVersion!==1||!payload.lifeAnnualSummary||!payload.lifeCategories||!payload.projects)throw new Error('Формат файла Numbers не распознан.');
-  await window.BudgetSharedDb?.saveSetting('analytics-manual-reference-v1',payload);
-  renderManualReference(payload);
-  $('manual-reference-status').textContent='Личная сводка сохранена локально · '+file.name;
- }catch(error){$('manual-reference-status').textContent='Не удалось загрузить сводку: '+error.message;}
- event.target.value='';
+function loadManualReferenceFromDatabase(database){
+ const raw=readMetadata(database,'numbers_manual_reference_v1');
+ if(!raw){$('manual-reference-content').classList.add('hidden');$('manual-reference-status').textContent='В этой базе пока нет ручных сводок Numbers. Их нужно один раз внести в сам файл .budget.';return false;}
+ try{const payload=JSON.parse(String(raw));renderManualReference(payload);$('manual-reference-status').textContent='Ручные сводки загружены из выбранного .budget';return true;}
+ catch(error){$('manual-reference-content').classList.add('hidden');$('manual-reference-status').textContent='Не удалось прочитать ручные сводки из .budget: '+error.message;return false;}
 }
 
 function renderAll(){
@@ -559,7 +547,7 @@ async function loadSql(){
  SQL=await window.initSqlJs({locateFile:file=>'./vendor/sql.js/'+file,useOldExtensionFunctions:true});
  return SQL;
 }
-async function loadDatabaseBytes(bytes,name,updatedAt=''){
+async function loadDatabaseBytes(bytes,name){
  if(loading)return;
  loading=true;hideError();
  let opened=null;
@@ -570,6 +558,7 @@ async function loadDatabaseBytes(bytes,name,updatedAt=''){
   if(String(check)!=='ok')throw new Error('Проверка целостности SQLite не пройдена.');
   const tables=new Set(opened.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values.map(r=>String(r[0]))||[]);
   if(!tables.has('numbers_history'))throw new Error('В этой базе пока нет истории Numbers. Сначала импортируй Excel на странице «Импорт Numbers».');
+  if(!tables.has('web_metadata'))opened.run('CREATE TABLE web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)');
   const columns=opened.exec('PRAGMA table_info(numbers_history)')[0]?.values.map(r=>String(r[1]))||[];
   const hasRole=columns.includes('role');
   const result=opened.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");
@@ -584,43 +573,37 @@ async function loadDatabaseBytes(bytes,name,updatedAt=''){
   });
   years=[...new Set(data.map(row=>row.year))].sort((a,b)=>a-b);
   if(!years.length)throw new Error('В истории Numbers не найдены годы.');
-  db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');lastCacheStamp=updatedAt||new Date().toISOString();
+  db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');dbChanged=false;
   $('year').innerHTML='<option value="all">Весь период</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').reverse().join('');
   $('year').value=latestYear();
   $('database-name').textContent=dbName;
   $('dashboard').classList.remove('hidden');
-  await loadSettings();renderAll();
-  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей · '+years[0]+'–'+years[years.length-1]+'. База синхронизируется с основным приложением в этом браузере.','ok');
+  loadSettings();loadManualReferenceFromDatabase(db);renderAll();$('download-db').disabled=true;
+  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+'.','ok');
   return true;
  }catch(error){try{opened?.close();}catch{}data=[];years=[];$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
  finally{loading=false;}
 }
-async function loadFromLocalCache(){
+function downloadDatabase(){
+ if(!db){setStatus('Сначала выбери базу данных.','error');return;}
  try{
-  const saved=await window.BudgetSharedDb?.loadDatabase();
-  if(saved?.bytes){await loadDatabaseBytes(saved.bytes,saved.name,saved.updatedAt);return true;}
-  setStatus('Локальная база ещё не сохранена. Открой .budget в основном приложении — Analytics подхватит её автоматически.');
-  return false;
- }catch(error){setStatus('Автозагрузка недоступна: '+error.message+'. Можно выбрать .budget вручную.','error');return false;}
-}
-async function reloadFromLocalCache(){
- try{
-  const saved=await window.BudgetSharedDb?.loadDatabase();
-  if(saved?.bytes&&saved.updatedAt!==lastCacheStamp)await loadDatabaseBytes(saved.bytes,saved.name,saved.updatedAt);
- }catch(error){console.warn('Could not refresh Analytics from local database:',error);}
+  const bytes=db.export(),blob=new Blob([bytes],{type:'application/vnd.sqlite3'});
+  const base=(dbName||'Budget-Capture').replace(/\\.(budget|sqlite3?|db)$/i,'').replace(/_analytics$/i,'');
+  const filename=base+'_analytics.budget';
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  dbChanged=false;$('download-db').disabled=false;
+  setStatus('Обновлённая база скачана: '+filename+'. Используй этот файл на других компьютерах.','ok');
+ }catch(error){setStatus('Не удалось экспортировать базу: '+error.message,'error');}
 }
 $('manual-file').addEventListener('change',async event=>{
  const file=event.target.files?.[0];if(!file)return;
- try{const bytes=await file.arrayBuffer();const loaded=await loadDatabaseBytes(bytes,file.name);if(!loaded)return;try{await window.BudgetSharedDb?.saveDatabase(file.name,bytes);setStatus('База загружена вручную и сохранена для автосинхронизации Analytics в этом браузере.','ok');}catch(cacheError){setStatus('База открыта, но не удалось сохранить локальную копию для автосинхронизации: '+cacheError.message,'error');}}
+ try{if(dbChanged&&!confirm('В базе есть несохранённые настройки. Загрузить другой файл без их скачивания?'))return;const loaded=await loadDatabaseBytes(await file.arrayBuffer(),file.name);if(!loaded)return;}
  catch(error){showError(error.message);}
  event.target.value='';
 });
 $('year').addEventListener('change',renderAll);
 $('save-settings').addEventListener('click',saveSettings);
-$('manual-reference-file').addEventListener('change',importManualReference);
-if(window.BudgetSharedDb?.subscribe)unsubscribe=window.BudgetSharedDb.subscribe(()=>{void reloadFromLocalCache();});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void reloadFromLocalCache();});
-window.addEventListener('focus',()=>{void reloadFromLocalCache();});
-(async()=>{try{await loadSql();await Promise.all([loadFromLocalCache(),loadManualReference()]);}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
+$('download-db').addEventListener('click',downloadDatabase);
+(async()=>{try{await loadSql();setStatus('SQLite готова. Выбери свой файл .budget — все отчёты загрузятся из него.');}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
 </script>
 </body></html>
