@@ -767,6 +767,12 @@ function isAnalyticsRubleCurrency(value){
  const currency=String(value||'RUB').trim().toUpperCase();
  return !currency||['RUB','RUR','₽','РУБ','РУБ.','РУБЛЬ','РУБЛЯ','РУБЛЕЙ'].includes(currency);
 }
+function transactionFallbackRole(row,rawAmount){
+ const type=String(row.transaction_type||'').trim().toLowerCase().replaceAll('-','_');
+ if(type==='income'||type==='refund')return 'income';
+ if(type==='expense')return 'expense';
+ return rawAmount>0?'income':rawAmount<0?'expense':'other';
+}
 function buildTransactionMonthlyRows(transactionRows,categoryKinds){
  const totals=new Map(),months=new Set();let excludedCurrencyTransactions=0;
  for(const row of transactionRows||[]){
@@ -777,9 +783,12 @@ function buildTransactionMonthlyRows(transactionRows,categoryKinds){
   if(!Number.isFinite(rawAmount))continue;
   if(!isAnalyticsRubleCurrency(row.currency)){excludedCurrencyTransactions++;continue;}
   months.add(monthKey);
-  const category=String(row.category||'').trim();
-  if(!category)continue;
-  const role=categoryKinds.get(normalized(category))||'other';
+  const category=String(row.category||'').trim()||'Не распределено';
+  const configuredRole=categoryKinds.get(normalized(category));
+  // An explicit income/expense/special category always wins. This preserves
+  // credits assigned to expense categories (for example KGR). Categories
+  // marked "other" use the bank's transaction direction instead of vanishing.
+  const role=VALID_ANALYTICS_ROLES.has(configuredRole)?configuredRole:transactionFallbackRole(row,rawAmount);
   if(!VALID_ANALYTICS_ROLES.has(role))continue;
   const amount=role==='expense'?-rawAmount:
    role==='special_input'||role==='special_output'?Math.abs(rawAmount):rawAmount;
