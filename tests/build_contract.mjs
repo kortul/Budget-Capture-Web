@@ -68,6 +68,8 @@ assert.doesNotMatch(app,/BudgetSharedDb|sharedSnapshot/, 'main app must not keep
 assert.match(db,/CREATE TABLE IF NOT EXISTS numbers_category_adjustments/,'database must persist category reconciliation baselines');
 assert.match(analytics,/function resolveMonthlySources\(historyRows,transactionRows,categoryKinds\)/,'Analytics must resolve one authoritative source for each month');
 assert.match(analytics,/function buildTransactionMonthlyRows\(transactionRows,categoryKinds\)/,'Analytics must aggregate live transactions using Budget Capture category roles');
+assert.match(analytics,/function isAnalyticsRubleCurrency\(value\)/,'rubles-only analytics must not mix foreign-currency values');
+assert.match(analytics,/excludedCurrencyTransactions/,'Analytics must report excluded foreign-currency transactions');
 assert.match(analytics,/const historicalRows=\(historyRows\|\|\[\]\)\.filter\(row=>!ledgerMonthSet\.has\(row\.month_key\)\)/,'a transaction-backed month must replace its Numbers snapshot');
 assert.match(analytics,/FROM transactions "\+activeClause/,'Analytics must read active transactions directly from the .budget database');
 assert.match(analytics,/источники: .*мес\. Numbers \/ .*мес\. транзакции/,'Analytics must show the monthly source split');
