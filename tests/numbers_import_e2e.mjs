@@ -214,7 +214,16 @@ try {
   assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
   assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\s?700\s?000/, 'analytics must show special inputs separately from Net');
   assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
-  assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
+  assert.match(await analytics.locator('#lifeRows').textContent(), /Продукты/);
+  const foldoutIds = ['monthly-balance', 'life', 'sasha', 'work', 'loans', 'year-comparison'];
+  for (const id of foldoutIds) assert.equal(await analytics.locator('#' + id).getAttribute('open'), null, id + ' must be collapsed after initial load');
+  for (const id of ['monthly-balance-chart', 'life-trend-chart', 'life-category-chart', 'sasha-trend-chart', 'sasha-category-chart', 'work-trend-chart', 'shop-trend-chart', 'loan-trend-chart', 'loan-category-chart', 'year-comparison-chart']) assert.equal(await analytics.locator('#' + id).count(), 1, id + ' visualization must be rendered');
+  assert.equal(await analytics.locator('#monthly-preview-chart svg').count(), 1, 'monthly balance preview must include a sparkline');
+  await analytics.locator('#life > summary').click();
+  assert.notEqual(await analytics.locator('#life').getAttribute('open'), null, 'the living expenses panel must expand on click');
+  assert.equal(await analytics.locator('#life-trend-chart').isVisible(), true, 'visualization must be visible when its panel is expanded');
+  await analytics.locator('#life > summary').click();
+  assert.equal(await analytics.locator('#life').getAttribute('open'), null, 'the living expenses panel must collapse on the second click');
   assert.equal(await analytics.locator('#manual-references').count(), 0, 'the illustrative manual summary section must not be displayed');
   assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');

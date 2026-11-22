@@ -39,6 +39,14 @@ assert.match(analytics,/function rangeMonthRows\(rows\)/,'monthly reports must u
 assert.match(analytics,/analytics_report_settings_v1/, 'report-category settings must be stored inside the selected .budget metadata');
 assert.match(analytics,/function renderGroupYears\(group,prefix\)/,'annual work, shop and loan tables must use a top-level renderGroupYears helper');
 assert.match(analytics,/function renderYearRows\(\)\{\s*const allMonths/,'overall yearly summary must remain separate from the group-year renderer');
+assert.match(analytics,/details class="a-card a-foldout" id="monthly-balance"/,'monthly balance must be collapsed by default as a summary panel');
+for (const sectionId of ['life','sasha','work','loans','year-comparison']) assert.match(analytics,new RegExp('details class="a-card a-foldout" id="'+sectionId+'"'),'each financial drilldown must be collapsed by default');
+assert.match(analytics,/function renderGroupedBars\(targetId,points,series/,'drilldowns must use self-contained SVG charts');
+assert.match(analytics,/id="life-trend-chart"[\s\S]*id="life-category-chart"/,'living expenses must show trend and category visualizations');
+assert.match(analytics,/id="sasha-trend-chart"[\s\S]*id="sasha-category-chart"/,'Sasha expenses must show trend and category visualizations');
+assert.match(analytics,/id="work-trend-chart"[\s\S]*id="shop-trend-chart"/,'work and shop must have separate cash-flow charts');
+assert.match(analytics,/id="loan-trend-chart"[\s\S]*id="loan-category-chart"/,'loans must show monthly movement and category structure');
+assert.match(analytics,/id="year-comparison-chart"/,'year comparison must include a chart, not only a table');
 assert.doesNotMatch(analytics,/BudgetSharedDb|indexedDB|IndexedDB/, 'Analytics must not depend on browser-local storage');
 assert.doesNotMatch(app,/BudgetSharedDb|sharedSnapshot/, 'main app must not keep a browser-local duplicate of the database');
 assert.match(app,/openAnalyticsWithCurrentDatabase/,'the Analytics link must hand off the currently opened database');
