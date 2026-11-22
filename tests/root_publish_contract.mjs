@@ -15,6 +15,9 @@ assert.match(builder, /'numbers-import\.html'/, 'Numbers import page must be inc
 assert.match(builder, /'numbers-analytics\.html'/, 'Numbers analytics page must be included in static build');
 const analyticsPage = fs.readFileSync(path.join(root, 'numbers-analytics.html'), 'utf8');
 assert.doesNotMatch(analyticsPage, /BudgetSharedDb|indexedDB|IndexedDB/, 'portable Analytics must not use browser storage');
+const appSource = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+assert.match(appSource, /openAnalyticsWithCurrentDatabase/, 'opening Analytics from the main app must transfer the already-open database');
+assert.match(analyticsPage, /BUDGET_CAPTURE_DATABASE/, 'Analytics must accept a one-time in-memory database handoff');
 assert.match(publisher, /asset-manifest\.json/, 'root publisher must require the generated asset manifest');
 assert.match(publisher, /SHA-256 mismatch/, 'root publisher must recheck every asset hash before copying');
 assert.match(publisher, /allowedOutputFiles/, 'root publisher must treat the manifest as an exact output allow-list');
