@@ -315,7 +315,7 @@ function normalizeSettings(input){
  if(Number.isFinite(percent))output.sharedPercent=Math.max(0,Math.min(100,percent));
  return output;
 }
-function readMetadata(database,key){try{return database.exec('SELECT value FROM web_metadata WHERE key='+JSON.stringify(key))[0]?.values?.[0]?.[0]??null;}catch{return null;}}
+function readMetadata(database,key){try{const escaped=String(key).replace(/'/g,"''");return database.exec("SELECT value FROM web_metadata WHERE key='"+escaped+"'")[0]?.values?.[0]?.[0]??null;}catch{return null;}}
 function writeMetadata(database,key,value){database.run('INSERT OR REPLACE INTO web_metadata(key,value) VALUES(?,?)',[key,JSON.stringify(value)]);}
 function loadSettings(){
  let saved=null;const raw=readMetadata(db,'analytics_report_settings_v1');
@@ -588,7 +588,7 @@ function downloadDatabase(){
  if(!db){setStatus('Сначала выбери базу данных.','error');return;}
  try{
   const bytes=db.export(),blob=new Blob([bytes],{type:'application/vnd.sqlite3'});
-  const base=(dbName||'Budget-Capture').replace(/\\.(budget|sqlite3?|db)$/i,'').replace(/_analytics$/i,'');
+  const base=(dbName||'Budget-Capture').replace(/\.(budget|sqlite3?|db)$/i,'').replace(/_analytics$/i,'');
   const filename=base+'_analytics.budget';
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
   dbChanged=false;$('download-db').disabled=false;
