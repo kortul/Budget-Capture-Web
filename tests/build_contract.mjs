@@ -25,6 +25,10 @@ assert.match(analytics,/numbers_manual_reference_v1/, 'manual Numbers summaries 
 assert.match(analytics,/analytics_report_settings_v1/, 'report-category settings must be stored inside the selected .budget metadata');
 assert.doesNotMatch(analytics,/BudgetSharedDb|indexedDB|IndexedDB/, 'Analytics must not depend on browser-local storage');
 assert.doesNotMatch(app,/BudgetSharedDb|sharedSnapshot/, 'main app must not keep a browser-local duplicate of the database');
+assert.match(app,/openAnalyticsWithCurrentDatabase/,'the Analytics link must hand off the currently opened database');
+assert.match(app,/BUDGET_ANALYTICS_READY/,'the main app must wait for Analytics to confirm it is ready before transferring bytes');
+assert.match(analytics,/BUDGET_CAPTURE_DATABASE/,'Analytics must receive the database snapshot directly from the opener');
+assert.match(analytics,/bc_transfer/,'the one-time opener handshake must be scoped to its transfer token');
 const builder=fs.readFileSync(path.join(root,'scripts/build-pages.mjs'),'utf8');
 assert.match(builder,/['"]profile\.js['"]/,'profile module must be copied to the static Pages build');
 assert.match(builder,/legacy\/build\/pdf\.mjs/,'PDF.js must be vendored from its maintained legacy ESM build');
