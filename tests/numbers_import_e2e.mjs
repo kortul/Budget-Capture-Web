@@ -229,12 +229,15 @@ try {
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
   assert.equal(await analytics.locator('#month-detail-select option').count(), 1, 'month selector must list available months in the reporting range');
   assert.equal(await analytics.locator('#month-income-list .a-month-category-row').count(), 1, 'income list must show active imported income categories');
-  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 1, 'expense list must show active imported expense categories');
+  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'expense list must preserve both nonzero imported expense categories');
+  assert.equal(await analytics.locator('#month-expense-list img').count(), 0, 'untrusted historical category text must not create HTML elements');
+  assert.match(await analytics.locator('#month-expense-list').textContent(), /<img src=x onerror=/, 'the untrusted category must remain visible as escaped plain text');
+  assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category text must not execute as HTML');
   assert.match(await analytics.locator('#month-income-list').innerText(), /Зарплата/, 'income list must show actual imported categories');
   assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'expense list must include categories assigned to the shop in settings');
   assert.equal(await analytics.locator('#month-expense-chart svg').count(), 1, 'expense composition must render a donut chart');
   assert.equal(await analytics.locator('#month-insights .a-month-insight').count(), 3, 'month view must include three concise data-driven insights');
-  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 1, 'zero-valued categories must not be rendered');
+  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'both nonzero expense categories must render while zero-valued categories stay hidden');
   assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
   assert.match(await analytics.locator('#month-overall-net').textContent(), /247\\s?498/, 'month headline must show income less expense including all ordinary categories');
   assert.match(await analytics.locator('#month-no-shop-net').textContent(), /0/, 'manual no-shop total must stay zero when imported categories do not match its fixed lists');
