@@ -69,7 +69,7 @@ assert.match(db,/CREATE TABLE IF NOT EXISTS numbers_category_adjustments/,'datab
 assert.match(analytics,/function resolveMonthlySources\(historyRows,transactionRows,categoryKinds\)/,'Analytics must resolve one authoritative source for each month');
 assert.match(analytics,/function buildTransactionMonthlyRows\(transactionRows,categoryKinds\)/,'Analytics must aggregate live transactions using Budget Capture category roles');
 assert.match(analytics,/const historicalRows=\(historyRows\|\|\[\]\)\.filter\(row=>!ledgerMonthSet\.has\(row\.month_key\)\)/,'a transaction-backed month must replace its Numbers snapshot');
-assert.match(analytics,/FROM transactions \+activeClause/,'Analytics must read active transactions directly from the .budget database');
+assert.match(analytics,/FROM transactions "\+activeClause/,'Analytics must read active transactions directly from the .budget database');
 assert.match(analytics,/источники: .*мес\. Numbers \/ .*мес\. транзакции/,'Analytics must show the monthly source split');
 assert.doesNotMatch(app,/numbers-adjust-button|numbers-adjustment|markNumbersCategoryAsNewCorrection|saveNumbersCategoryAdjustment/,'manual Sigma reconciliation must not remain in the transaction UI');
 assert.match(numbersImport,/DELETE FROM numbers_category_adjustments/,'a new Numbers import must reset manual category deltas');
