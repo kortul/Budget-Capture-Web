@@ -20,6 +20,11 @@ assert.match(app,/useOldExtensionFunctions:true/,'sql.js 1.16 must preserve lega
 assert.match(app,/\.\/vendor\/pdfjs\/pdf\.mjs/);
 assert.match(app,/isEvalSupported:false/,'PDF.js must disable dynamic evaluation while parsing untrusted PDFs');
 assert.match(app,/\.\/vendor\/xlsx\/xlsx\.full\.min\.js/);
+const analytics = fs.readFileSync(path.join(root,'numbers-analytics.html'),'utf8');
+assert.match(analytics,/numbers_manual_reference_v1/, 'manual Numbers summaries must be read from the selected .budget metadata');
+assert.match(analytics,/analytics_report_settings_v1/, 'report-category settings must be stored inside the selected .budget metadata');
+assert.doesNotMatch(analytics,/BudgetSharedDb|indexedDB|IndexedDB/, 'Analytics must not depend on browser-local storage');
+assert.doesNotMatch(app,/BudgetSharedDb|sharedSnapshot/, 'main app must not keep a browser-local duplicate of the database');
 const builder=fs.readFileSync(path.join(root,'scripts/build-pages.mjs'),'utf8');
 assert.match(builder,/['"]profile\.js['"]/,'profile module must be copied to the static Pages build');
 assert.match(builder,/legacy\/build\/pdf\.mjs/,'PDF.js must be vendored from its maintained legacy ESM build');
