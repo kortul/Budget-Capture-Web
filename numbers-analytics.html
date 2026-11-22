@@ -117,7 +117,7 @@
 <body>
 <div class="analytics-shell">
 <header class="a-head">
-  <div><div class="eyebrow">BUDGET CAPTURE · ОТЧЁТЫ</div><h1>Финансовая аналитика</h1><p>Годовой обзор, расходы на жизнь, работа, магазин и кредиты</p></div>
+  <div><div class="eyebrow">BUDGET CAPTURE · ОТЧЁТЫ</div><h1>Финансовая аналитика</h1><p>Все отчёты рассчитываются на сайте по истории Numbers. Исходные финансовые записи не изменяются; настройки сохраняются только по явной команде.</p></div>
   <div class="a-actions"><a class="button secondary" href="index.html">← Основное приложение</a><a class="button secondary" href="numbers-import.html">Импорт Numbers</a></div>
 </header>
 
@@ -347,7 +347,7 @@ function normalizeSettings(input){
  return output;
 }
 function readMetadata(database,key){try{const escaped=String(key).replace(/'/g,"''");return database.exec("SELECT value FROM web_metadata WHERE key='"+escaped+"'")[0]?.values?.[0]?.[0]??null;}catch{return null;}}
-function writeMetadata(database,key,value){database.run('INSERT OR REPLACE INTO web_metadata(key,value) VALUES(?,?)',[key,JSON.stringify(value)]);}
+function writeMetadata(database,key,value){database.run('CREATE TABLE IF NOT EXISTS web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)');database.run('INSERT OR REPLACE INTO web_metadata(key,value) VALUES(?,?)',[key,JSON.stringify(value)]);}
 function loadSettings(){
  let saved=null;const raw=readMetadata(db,'analytics_report_settings_v1');
  if(raw){try{saved=JSON.parse(String(raw));}catch{}}
@@ -592,7 +592,6 @@ async function loadDatabaseBytes(bytes,name){
   if(String(check)!=='ok')throw new Error('Проверка целостности SQLite не пройдена.');
   const tables=new Set(opened.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values.map(r=>String(r[0]))||[]);
   if(!tables.has('numbers_history'))throw new Error('В этой базе пока нет истории Numbers. Сначала импортируй Excel на странице «Импорт Numbers».');
-  if(!tables.has('web_metadata'))opened.run('CREATE TABLE web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)');
   const columns=opened.exec('PRAGMA table_info(numbers_history)')[0]?.values.map(r=>String(r[1]))||[];
   const hasRole=columns.includes('role');
   const result=opened.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");
@@ -614,8 +613,6 @@ async function loadDatabaseBytes(bytes,name){
   $('database-name').textContent=dbName;
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
-  const oldExamples=readMetadata(db,'numbers_manual_reference_v1');
-  if(oldExamples){db.run("DELETE FROM web_metadata WHERE key='numbers_manual_reference_v1'");dbChanged=true;}
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
   setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+'.','ok');
   return true;
@@ -625,7 +622,6 @@ async function loadDatabaseBytes(bytes,name){
 function downloadDatabase(){
  if(!db){setStatus('Сначала выбери базу данных.','error');return;}
  try{
-  if(readMetadata(db,'numbers_manual_reference_v1'))db.run("DELETE FROM web_metadata WHERE key='numbers_manual_reference_v1'");
   const bytes=db.export(),blob=new Blob([bytes],{type:'application/vnd.sqlite3'});
   const base=(dbName||'Budget-Capture').replace(/\.(budget|sqlite3?|db)$/i,'').replace(/_analytics$/i,'');
   const filename=base+'_analytics.budget';

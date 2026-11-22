@@ -219,10 +219,12 @@ try {
   assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
   assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'monthly drilldown must show category totals');
+  assert.equal(await analytics.locator('#download-db').isDisabled(), true, 'opening Analytics must not silently modify or mark the selected .budget as changed');
 
   await analytics.locator('#sasha-shared-percent').fill('60');
   await analytics.locator('#save-settings').click();
   assert.match(await analytics.locator('#status').textContent(), /записаны внутрь базы/);
+  assert.equal(await analytics.locator('#download-db').isDisabled(), false, 'only an explicit Save settings action should enable database export');
   const analyticsDownloadPromise = analytics.waitForEvent('download');
   await analytics.locator('#download-db').click();
   const analyticsDownload = await analyticsDownloadPromise;
@@ -234,14 +236,17 @@ try {
     const db = new SQL.Database(new Uint8Array(bytes));
     const read = key => JSON.parse(String(db.exec('SELECT value FROM web_metadata WHERE key=' + JSON.stringify(key))[0].values[0][0]));
     const settings = read('analytics_report_settings_v1');
-    const legacyManualRows = Number(db.exec("SELECT COUNT(*) FROM web_metadata WHERE key='numbers_manual_reference_v1'")[0].values[0][0]);
-    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5, legacyManualRows };
+    const legacyManualRow = db.exec("SELECT value FROM web_metadata WHERE key='numbers_manual_reference_v1'")[0]?.values?.[0]?.[0] ?? null;
+    const legacyManualRows = legacyManualRow === null ? 0 : 1;
+    const legacyManualValue = legacyManualRow === null ? null : JSON.parse(String(legacyManualRow));
+    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5, legacyManualRows, legacyManualValue };
     db.close();
     return result;
   }, Array.from(fs.readFileSync(analyticsExportPath)));
   assert.equal(settingsState.sharedPercent, 60, 'Analytics category rules must be written inside the portable .budget file');
   assert.equal(settingsState.hasNumbersHistory, true, 'Analytics export must retain imported Numbers history');
-  assert.equal(settingsState.legacyManualRows, 0, 'Analytics must remove illustrative legacy summaries from the exported .budget');
+  assert.equal(settingsState.legacyManualRows, 1, 'Analytics must preserve unrecognized legacy metadata instead of silently deleting it');
+  assert.deepEqual(settingsState.legacyManualValue, { exampleOnly: true }, 'opening and exporting Analytics must leave legacy metadata unchanged');
 
   await analytics.locator('#manual-file').setInputFiles(analyticsExportPath);
   await analytics.waitForFunction(() => document.querySelector('#sasha-shared-percent')?.value === '60', null, { timeout: 20000 });
@@ -277,7 +282,7 @@ try {
   assert.deepEqual(pageErrors, [], 'Numbers pages must not raise uncaught browser errors');
   assert.deepEqual(externalRequests, [], 'Numbers pages must load every runtime asset from the same origin');
   assert.deepEqual(failedRequests, [], 'Numbers page asset requests must not fail');
-  console.log('Numbers Chromium E2E: PASS · Excel preview · SQLite import/export · history replacement · transactions untouched · Analytics loads selected .budget and receives the already-open app database without re-selection · settings persist inside .budget');
+  console.log('Numbers Chromium E2E: PASS · Excel preview · SQLite import/export · history replacement · transactions untouched · Analytics reads .budget without automatic writes, preserves legacy metadata, receives the already-open app database without re-selection, and saves report settings only after explicit action');
   await context.close();
 } finally {
   if (browser) await browser.close().catch(() => {});
