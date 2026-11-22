@@ -69,6 +69,11 @@ assert.match(db,/CREATE TABLE IF NOT EXISTS numbers_category_adjustments/,'datab
 assert.match(analytics,/function resolveMonthlySources\(historyRows,transactionRows,categoryKinds\)/,'Analytics must resolve one authoritative source for each month');
 assert.match(analytics,/function buildTransactionMonthlyRows\(transactionRows,categoryKinds\)/,'Analytics must aggregate live transactions using Budget Capture category roles');
 assert.match(analytics,/function transactionFallbackRole\(row,rawAmount\)/,'transactions in categories marked other must still contribute to cash flow by their transaction direction');
+assert.match(analytics,/function isReviewTransactionRow\(row\)/,'failed or review-only bank operations must not affect financial totals');
+assert.match(analytics,/if\(rawAmount===0\)continue/,'zero-value ledger rows must not replace historical month totals');
+assert.match(analytics,/function isInternalTransactionRow\(row\)[\s\S]*?row\.category/,'internal transfer categories must be excluded even without a transfer description');
+assert.doesNotMatch(analytics,/if\(!tables\.has\('numbers_history'\)\)throw/,'transaction-only databases must not require Numbers history');
+assert.match(analytics,/операций на проверку:/,'excluded review operations must be disclosed in the Analytics status');
 assert.match(analytics,/function isAnalyticsRubleCurrency\(value\)/,'rubles-only analytics must not mix foreign-currency values');
 assert.match(analytics,/excludedCurrencyTransactions/,'Analytics must report excluded foreign-currency transactions');
 assert.match(analytics,/const historicalRows=\(historyRows\|\|\[\]\)\.filter\(row=>!ledgerMonthSet\.has\(row\.month_key\)\)/,'a transaction-backed month must replace its Numbers snapshot');
