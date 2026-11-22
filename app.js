@@ -347,8 +347,38 @@ function renderAccounts(){if(!state.db)return;const rows=all(state.db,'SELECT * 
 function renderAll(){if(!state.db)return;state.profile=readBudgetProfile(state.db);populateCategoryFilter();renderTransactions();renderRecovery();renderAccounts();renderNumbers();renderProfileEditor();updateStats();$('run-import').disabled=!state.selectedFiles.length;}
 function exportCsv(){if(!state.db)return;const rows=filteredTransactions();const headers=['Date','Bank','Merchant','Description','Amount','Currency','Category','Type','Status','Notes','Source file'];const lines=[headers,...rows.map(r=>[r.tx_date,r.account,r.merchant,r.description,r.amount,r.currency,r.category,r.transaction_type,r.status,r.notes,r.source_file])];const csv='\ufeff'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),`budget-transactions-${$('filter-month').value||'all'}.csv`);}
 function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function openAnalyticsWithCurrentDatabase(event){
+  if(!state.db)return;
+  event.preventDefault();
+  const token=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  let target=null,sent=false;
+  const receiveReady=message=>{
+    if(message.origin!==location.origin||message.source!==target||message.data?.type!=='BUDGET_ANALYTICS_READY'||message.data?.token!==token)return;
+    window.removeEventListener('message',receiveReady);
+    sent=true;
+    try{
+      if(!state.db)throw new Error('The database is no longer open.');
+      const bytes=state.db.export();
+      const buffer=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+      target.postMessage({type:'BUDGET_CAPTURE_DATABASE',token,name:state.dbName,bytes:buffer},location.origin,[buffer]);
+      toast('База передана в финансовую аналитику');
+    }catch(error){showError('Не удалось передать базу в аналитику: '+error.message);}
+  };
+  window.addEventListener('message',receiveReady);
+  target=window.open(new URL('./numbers-analytics.html?bc_transfer='+encodeURIComponent(token),location.href).href,'_blank');
+  if(!target){
+    window.removeEventListener('message',receiveReady);
+    toast('Браузер заблокировал новую вкладку. Разреши всплывающие окна для Budget Capture.',true);
+    return;
+  }
+  window.setTimeout(()=>{
+    if(sent)return;
+    window.removeEventListener('message',receiveReady);
+    toast('Передача не завершилась. Открой аналитику и выбери .budget вручную.',true);
+  },20000);
+}
 function handleEvents(){
-  $('new-db').addEventListener('click',newDatabase);$('open-db').addEventListener('click',()=>$('open-file').click());$('data-open').addEventListener('click',()=>$('open-file').click());$('open-file').addEventListener('change',e=>{const f=e.target.files?.[0];if(f)openDatabaseFile(f);e.target.value='';});$('save-db').addEventListener('click',saveDatabase);$('data-save').addEventListener('click',saveDatabase);
+  $('open-analytics').addEventListener('click',openAnalyticsWithCurrentDatabase);$('new-db').addEventListener('click',newDatabase);$('open-db').addEventListener('click',()=>$('open-file').click());$('data-open').addEventListener('click',()=>$('open-file').click());$('open-file').addEventListener('change',e=>{const f=e.target.files?.[0];if(f)openDatabaseFile(f);e.target.value='';});$('save-db').addEventListener('click',saveDatabase);$('data-save').addEventListener('click',saveDatabase);
   document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
   const fileInput=$('statement-files');fileInput.addEventListener('change',e=>{state.selectedFiles=[...(e.target.files||[])];renderSelectedFiles();});const drop=$('drop-zone');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');state.selectedFiles=[...e.dataTransfer.files];renderSelectedFiles();});$('clear-files').addEventListener('click',()=>{state.selectedFiles=[];fileInput.value='';renderSelectedFiles();});$('run-import').addEventListener('click',importFiles);
   ['filter-month','filter-bank','filter-status','filter-category','filter-search','filter-sort','show-internal'].forEach(id=>$(id).addEventListener('input',()=>{state.selected.clear();renderTransactions();}));$('clear-filters').addEventListener('click',()=>{$('filter-month').value=monthNowPrevious();$('filter-bank').value='';$('filter-status').value='';$('filter-category').value='';$('filter-search').value='';$('filter-sort').value='date';$('show-internal').checked=false;state.selected.clear();renderTransactions();});
