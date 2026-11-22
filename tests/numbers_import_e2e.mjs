@@ -292,6 +292,8 @@ try {
       const [year,monthNumber] = month.split('-').map(Number);
       history.run([id,'numbers',month,year,monthNumber,kind,category,amount,role,'']);
     };
+    addHistory('aug-income','2026-08','income','Зарплата',12000);
+    addHistory('aug-expense','2026-08','expense','Еда',4000);
     addHistory('sep-income','2026-09','income','Зарплата',10000);
     addHistory('sep-expense','2026-09','expense','Еда',2000);
     addHistory('oct-income','2026-10','income','Зарплата',312366.88);
@@ -300,12 +302,14 @@ try {
     addHistory('oct-stale','2026-10','expense','Numbers only October',123);
     history.free();
     const tx = fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
-    const addTx = (id,date,amount,category,type='expense',description='') =>
-      tx.run([id,date,amount,'RUB',category,type,description,'','','',null]);
+    const addTx = (id,date,amount,category,type='expense',description='',currency='RUB') =>
+      tx.run([id,date,amount,currency,category,type,description,'','','',null]);
     addTx('salary','2026-10-01',312366.88,'Зарплата','income');
     addTx('kgr-expense','2026-10-05',-96784.78,'KGR');
     addTx('kgr-positive','2026-10-23',41000,'KGR','income');
     addTx('other-expense','2026-10-14',-180835.39,'Остальные расходы');
+    addTx('aug-usd','2026-08-12',90000,'Зарплата','income','USD income','USD');
+    addTx('sep-internal','2026-09-12',-50000,'Зарплата','internal_transfer','internal transfer');
     addTx('nov-income','2026-11-01',50000,'Зарплата','income');
     addTx('nov-expense','2026-11-02',-10000,'Остальные расходы');
     addTx('internal','2026-10-20',-999999,'Зарплата','internal_transfer','internal transfer');
@@ -316,7 +320,7 @@ try {
     await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
     return document.querySelector('#status')?.textContent || '';
   });
-  assert.match(ledgerStatus, /1 мес\. Numbers \/ 2 мес\. транзакции/, 'Analytics must identify historical and transaction-backed months');
+  assert.match(ledgerStatus, /2 мес\. Numbers \/ 2 мес\. транзакции · пропущено валютных операций не в RUB: 1/, 'Analytics must identify source months and disclose excluded foreign-currency transactions');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-10');
@@ -326,8 +330,11 @@ try {
   assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /KGR[\s\S]*55.?784,78/, 'KGR must total 55,784.78 after the positive transaction is treated as an expense-category credit');
   assert.doesNotMatch(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Numbers only October/, 'October Numbers category rows must be fully replaced when ledger transactions exist');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-09');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000,00/, 'September must retain its Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000,00/, 'September must retain Numbers history when its only live transaction is internal');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?000,00/, 'September expenses must remain sourced from Numbers history');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-08');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000,00/, 'a USD-only transaction must not replace August Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000,00/, 'August Numbers expenses must remain when there are no RUB ledger rows');
   await ledgerAnalytics.close();
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
