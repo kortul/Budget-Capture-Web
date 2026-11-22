@@ -56,7 +56,7 @@ try {
     db.run('INSERT INTO categories(name) VALUES (?), (?), (?), (?)', ['Зарплата', 'Продукты', 'ВВОДЫ ДИМА СПЕЦ', 'ВЫВОДЫ ДИМА СПЕЦ']);
     db.run('CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)');
     db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['budget_profile_v1', JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'Продукты',kind:'expense'},{name:'ВВОДЫ ДИМА СПЕЦ',kind:'special_input'},{name:'ВЫВОДЫ ДИМА СПЕЦ',kind:'special_output'}],numbers:{specialInput:{category:'ВВОДЫ ДИМА СПЕЦ'},specialOutput:{category:'ВЫВОДЫ ДИМА СПЕЦ'}}})]);
-    db.run('CREATE TABLE transactions (id TEXT PRIMARY KEY, description TEXT NOT NULL)');
+    db.run("CREATE TABLE transactions (id TEXT PRIMARY KEY, account TEXT NOT NULL DEFAULT '', tx_date TEXT NOT NULL DEFAULT '', amount REAL, category TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '')");
     db.run('INSERT INTO transactions(id, description) VALUES (?, ?)', ['sentinel-transaction', 'Must remain unchanged']);
     const bytes = Array.from(db.export());
     db.close();
