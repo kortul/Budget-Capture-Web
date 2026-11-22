@@ -748,7 +748,13 @@ function ledgerContribution(amount,role){
  return 0;
 }
 function applyNumbersCategoryAdjustments(baseRows,adjustments,categoryKinds){
- const rows=baseRows.map(row=>({...row}));let applied=0;
+ const rows=baseRows.map(row=>({...row})),effectiveCategoryKinds=new Map(categoryKinds||[]);let applied=0;
+ for(const row of baseRows||[]){
+  const historyKind=String(row.role||row.kind||'');
+  if(!['income','expense'].includes(historyKind))continue;
+  const key=normalized(row.category),configured=effectiveCategoryKinds.get(key);
+  if(!['income','expense','special_input','special_output'].includes(configured))effectiveCategoryKinds.set(key,historyKind);
+ }
  const addDelta=(monthKey,year,month,category,role,delta)=>{
   if(!['income','expense'].includes(role)||Math.abs(delta)<0.0001)return;
   const target=rows.find(row=>row.month_key===monthKey&&row.role===role&&normalized(row.category)===normalized(category));
@@ -761,7 +767,7 @@ function applyNumbersCategoryAdjustments(baseRows,adjustments,categoryKinds){
   const currency=String(item.currency||'RUB').toUpperCase();
   if(currency&&!['RUB','RUR','₽'].includes(currency))continue;
   const amount=Number(item.amount)||0,baseCategory=String(item.base_category||'Не распределено'),baseKind=String(item.base_kind||'other');
-  const currentCategory=String(item.current_category||''),currentKind=categoryKinds.get(normalized(currentCategory))||'other';
+  const currentCategory=String(item.current_category||''),currentKind=effectiveCategoryKinds.get(normalized(currentCategory))||'other';
   const baseWasInHistory=rows.some(row=>row.month_key===monthKey&&row.role===baseKind&&normalized(row.category)===normalized(baseCategory)&&Math.abs(Number(row.amount)||0)>0.0001);
   if(baseWasInHistory)addDelta(monthKey,parts[0],parts[1],baseCategory,baseKind,-ledgerContribution(amount,baseKind));
   const contribution=ledgerContribution(amount,currentKind);
@@ -1061,15 +1067,18 @@ async function loadDatabaseBytes(bytes,name){
    const role=rawRole||roleMap.get(normalized(category))||String(row[3]);
    return {month_key:String(row[0]),year:Number(row[1]),month:Number(row[2]),kind:String(row[3]),category,amount:Number(row[5])||0,role};
   });
-  let categoryAdjustmentsApplied=0;
+  let categoryAdjustmentsApplied=0,categoryAdjustmentsStored=0,categoryAdjustmentsMatched=0;
   if(tables.has('numbers_category_adjustments')&&tables.has('transactions')){
+   categoryAdjustmentsStored=Number(opened.exec('SELECT COUNT(*) FROM numbers_category_adjustments')[0]?.values?.[0]?.[0]||0);
    const txColumns=opened.exec('PRAGMA table_info(transactions)')[0]?.values.map(r=>String(r[1]))||[];
    const activeClause=txColumns.includes('deleted_at')?"WHERE COALESCE(t.deleted_at,'')=''":"";
-   const adjustmentResult=opened.exec("SELECT a.base_category,a.base_kind,t.tx_date,t.amount,t.currency,t.category FROM numbers_category_adjustments a JOIN transactions t ON t.id=a.transaction_id "+activeClause);
+   const currencyColumn=txColumns.includes('currency')?'t.currency':"'RUB'";
+   const adjustmentResult=opened.exec("SELECT a.base_category,a.base_kind,t.tx_date,t.amount,"+currencyColumn+",t.category FROM numbers_category_adjustments a JOIN transactions t ON t.id=a.transaction_id "+activeClause);
    const adjustments=adjustmentResult[0]?.values.map(row=>({
     base_category:String(row[0]),base_kind:String(row[1]),tx_date:String(row[2]),amount:Number(row[3])||0,
     currency:String(row[4]||'RUB'),current_category:String(row[5]||'')
    }))||[];
+   categoryAdjustmentsMatched=adjustments.length;
    const applied=applyNumbersCategoryAdjustments(data,adjustments,categoryKinds);
    data=applied.rows;categoryAdjustmentsApplied=applied.applied;
   }
@@ -1083,7 +1092,8 @@ async function loadDatabaseBytes(bytes,name){
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
-  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+(categoryAdjustmentsApplied?' · учтено корректировок: '+categoryAdjustmentsApplied:'')+'.','ok');
+  const adjustmentStatus=tables.has('numbers_category_adjustments')?' · корректировки: '+categoryAdjustmentsStored+' сохранено / '+categoryAdjustmentsMatched+' найдено / '+categoryAdjustmentsApplied+' применено':' · журнал корректировок отсутствует';
+  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+adjustmentStatus+'.','ok');
   return true;
  }catch(error){try{opened?.close();}catch{}data=[];years=[];rangeFrom='';rangeTo='';selectedMonthKey='';$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
  finally{loading=false;}

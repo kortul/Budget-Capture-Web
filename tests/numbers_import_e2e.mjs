@@ -279,12 +279,12 @@ try {
       {month_key:'2026-10',year:2026,month:10,kind:'expense',role:'expense',category:'Остальные расходы',amount:180835.39}
     ];
     const changes = [{base_category:'Не распределено',base_kind:'other',tx_date:'2026-10-23',amount:41000,currency:'RUB',current_category:'KGR'}];
-    const kinds = new Map([['kgr','expense']]);
+    const kinds = new Map([['kgr','other']]);
     const adjusted=applyNumbersCategoryAdjustments(base,changes,kinds);
     const october=adjusted.rows.filter(row=>row.month_key==='2026-10'),totals=totalsFor(october);
     return {kgr:october.find(row=>row.category==='KGR')?.amount,expense:totals.expense,income:totals.income,net:totals.net,applied:adjusted.applied};
   });
-  assert.deepEqual(kgrAdjustmentFixture,{kgr:55784.78,expense:236620.17,income:312366.88,net:75746.71,applied:1},'positive RUB transaction assigned to KGR expense lowers it by 41,000 exactly once');
+  assert.deepEqual(kgrAdjustmentFixture,{kgr:55784.78,expense:236620.17,income:312366.88,net:75746.71,applied:1},'Numbers history role must override an incomplete profile kind when applying a positive transaction to KGR expense');
 
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
