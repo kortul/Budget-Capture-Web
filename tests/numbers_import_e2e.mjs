@@ -311,10 +311,12 @@ try {
     const tx = fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
     const addTx = (id,date,amount,category,type='expense',description='',currency='RUB') =>
       tx.run([id,date,amount,currency,category,type,description,'','','',null]);
-    addTx('salary','2026-10-01',312366.88,'Зарплата','income');
+    addTx('salary','2026-10-01',271366.88,'Зарплата','income');
+    addTx('other-income-oct','2026-10-24',41000,'Прочий доход','income');
     addTx('kgr-expense','2026-10-05',-96784.78,'KGR');
     addTx('kgr-positive','2026-10-23',41000,'KGR','income');
-    addTx('other-expense','2026-10-14',-180835.39,'Остальные расходы');
+    addTx('other-expense','2026-10-14',-168835.39,'Остальные расходы');
+    addTx('other-expense-oct','2026-10-16',-12000,'Прочий расход','expense');
     addTx('aug-usd','2026-08-12',90000,'Зарплата','income','USD income','USD');
     addTx('sep-internal','2026-09-12',-50000,'Зарплата','internal_transfer','internal transfer');
     addTx('nov-income','2026-11-01',50000,'Зарплата','income');
@@ -349,6 +351,8 @@ try {
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /236.?620,17/, 'October expenses must be recalculated from transactions, including the positive KGR transaction');
   assert.match(await ledgerAnalytics.locator('#month-overall-net').textContent(), /75.?746,71/, 'October net must use the transaction ledger only once');
   assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /KGR[\s\S]*55.?784,78/, 'KGR must total 55,784.78 after the positive transaction is treated as an expense-category credit');
+  assert.match(await ledgerAnalytics.locator('#month-income-list').textContent(), /Прочий доход[\s\S]*41.?000/, 'the missing 41,000 income must be recovered from an other-kind category by transaction direction');
+  assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Прочий расход[\s\S]*12.?000/, 'the missing 12,000 expense must be recovered from an other-kind category by transaction direction');
   assert.doesNotMatch(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Numbers only October/, 'October Numbers category rows must be fully replaced when ledger transactions exist');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-09');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000/, 'September must retain Numbers history when its only live transaction is internal');
