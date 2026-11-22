@@ -239,10 +239,10 @@ try {
   assert.equal(await analytics.locator('#month-insights .a-month-insight').count(), 3, 'month view must include three concise data-driven insights');
   assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'both nonzero expense categories must render while zero-valued categories stay hidden');
   assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
-  assert.match(await analytics.locator('#month-overall-net').textContent(), /247\\s?498/, 'month headline must show income less expense including all ordinary categories');
+  assert.match(await analytics.locator('#month-overall-net').textContent(), /247\s?498/, 'month headline must show income less expense including all ordinary categories');
   assert.match(await analytics.locator('#month-no-shop-net').textContent(), /0/, 'manual no-shop total must stay zero when imported categories do not match its fixed lists');
   assert.match(await analytics.locator('#month-sasha-expense').textContent(), /0/, 'missing Sasha category must safely display zero');
-  assert.match(await analytics.locator('#month-dima-net').textContent(), /50\\s?000/, 'Dima inputs minus outputs must appear as a separate monthly metric');
+  assert.match(await analytics.locator('#month-dima-net').textContent(), /50\s?000/, 'Dima inputs minus outputs must appear as a separate monthly metric');
   assert.match(await analytics.locator('#month-income-list').textContent(), /Зарплата/, 'income list must use imported month categories');
   assert.doesNotMatch(await analytics.locator('#month-income-list').textContent(), /Приход от работы Дима/, 'manual no-shop rules must not replace the actual month category set');
   assert.match(await analytics.locator('#month-expense-list').textContent(), /Продукты/, 'expense list must show the imported category');
