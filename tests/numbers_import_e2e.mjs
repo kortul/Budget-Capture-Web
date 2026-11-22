@@ -74,6 +74,10 @@ try {
         ['Категория', 'Сумма'],
         ['Продукты', expenses],
         [suspiciousCategory, suspiciousAmount],
+        ['****Note: Саша 30 Тотал', 3000],
+        ['****Note: Paris Total', 4000],
+        ['****Note: Provance/Chamonix Total', 5000],
+        ['Всего Сент-декабрь', 6000],
         ['ИТОГО РАСХОДЫ', expenses + suspiciousAmount],
       ]);
       XLSX.utils.book_append_sheet(workbook, incomeSheet, 'Октябрь 2026 - Income');
@@ -103,6 +107,7 @@ try {
   }, null, { timeout: 20000 });
 
   assert.equal(await page.locator('#export-history').isDisabled(), true, 'export must stay disabled before a successful import');
+  assert.match(await page.locator('#status').textContent(), /4 summary\/total rows excluded/, 'named Total/Тотал/Всего helper rows must be excluded from the Numbers preview');
   assert.equal(await page.locator('#matching').isVisible(), true, 'database categories must be matched against the Numbers preview');
   assert.equal(await page.locator('#matching-body img').count(), 0, 'untrusted Excel category text must not create HTML elements');
   assert.equal(await page.evaluate(() => window.__numbersXss || 0), 0, 'Excel category payload must not execute');
