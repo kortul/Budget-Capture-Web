@@ -100,15 +100,13 @@ Node.js 22+ требуется для локальных scripts; зависим
 
 Не добавляй `.budget`, `.sqlite*`, `.db`, backup ZIP, PDF, XLSX, CSV, личные JSON exports или отчёты с source references в Git.
 
-## Текущий статус — 21 ноября 2026
+## Текущий статус — 22 ноября 2026
 
-- GitHub Actions workflows удалены. Рабочая схема — прямой GitHub Pages deploy из `main` и корня репозитория.
-- Добавлена команда `npm run publish:root` и контрактные тесты для безопасного копирования build output в корень.
-- Build включает приложение и обе страницы Numbers; runtime dependencies остаются same-origin и закреплены в lockfile.
-- В Numbers Import исправлено состояние кнопок при смене файлов/баз, закрытие ошибочной SQLite-копии и экранирование названий категорий из Excel/базы перед вставкой в HTML.
-- В Financial Analytics экранируются названия категорий перед вставкой в HTML.
-- **Публикация ещё не завершена:** локальная команда `npm run publish:root` пока не запускалась в клонированном репозитории, поэтому `vendor/` пока отсутствует в корне `main`. До генерации и commit runtime assets Numbers Import не заработает в branch-root deployment.
-- Исторический Actions artifact содержит проверенные версии vendor assets, но он не является частью текущей ветки `main`.
-- Не подтверждены актуальная настройка Settings → Pages и ручной браузерный тест импорт → export → повторное открытие `.budget`.
+- GitHub Actions workflows удалены. Рабочая схема — прямой GitHub Pages deploy из `main` и корня репозитория (`Deploy from a branch → main → /(root)`).
+- В корне `main` присутствуют `index.html`, `numbers-import.html`, `numbers-analytics.html`, runtime JS/CSS и `vendor/` с закреплёнными библиотеками.
+- `asset-manifest.json` содержит 221 production asset; проверены наличие файлов и совпадение размеров с Git tree GitHub.
+- Пользователь переключил Settings → Pages на публикацию из ветки; после этого сайт пока отвечает 404 по пользовательской проверке. Успешная публикация Pages и browser smoke test ещё не подтверждены.
+- Текущие локальные `npm test`, `npm run build:pages`, `npm run publish:root`, `npm run test:dist` и Chromium E2E не выполнялись в этой проверке. Не считать Numbers Import/Analytics проверенными в runtime.
+- Следующий шаг — дождаться/проверить результат нового Pages deployment и открыть все три URL; затем проверить полный импорт Excel → обновлённый `.budget` → Financial Analytics на синтетической базе.
 
 Не добавляй `.budget`, SQLite базы, backup ZIP, банковские PDF/XLSX/CSV или личные JSON exports в Git.
