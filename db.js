@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS merchant_labels(merchant_key TEXT PRIMARY KEY,merchan
 CREATE TABLE IF NOT EXISTS category_rules(merchant_key TEXT PRIMARY KEY,category TEXT NOT NULL DEFAULT 'Не распределено',updated_at TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS transaction_delete_actions(id TEXT PRIMARY KEY,transaction_ids TEXT NOT NULL,created_at TEXT NOT NULL,undone_at TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS numbers_history (id TEXT PRIMARY KEY, source TEXT NOT NULL DEFAULT 'numbers', month_key TEXT NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('income','expense')), category TEXT NOT NULL, amount REAL NOT NULL DEFAULT 0, imported_at TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS numbers_history (id TEXT PRIMARY KEY, source TEXT NOT NULL DEFAULT 'numbers', month_key TEXT NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('income','expense')), category TEXT NOT NULL, amount REAL NOT NULL DEFAULT 0, role TEXT NOT NULL DEFAULT '', imported_at TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS idx_numbers_history_month ON numbers_history(month_key);
 `;
 
@@ -93,6 +93,8 @@ export function initializeDatabase(db) {
   const legacyTxFields=['category','amount'].filter(name=>legacyTxColumns.has(name));
   const legacyTransactionRows=legacyTxFields.length===2?all(db,'SELECT category,amount FROM transactions'):[];
   db.exec(SCHEMA);
+  const historyCols=all(db,'PRAGMA table_info(numbers_history)').map(r=>r.name);
+  if(!historyCols.includes('role')) db.run("ALTER TABLE numbers_history ADD COLUMN role TEXT NOT NULL DEFAULT ''");
   const cols=all(db,'PRAGMA table_info(transactions)').map(r=>r.name);
   const migrations={merchant:"TEXT NOT NULL DEFAULT ''",merchant_key:"TEXT NOT NULL DEFAULT ''",transaction_type:"TEXT NOT NULL DEFAULT 'unknown'",source_ref:"TEXT NOT NULL DEFAULT ''",manually_adjusted:'INTEGER NOT NULL DEFAULT 0',deleted_at:'TEXT',delete_action_id:"TEXT NOT NULL DEFAULT ''"};
   for(const [name,ddl] of Object.entries(migrations)) if(!cols.includes(name)) db.run(`ALTER TABLE transactions ADD COLUMN ${name} ${ddl}`);
@@ -262,7 +264,7 @@ export function importLegacyJson(SQL,payload) {
   for(const r of payload.recognized_accounts||[])if(r?.bank_code&&r?.identifier)upsertRecognizedAccount(db,r);
   for(const a of payload.transaction_delete_actions||[])if(a?.id)db.run('INSERT OR REPLACE INTO transaction_delete_actions(id,transaction_ids,created_at,undone_at) VALUES(?,?,?,?)',[a.id,a.transaction_ids||'[]',a.created_at||now,a.undone_at||'']);
   for(const m of payload.web_metadata||[])if(m?.key)db.run('INSERT OR REPLACE INTO web_metadata(key,value) VALUES(?,?)',[m.key,m.value||'']);
-  for(const r of payload.numbers_history||[])if(r?.id&&r?.month_key&&r?.kind&&r?.category)db.run('INSERT OR REPLACE INTO numbers_history(id,source,month_key,year,month,kind,category,amount,imported_at) VALUES(?,?,?,?,?,?,?,?,?)',[r.id,r.source||'numbers',r.month_key,r.year||0,r.month||0,r.kind,r.category,Number(r.amount)||0,r.imported_at||now]);
+  for(const r of payload.numbers_history||[])if(r?.id&&r?.month_key&&r?.kind&&r?.category)db.run('INSERT OR REPLACE INTO numbers_history(id,source,month_key,year,month,kind,category,amount,role,imported_at) VALUES(?,?,?,?,?,?,?,?,?,?)',[r.id,r.source||'numbers',r.month_key,r.year||0,r.month||0,r.kind,r.category,Number(r.amount)||0,r.role||r.kind,r.imported_at||now]);
   initializeDatabase(db);
   DATABASES_REQUIRING_SAVE.add(db);
   return db;
