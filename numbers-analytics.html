@@ -551,12 +551,15 @@ function keyInsideRange(key,from=rangeFrom,to=rangeTo){return key>=from&&key<=to
 function filterYear(rows){return rows.filter(row=>keyInsideRange(row.month_key));}
 function setRange(from,to,render=true){
  const min=data[0]?.month_key||from,max=data[data.length-1]?.month_key||to;
- from=from<min?min:from>max?max:from;
+ // Periods are calendar ranges, not merely first-to-last transaction dates:
+ // "This year" must begin in January even when the first entry is in October.
+ from=from>max?max:from;
  to=to>max?max:to<min?min:to;
  if(from>to){const swap=from;from=to;to=swap;}
  rangeFrom=from;rangeTo=to;
  $('range-from').value=from;$('range-to').value=to;
- $('range-from').min=min;$('range-from').max=max;$('range-to').min=min;$('range-to').max=max;
+ $('range-from').min=min.slice(0,4)+'-01';$('range-from').max=max;
+ $('range-to').min=min;$('range-to').max=max;
  if(!selectedMonthKey||!keyInsideRange(selectedMonthKey))selectedMonthKey=to;
  if(render)renderAll();
 }
