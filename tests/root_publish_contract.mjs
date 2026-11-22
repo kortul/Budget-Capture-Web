@@ -13,7 +13,7 @@ const readme = fs.readFileSync(path.join(root, 'README_RU.md'), 'utf8');
 assert.match(pkg.scripts['publish:root'], /npm run build:pages && node scripts\/publish-root\.mjs --publish/);
 assert.match(builder, /'numbers-import\.html'/, 'Numbers import page must be included in static build');
 assert.match(builder, /'numbers-analytics\.html'/, 'Numbers analytics page must be included in static build');
-const analyticsPage = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'numbers-analytics.html'), 'utf8');
+const analyticsPage = fs.readFileSync(path.join(root, 'numbers-analytics.html'), 'utf8');
 assert.doesNotMatch(analyticsPage, /BudgetSharedDb|indexedDB|IndexedDB/, 'portable Analytics must not use browser storage');
 assert.match(publisher, /asset-manifest\.json/, 'root publisher must require the generated asset manifest');
 assert.match(publisher, /SHA-256 mismatch/, 'root publisher must recheck every asset hash before copying');
