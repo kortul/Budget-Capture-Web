@@ -81,6 +81,34 @@
 .a-anchor{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
 .a-anchor a{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:6px 9px;text-decoration:none}
 .hidden{display:none!important}
+
+.a-range-presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.a-range-presets .button{white-space:nowrap}
+.a-chart{overflow-x:auto;grid-template-columns:repeat(var(--month-count,12),minmax(42px,1fr));scrollbar-width:thin;min-height:220px}
+.a-month{border:0;background:transparent;color:inherit;padding:5px 2px 0;cursor:pointer;border-radius:8px;min-width:0}
+.a-month:hover,.a-month.selected{background:rgba(112,165,232,.12);outline:1px solid rgba(112,165,232,.45)}
+.a-month:focus-visible{outline:2px solid #83b5f3;outline-offset:2px}
+.a-month small{font-size:10px}
+.a-table tbody tr[data-month-key]{cursor:pointer}
+.a-table tbody tr[data-month-key]:hover{background:rgba(112,165,232,.09)}
+.a-table tbody tr.selected-month{background:rgba(112,165,232,.13)}
+.a-mini-head{font-size:13px;margin:0 0 10px}
+.a-rank-list{display:flex;flex-direction:column;gap:10px}
+.a-rank-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(70px,2fr) auto;align-items:center;gap:10px;font-size:12px}
+.a-rank-name{overflow-wrap:anywhere;color:var(--text)}
+.a-rank-track{height:7px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.a-rank-fill{height:100%;background:#6c9de3;border-radius:99px}
+.a-rank-value{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.a-period-insights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.a-insight{padding:14px 16px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025);min-width:0}
+.a-insight small{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+.a-insight strong{font-size:17px;display:block;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.a-insight p{font-size:11px;color:var(--muted);margin:6px 0 0;line-height:1.4}
+.a-change-up{color:#f0a09a!important}.a-change-down{color:#83d7ae!important}
+.a-month-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1000px){.a-period-insights{grid-template-columns:1fr 1fr}.a-month-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.a-range-presets{width:100%}.a-range-presets .button{flex:1}.a-period-insights{grid-template-columns:1fr}.a-month-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.a-rank-row{grid-template-columns:minmax(80px,1fr) minmax(50px,1fr) auto;gap:6px}}
+
 @media(max-width:1000px){.a-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a-two{grid-template-columns:1fr}}
 @media(max-width:650px){.analytics-shell{padding:18px 12px 40px}.a-card{padding:14px}.a-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.a-metric{padding:12px}.a-metric strong{font-size:20px}.a-chart{gap:3px;min-height:180px}.a-bars{height:140px}.a-month small{font-size:9px}.a-settings-grid,.a-manual-grid{grid-template-columns:1fr}.a-check-list{grid-template-columns:1fr}.a-summary-grid{grid-template-columns:1fr}.a-table{font-size:12px}.a-table th,.a-table td{padding:9px 8px}}
 </style>
@@ -95,8 +123,15 @@
 <section class="a-card">
   <div class="a-topline">
     <div class="a-controls">
-      <label>Отчётный год<select id="year"><option value="">Сначала выбери базу</option></select></label>
-      <div class="a-file"><label>Файл базы данных Budget Capture (.budget)<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
+      <label>С<input id="range-from" type="month" aria-label="Начало периода"></label>
+      <label>По<input id="range-to" type="month" aria-label="Конец периода"></label>
+      <div class="a-range-presets">
+        <button class="button secondary button-small" id="range-6" type="button">6 месяцев</button>
+        <button class="button secondary button-small" id="range-12" type="button">12 месяцев</button>
+        <button class="button secondary button-small" id="range-year" type="button">Этот год</button>
+        <button class="button secondary button-small" id="range-all" type="button">Вся история</button>
+      </div>
+      <div class="a-file"><label>Открыть другую базу (.budget)<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
       <button id="download-db" class="button secondary" type="button" disabled>Скачать обновлённую базу</button>
     </div>
     <span class="a-pill" id="database-name">База не загружена</span>
@@ -107,7 +142,7 @@
 
 <div id="dashboard" class="hidden">
 <nav class="a-anchor">
-  <a href="#annual">Итоги года</a><a href="#life">Расходы на жизнь</a><a href="#sasha">Расходы Саши</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты и проекты</a><a href="#report-settings">Настройки отчёта</a>
+  <a href="#annual">Итоги года</a><a href="#life">Расходы на жизнь</a><a href="#sasha">Расходы Саши</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#year-comparison">Сравнение лет</a><a href="#report-settings">Настройки отчёта</a>
 </nav>
 
 <section class="a-grid" id="annual">
@@ -116,12 +151,17 @@
   <div class="a-metric"><small>Баланс за год</small><strong id="netMetric">—</strong><div class="sub" id="netSub">Доходы минус расходы</div></div>
   <div class="a-metric"><small>Доля сбережений</small><strong id="rateMetric">—</strong><div class="sub">Баланс / доходы</div></div>
 </section>
+<div class="a-period-insights">
+  <div class="a-insight"><small>Расходы к предыдущему периоду</small><strong id="period-expense-change">—</strong><p id="period-expense-note">Сравнение с равным по длине периодом</p></div>
+  <div class="a-insight"><small>Самый дорогой месяц</small><strong id="period-top-month">—</strong><p id="period-top-month-note">За выбранный диапазон</p></div>
+  <div class="a-insight"><small>Крупнейшая статья расходов</small><strong id="period-top-category">—</strong><p id="period-top-category-note">За выбранный диапазон</p></div>
+</div>
 
 <div class="a-two" style="margin-top:16px">
   <section class="a-card">
     <div class="a-section-head"><div><h2>Движение денег по месяцам</h2><p id="chart-caption">Поступления и расходы за выбранный год</p></div></div>
     <div id="cashflow-chart" class="a-chart"></div>
-    <div class="a-legend"><span><i style="background:#55bf91"></i>Доходы</span><span><i style="background:#df9276"></i>Расходы</span></div>
+    <div class="a-legend"><span><i style="background:#55bf91"></i>Доходы</span><span><i style="background:#df9276"></i>Расходы</span><span class="a-small">Нажми на месяц, чтобы открыть подробности</span></div>
   </section>
   <section class="a-card">
     <div class="a-section-head"><div><h2>Специальные потоки</h2><p>Не включаются в обычный баланс</p></div></div>
@@ -134,9 +174,23 @@
   </section>
 </div>
 
+<section class="a-card" id="month-detail">
+  <div class="a-section-head"><div><h2 id="month-detail-title">Детализация месяца</h2><p id="month-detail-subtitle">Выбери месяц на графике или в таблице ниже</p></div><span class="a-pill" id="month-compare-label">Сравнение с предыдущим месяцем</span></div>
+  <div class="a-grid a-month-metrics">
+    <div class="a-metric"><small>Поступления</small><strong id="month-income">—</strong><div class="sub" id="month-income-delta">—</div></div>
+    <div class="a-metric"><small>Расходы</small><strong id="month-expense">—</strong><div class="sub" id="month-expense-delta">—</div></div>
+    <div class="a-metric"><small>Баланс</small><strong id="month-net">—</strong><div class="sub" id="month-net-delta">—</div></div>
+    <div class="a-metric"><small>Доля сбережений</small><strong id="month-rate">—</strong><div class="sub">Баланс / поступления</div></div>
+  </div>
+  <div class="a-two" style="margin-top:16px">
+    <div><h3 class="a-mini-head">Куда ушли деньги</h3><div id="month-expense-list" class="a-rank-list"></div></div>
+    <div><h3 class="a-mini-head">Из чего сложились поступления</h3><div id="month-income-list" class="a-rank-list"></div></div>
+  </div>
+</section>
+
 <section class="a-card">
   <div class="a-section-head"><div><h2>Баланс по месяцам</h2><p>Доходы, расходы и результат каждого месяца</p></div></div>
-  <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th></tr></thead><tbody id="monthlyRows"></tbody></table></div>
+  <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th><th class="num">К прошлому месяцу</th></tr></thead><tbody id="monthlyRows"></tbody></table></div>
 </section>
 
 <section class="a-card" id="life">
@@ -200,64 +254,11 @@
   <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Получено</th><th class="num">Погашено</th><th class="num">Разница</th></tr></thead><tbody id="loanYearRows"></tbody></table></div>
 </section>
 
-<section class="a-card">
+<section class="a-card" id="year-comparison">
   <div class="a-section-head"><div><h2>Итоги по годам</h2><p>Сравнение всех лет, доступных в истории Numbers</p></div></div>
   <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th><th class="num">Доля сбережений</th><th class="num">Спец. вводы</th><th class="num">Спец. выводы</th></tr></thead><tbody id="yearRows"></tbody></table></div>
 </section>
 
-<section class="a-card" id="manual-references">
-  <div class="a-section-head"><div><h2>Сводки из старой таблицы Numbers</h2><p>Ручные исторические показатели загружаются непосредственно из выбранного файла .budget</p></div></div>
-  <div class="a-pill" id="manual-reference-status">Сначала выбери базу данных</div>
-  <div class="a-note">Ручные сводки являются частью файла .budget. Чтобы перенести их на другой компьютер, достаточно перенести сам файл базы — дополнительных файлов не требуется.</div>
-  <div id="manual-reference-content" class="hidden">
-    <div class="a-manual-grid" style="margin-top:16px">
-      <div>
-        <h3>Расходы только на жизнь · помесячно</h3><p class="a-small" id="manual-life-year"></p>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Расходы</th></tr></thead><tbody id="manual-life-months"></tbody><tfoot id="manual-life-total"></tfoot></table></div>
-        <p class="a-small" id="manual-life-refunds"></p>
-      </div>
-      <div>
-        <h3>Баланс за год · помесячно</h3><p class="a-small" id="manual-balance-year"></p>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Баланс</th></tr></thead><tbody id="manual-balance-months"></tbody><tfoot id="manual-balance-total"></tfoot></table></div>
-      </div>
-      <div>
-        <h3>Категории расходов на жизнь</h3><p class="a-small" id="manual-life-categories-year"></p>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Всего</th><th class="num">Доля</th><th class="num">В месяц</th></tr></thead><tbody id="manual-life-categories"></tbody><tfoot id="manual-life-categories-total"></tfoot></table></div>
-      </div>
-      <div>
-        <h3>Расходы Саши</h3>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Учтено</th><th class="num">Доля</th><th class="num">В месяц</th></tr></thead><tbody id="manual-sasha-categories"></tbody><tfoot id="manual-sasha-total"></tfoot></table></div>
-        <p class="a-small" id="manual-sasha-note"></p>
-      </div>
-      <div>
-        <h3>Магазин · вводы и выводы</h3><p class="a-small" id="manual-shop-year"></p>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Вводы</th><th class="num">Выводы</th><th class="num">Чистый вывод</th></tr></thead><tbody id="manual-shop-months"></tbody><tfoot id="manual-shop-total"></tfoot></table></div>
-      </div>
-      <div>
-        <h3>Кредиты и возвраты</h3>
-        <div id="manual-credit-summary" class="a-summary-grid"></div>
-        <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Возвраты</th></tr></thead><tbody id="manual-credit-years"></tbody><tfoot id="manual-credit-years-total"></tfoot></table></div>
-        <p class="a-small" id="manual-credit-month-note"></p>
-      </div>
-      <div>
-        <h3>Проекты и обязательства</h3>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Проект</th><th class="num">Оплачено</th><th class="num">Потрачено</th><th class="num">Прибыль</th><th>Сроки / примечание</th></tr></thead><tbody id="manual-projects"></tbody><tfoot id="manual-projects-total"></tfoot></table></div>
-        <p class="a-small" id="manual-project-duration"></p>
-      </div>
-      <div>
-        <h3>Дополнительный показатель · название не указано</h3>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц 2026</th><th class="num">Значение</th></tr></thead><tbody id="manual-extra-months"></tbody><tfoot id="manual-extra-months-total"></tfoot></table></div>
-        <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Значение</th></tr></thead><tbody id="manual-extra-years"></tbody><tfoot id="manual-extra-years-total"></tfoot></table></div>
-        <p class="a-small" id="manual-extra-note"></p>
-      </div>
-      <div>
-        <h3>Баланс по работе · годовые значения</h3>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Баланс</th></tr></thead><tbody id="manual-work-years"></tbody><tfoot id="manual-work-years-total"></tfoot></table></div>
-        <p class="a-small" id="manual-work-note"></p>
-      </div>
-    </div>
-  </div>
-</section>
 <section class="a-card" id="report-settings">
   <div class="a-section-head"><div><h2>Настройка состава отчётов</h2><p>Выбери, какие категории относятся к жизни, расходам Саши, работе, магазину и кредитам</p></div></div>
   <details id="settings-details" class="a-details">
