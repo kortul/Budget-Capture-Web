@@ -53,7 +53,9 @@ try {
     });
     const db = new SQL.Database();
     db.run('CREATE TABLE categories (name TEXT PRIMARY KEY)');
-    db.run('INSERT INTO categories(name) VALUES (?), (?)', ['Зарплата', 'Продукты']);
+    db.run('INSERT INTO categories(name) VALUES (?), (?), (?), (?)', ['Зарплата', 'Продукты', 'ВВОДЫ ДИМА СПЕЦ', 'ВЫВОДЫ ДИМА СПЕЦ']);
+    db.run('CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)');
+    db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['budget_profile_v1', JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'Продукты',kind:'expense'},{name:'ВВОДЫ ДИМА СПЕЦ',kind:'special_input'},{name:'ВЫВОДЫ ДИМА СПЕЦ',kind:'special_output'}],numbers:{specialInput:{category:'ВВОДЫ ДИМА СПЕЦ'},specialOutput:{category:'ВЫВОДЫ ДИМА СПЕЦ'}}})]);
     db.run('CREATE TABLE transactions (id TEXT PRIMARY KEY, description TEXT NOT NULL)');
     db.run('INSERT INTO transactions(id, description) VALUES (?, ?)', ['sentinel-transaction', 'Must remain unchanged']);
     const bytes = Array.from(db.export());
@@ -73,6 +75,8 @@ try {
       const expenseSheet = XLSX.utils.aoa_to_sheet([
         ['Категория', 'Сумма'],
         ['Продукты', expenses],
+        ['ВВОДЫ ДИМА СПЕЦ', 203700000],
+        ['ВЫВОДЫ ДИМА СПЕЦ', 203650000],
         [suspiciousCategory, suspiciousAmount],
         ['****Note: Саша 30 Тотал', 3000],
         ['****Note: Paris Total', 4000],
@@ -141,10 +145,12 @@ try {
     db.close();
     return result;
   }, Array.from(fs.readFileSync(firstExportPath)));
-  assert.equal(firstDatabaseState.historyRows, 3, 'all three month/category rows must be stored');
+  assert.equal(firstDatabaseState.historyRows, 5, 'all five category rows must be stored');
   assert.equal(firstDatabaseState.transactionRows, 1, 'Numbers import must not alter transactions');
   assert.equal(firstDatabaseState.categoryRows, 2, 'unmatched historical categories must not be added to live categories');
-  assert.deepEqual(firstDatabaseState.totals, { expense: 12001, income: 250000 });
+  assert.deepEqual(firstDatabaseState.totals, { expense: 12001, income: 250000 }, 'ordinary income/expense rows remain in their original kind totals');
+  const firstRoles = await page.evaluate(async bytes => { const SQL=await window.initSqlJs({locateFile:file=>'./vendor/sql.js/'+file,useOldExtensionFunctions:true});const db=new SQL.Database(new Uint8Array(bytes));const rows=db.exec('SELECT role,SUM(amount) FROM numbers_history GROUP BY role ORDER BY role')[0].values;db.close();return Object.fromEntries(rows.map(row=>[String(row[0]),Number(row[1])])); }, Array.from(fs.readFileSync(firstExportPath)));
+  assert.deepEqual(firstRoles,{expense:12001,income:250000,special_input:203700000,special_output:203650000},'special input/output categories must persist as separate roles');
   assert.equal(firstDatabaseState.description, 'Must remain unchanged');
 
   // Import a revised workbook into the just-exported database. Existing Numbers
@@ -187,7 +193,7 @@ try {
     db.close();
     return result;
   }, Array.from(fs.readFileSync(secondExportPath)));
-  assert.equal(finalDatabaseState.historyRows, 3, 're-import must replace the previous Numbers history, not duplicate it');
+  assert.equal(finalDatabaseState.historyRows, 5, 're-import must replace the previous Numbers history, not duplicate it');
   assert.equal(finalDatabaseState.transactionRows, 1, 're-import must leave live transactions untouched');
   assert.equal(finalDatabaseState.categoryRows, 2, 'unmatched historical categories must remain outside live categories');
   assert.deepEqual(finalDatabaseState.totals, { expense: 12502, income: 260000 });
@@ -205,6 +211,7 @@ try {
   assert.match(await analytics.locator('#incomeMetric').textContent(), /260\s?000/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
   assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
+  assert.match(await analytics.locator('#specialFlowMetric').textContent(), /203\s?700\s?000.*203\s?650\s?000/, 'analytics must show special input/output separately from Net');
   assert.equal(await analytics.locator('#categoryList img').count(), 0, 'untrusted historical category names must be rendered as text');
   assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category payload must not execute in analytics');
   assert.match(await analytics.locator('#categoryRows').innerText(), /Продукты/);
