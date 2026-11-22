@@ -15,11 +15,25 @@ const state = { SQL:null, db:null, dbName:'', fileHandle:null, dirty:false, sele
 const fmt = new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2});
 const esc = (v='') => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nowIso = () => new Date().toISOString();
+let sharedSnapshotTimer = null;
+async function saveSharedDatabaseSnapshot() {
+  if (!state.db || !window.BudgetSharedDb) return;
+  try {
+    const bytes = state.db.export();
+    await window.BudgetSharedDb.saveDatabase(state.dbName || 'MyBudget.budget', bytes);
+  } catch (error) {
+    console.warn('Analytics local database sync is unavailable:', error);
+  }
+}
+function scheduleSharedDatabaseSnapshot() {
+  clearTimeout(sharedSnapshotTimer);
+  sharedSnapshotTimer = setTimeout(() => { void saveSharedDatabaseSnapshot(); }, 500);
+}
 const isReady = () => !!state.db;
 
 function toast(message, bad=false){const el=$('toast');el.textContent=message;el.classList.toggle('bad',bad);el.classList.add('show');clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>el.classList.remove('show'),3600);}
 function showError(message){toast(message,true);console.error(message);}
-function setDirty(value=true){state.dirty=value;$('save-db').disabled=!state.db||!value;$('data-save').disabled=!state.db||!value;$('db-dot').classList.toggle('open',!!state.db&&!value);$('db-dot').classList.toggle('dirty',!!state.db&&value);$('db-state').textContent=state.db?(value?'Unsaved changes · save your database file':'Database open · all changes saved'):'Create a database or open your existing SQLite file';}
+function setDirty(value=true){state.dirty=value;$('save-db').disabled=!state.db||!value;$('data-save').disabled=!state.db||!value;$('db-dot').classList.toggle('open',!!state.db&&!value);$('db-dot').classList.toggle('dirty',!!state.db&&value);$('db-state').textContent=state.db?(value?'Unsaved changes · analytics syncs in this browser':'Database open · all changes saved'):'Create a database or open your existing SQLite file';if(value)scheduleSharedDatabaseSnapshot();else clearTimeout(sharedSnapshotTimer);}
 function setDbName(name){state.dbName=name||'MyBudget.budget';$('db-name').textContent=state.dbName;}
 function ownSbpNameMarkers(){if(!state.db)return[];const row=one(state.db,"SELECT value FROM web_metadata WHERE key='own_sbp_name_markers'");try{return row?JSON.parse(row.value):[];}catch{return[];}}
 function renderOwnSbpMarkers(){if(!state.db)return;const el=$('own-sbp-markers');if(el&&document.activeElement!==el)el.value=ownSbpNameMarkers().join('\n');}
@@ -40,7 +54,7 @@ async function loadGlobal(globalName,candidates){if(window[globalName])return nu
 async function loadSql(){if(state.SQL)return state.SQL;let lastError;let hasGlobal=typeof window.initSqlJs==='function';for(const candidate of SCRIPT_CANDIDATES.sql){try{if(!hasGlobal){await loadGlobal('initSqlJs',[candidate]);hasGlobal=true;}state.SQL=await window.initSqlJs({locateFile:file=>`${candidate.base}${file}`,useOldExtensionFunctions:true});return state.SQL;}catch(error){lastError=error;}}throw new Error(`SQLite engine could not be initialized from the same-origin /vendor folder. ${lastError?.message||''}`);}
 async function loadXlsx(){if(window.XLSX)return window.XLSX;await loadGlobal('XLSX',SCRIPT_CANDIDATES.xlsx);return window.XLSX;}
 async function loadPdf(){if(window.pdfjsLib)return window.pdfjsLib;let lastError;for(const candidate of SCRIPT_CANDIDATES.pdf){try{const library=await import(candidate.module);library.GlobalWorkerOptions.workerSrc=candidate.worker;window.pdfjsLib=library;return library;}catch(error){lastError=error;}}throw new Error(`PDF.js module could not be loaded from the same-origin /vendor folder. ${lastError?.message||''}`);}
-function attachDb(db,name,{dirty=false}={}){if(state.db&&state.db!==db){try{state.db.close();}catch{}}state.db=db;state.profile=readBudgetProfile(db);setDbName(name);state.selected.clear();setDirty(false);if(dirty)setDirty(true);renderAll();}
+function attachDb(db,name,{dirty=false}={}){if(state.db&&state.db!==db){try{state.db.close();}catch{}}state.db=db;state.profile=readBudgetProfile(db);setDbName(name);state.selected.clear();setDirty(false);if(dirty)setDirty(true);renderAll();void saveSharedDatabaseSnapshot();}
 async function newDatabase(){if(!guardUnsaved())return;try{const SQL=await loadSql();attachDb(createDatabase(SQL),'MyBudget.budget',{dirty:true});}catch(e){showError(e.message);}}
 async function openDatabaseFile(file){if(!file)return;if(!guardUnsaved())return;let db=null;try{const bytes=new Uint8Array(await file.arrayBuffer());const SQL=await loadSql();let dirty=false;if(file.name.toLowerCase().endsWith('.json')){const payload=JSON.parse(new TextDecoder().decode(bytes));db=importLegacyJson(SQL,payload);dirty=true;}else{db=openDatabase(SQL,bytes);dirty=databaseNeedsSave(db);}const txCount=Number(scalar(db,'SELECT COUNT(*) FROM transactions')||0);attachDb(db,file.name,{dirty});state.fileHandle=null;toast(dirty?`Database opened · ${txCount.toLocaleString('ru-RU')} records · migration changes need saving`:`Database opened · ${txCount.toLocaleString('ru-RU')} transaction records`);}catch(e){if(db){try{db.close();}catch{}}showError(`Could not open database: ${e.message}`);}}
 async function saveDatabase(){
@@ -53,7 +67,7 @@ async function saveDatabase(){
     verificationDb=new state.SQL.Database(bytes);
     const exportedCheck=String(scalar(verificationDb,'PRAGMA quick_check')||'');
     if(exportedCheck!=='ok')throw new Error(`Exported database integrity check failed: ${exportedCheck||'unknown result'}`);
-    const tables=['transactions','accounts','categories','import_batches','merchant_rules','merchant_labels','category_rules','recognized_accounts','transaction_delete_actions','web_metadata'];
+    const tables=['transactions','accounts','categories','import_batches','merchant_rules','merchant_labels','category_rules','recognized_accounts','transaction_delete_actions','web_metadata','numbers_history'];
     for(const table of tables){
       const before=Number(scalar(state.db,`SELECT COUNT(*) FROM ${table}`)||0);
       const after=Number(scalar(verificationDb,`SELECT COUNT(*) FROM ${table}`)||0);
@@ -68,14 +82,16 @@ async function saveDatabase(){
         const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'Budget Capture database',accept:{'application/vnd.sqlite3':['.budget','.sqlite3']}}]});
         const writable=await handle.createWritable();
         await writable.write(blob);await writable.close();
-        state.fileHandle=handle;setDbName(handle.name||filename);setDirty(false);updateStats();toast('Database saved and verified');return;
+        await window.BudgetSharedDb?.saveDatabase(handle.name||filename,bytes);
+        state.fileHandle=handle;setDbName(handle.name||filename);setDirty(false);updateStats();toast('Database saved and verified · Analytics synced');return;
       } catch(error) {
         if(error.name==='AbortError')return;
         console.warn('Save picker unavailable; falling back to download',error);
       }
     }
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-    setDbName(filename);setDirty(false);updateStats();toast('Database downloaded and verified. Replace the previous .budget file in your cloud drive.');
+    await window.BudgetSharedDb?.saveDatabase(filename,bytes);
+    setDbName(filename);setDirty(false);updateStats();toast('Database downloaded and verified · Analytics synced in this browser.');
   } catch(error) {
     showError(`Save failed: ${error.message}`);
   } finally {
