@@ -208,11 +208,11 @@ try {
   assert.equal(analyticsResponse.status(), 200, 'Financial Analytics page must be served from the Pages subpath');
   await analytics.locator('#manual-file').setInputFiles(secondExportPath);
   await analytics.waitForFunction(() => !document.querySelector('#dashboard').classList.contains('hidden'), null, { timeout: 20000 });
-  assert.match(await analytics.locator('#incomeMetric').textContent(), /260\\s?000/);
-  assert.match(await analytics.locator('#expenseMetric').textContent(), /12\\s?502/);
-  assert.match(await analytics.locator('#netMetric').textContent(), /247\\s?498/);
-  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\\s?700\\s?000/, 'analytics must show special inputs separately from Net');
-  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\\s?650\\s?000/, 'analytics must show special outputs separately from Net');
+  assert.match(await analytics.locator('#incomeMetric').textContent(), /260\s?000/);
+  assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
+  assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
+  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\s?700\s?000/, 'analytics must show special inputs separately from Net');
+  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
   assert.match(await analytics.locator('#manual-reference-status').textContent(), /В этой базе пока нет ручных сводок/);
 
