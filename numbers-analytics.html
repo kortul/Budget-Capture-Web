@@ -367,8 +367,16 @@ function renderChart(months){
  }).join('');
  $('chart-caption').textContent=selectedYear()==='all'?'Последние 12 месяцев истории':'Поступления и расходы за '+selectedYear()+' год';
 }
+function fillYearMonths(months){
+ if(selectedYear()==='all')return months;
+ const year=Number(selectedYear()),map=new Map(months.map(row=>[row.key,row]));
+ return Array.from({length:12},(_,index)=>{
+  const month=index+1,key=year+'-'+String(month).padStart(2,'0');
+  return map.get(key)||{key,year,month,income:0,expense:0,special_input:0,special_output:0};
+ });
+}
 function renderMonthly(rows){
- const months=rowMonthTotals(rows);
+ const months=fillYearMonths(rowMonthTotals(rows));
  $('monthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(row.income-row.expense>=0?'a-positive':'a-negative')+'">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет данных за этот период</td></tr>';
  renderChart(months);
 }
@@ -382,6 +390,7 @@ function renderLife(rows,monthsCount){
  const monthMap=new Map();
  for(const row of selected){const item=monthMap.get(row.month_key)||{year:row.year,month:row.month,expense:0,refund:0};item.expense+=row.amount;monthMap.set(row.month_key,item);}
  for(const row of rows.filter(r=>r.role==='income'&&/возврат/i.test(r.category))){const item=monthMap.get(row.month_key)||{year:row.year,month:row.month,expense:0,refund:0};item.refund+=row.amount;monthMap.set(row.month_key,item);}
+ if(selectedYear()!=='all'){const year=Number(selectedYear());for(let month=1;month<=12;month++){const key=year+'-'+String(month).padStart(2,'0');if(!monthMap.has(key))monthMap.set(key,{year,month,expense:0,refund:0});}}
  const monthly=[...monthMap.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
  $('lifeMonthlyRows').innerHTML=monthly.map(([,item])=>'<tr><td>'+escapeHtml(MONTHS[item.month-1]+' '+item.year)+'</td><td class="num">'+money(item.expense)+'</td><td class="num">'+money(item.refund)+'</td><td class="num">'+money(item.expense-item.refund)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий за этот период</td></tr>';
 }
@@ -404,7 +413,7 @@ function renderBusinessArea(group,prefix,rows){
  return result;
 }
 function renderShop(rows){
- const result=groupTotals('shop',rows),months=rowMonthTotals(result.rows);
+ const result=groupTotals('shop',rows),months=fillYearMonths(rowMonthTotals(result.rows));
  $('shopIncome').textContent=money(result.income);$('shopExpense').textContent=money(result.expense);$('shopNet').textContent=money(result.net);
  $('shopRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
  $('shopMonthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий магазина</td></tr>';
