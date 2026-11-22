@@ -245,10 +245,37 @@ try {
 
   await analytics.locator('#manual-file').setInputFiles(analyticsExportPath);
   await analytics.waitForFunction(() => document.querySelector('#sasha-shared-percent')?.value === '60', null, { timeout: 20000 });
+
+  // Opening Analytics from the main Budget Capture page must transfer the
+  // already-open database in memory; the user must not select the file twice.
+  const mainApp = await context.newPage();
+  mainApp.on('pageerror', error => pageErrors.push(error.message));
+  mainApp.on('request', request => {
+    if (new URL(request.url()).origin !== origin) externalRequests.push(request.url());
+  });
+  mainApp.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
+  await mainApp.goto(origin + basePath + 'index.html', { waitUntil: 'networkidle', timeout: 30000 });
+  await mainApp.locator('#open-file').setInputFiles(analyticsExportPath);
+  await mainApp.waitForFunction(() => document.querySelector('#db-name')?.textContent !== 'No database open', null, { timeout: 20000 });
+  const popupPromise = context.waitForEvent('page');
+  await mainApp.locator('#open-analytics').click();
+  const transferredAnalytics = await popupPromise;
+  transferredAnalytics.on('pageerror', error => pageErrors.push(error.message));
+  transferredAnalytics.on('request', request => {
+    if (new URL(request.url()).origin !== origin) externalRequests.push(request.url());
+  });
+  transferredAnalytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
+  await transferredAnalytics.waitForFunction(() => !document.querySelector('#dashboard')?.classList.contains('hidden'), null, { timeout: 20000 });
+  assert.match(await transferredAnalytics.locator('#incomeMetric').textContent(), /260\\s?000/, 'Analytics must receive the main app database without a second file selection');
+  assert.match(await transferredAnalytics.locator('#manual-reference-status').textContent(), /Ручные сводки загружены из выбранного \.budget/, 'the direct handoff must include manual Numbers summaries');
+  assert.match(await transferredAnalytics.locator('#database-name').textContent(), /MyBudget|Budget/i, 'the transferred database name must be displayed');
+  await transferredAnalytics.close();
+  await mainApp.close();
+
   assert.deepEqual(pageErrors, [], 'Numbers pages must not raise uncaught browser errors');
   assert.deepEqual(externalRequests, [], 'Numbers pages must load every runtime asset from the same origin');
   assert.deepEqual(failedRequests, [], 'Numbers page asset requests must not fail');
-  console.log('Numbers Chromium E2E: PASS · Excel preview · SQLite import/export · history replacement · transactions untouched · Analytics loads selected .budget · settings persist inside .budget');
+  console.log('Numbers Chromium E2E: PASS · Excel preview · SQLite import/export · history replacement · transactions untouched · Analytics loads selected .budget and receives the already-open app database without re-selection · settings persist inside .budget');
   await context.close();
 } finally {
   if (browser) await browser.close().catch(() => {});
