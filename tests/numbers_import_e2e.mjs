@@ -218,7 +218,7 @@ try {
   assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
   assert.equal(await analytics.locator('#manual-references').count(), 0, 'the illustrative manual summary section must not be displayed');
-  assert.equal(await analytics.locator('#range-from').inputValue(), '2024-01', 'analytics must default to the latest available year start');
+  assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
   assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты|Учебная категория/, 'monthly drilldown must show category totals');
 
@@ -269,6 +269,9 @@ try {
   transferredAnalytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   await transferredAnalytics.waitForFunction(() => !document.querySelector('#dashboard')?.classList.contains('hidden'), null, { timeout: 20000 });
   assert.match(await transferredAnalytics.locator('#incomeMetric').textContent(), /260\s?000/, 'Analytics must receive the main app database without a second file selection');
+  assert.equal(await transferredAnalytics.locator('#manual-references').count(), 0, 'the handoff must not display illustrative manual figures');
+  assert.ok(await transferredAnalytics.locator('#month-detail-title').textContent(), 'the handoff must render month detail');
+  assert.equal(await transferredAnalytics.locator('#manual-file').inputValue(), '', 'the handoff must avoid a second file selection');
   assert.match(await transferredAnalytics.locator('#database-name').textContent(), /MyBudget|Budget/i, 'the transferred database name must be displayed');
   await transferredAnalytics.close();
   await mainApp.close();
