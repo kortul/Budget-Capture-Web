@@ -414,7 +414,7 @@ function renderLoans(rows){
  const result=groupTotals('loans',rows);
  $('loanIncome').textContent=money(result.income);$('loanExpense').textContent=money(result.expense);$('loanNet').textContent=money(result.net);
  $('loanRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
- renderGroupYears('loans','loans');
+ renderGroupYears('loans','loan');
 }
 function renderYearRows(){function renderGroupYears(group,prefix){
  const tbody=$(prefix+'YearRows');
