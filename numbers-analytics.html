@@ -83,6 +83,7 @@
 .hidden{display:none!important}
 
 .a-range-presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.a-month-link{border:0;background:transparent;color:inherit;padding:0;text-align:left;font:inherit;font-weight:600;text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px;cursor:pointer}.a-month-link:hover{color:#9ec5ff;text-decoration-color:currentColor}
 .a-range-presets .button{white-space:nowrap}
 .a-chart{overflow-x:auto;grid-template-columns:repeat(var(--month-count,12),minmax(42px,1fr));scrollbar-width:thin;min-height:220px}
 .a-month{border:0;background:transparent;color:inherit;padding:5px 2px 0;cursor:pointer;border-radius:8px;min-width:0}
@@ -146,9 +147,9 @@
 </nav>
 
 <section class="a-grid" id="annual">
-  <div class="a-metric"><small>Доходы за год</small><strong id="incomeMetric">—</strong><div class="sub">Обычные поступления</div></div>
-  <div class="a-metric"><small>Расходы за год</small><strong id="expenseMetric">—</strong><div class="sub">Обычные расходы</div></div>
-  <div class="a-metric"><small>Баланс за год</small><strong id="netMetric">—</strong><div class="sub" id="netSub">Доходы минус расходы</div></div>
+  <div class="a-metric"><small>Поступления за период</small><strong id="incomeMetric">—</strong><div class="sub">Обычные поступления</div></div>
+  <div class="a-metric"><small>Расходы за период</small><strong id="expenseMetric">—</strong><div class="sub">Обычные расходы</div></div>
+  <div class="a-metric"><small>Баланс за период</small><strong id="netMetric">—</strong><div class="sub" id="netSub">Доходы минус расходы</div></div>
   <div class="a-metric"><small>Доля сбережений</small><strong id="rateMetric">—</strong><div class="sub">Баланс / доходы</div></div>
 </section>
 <div class="a-period-insights">
@@ -607,12 +608,12 @@ async function loadDatabaseBytes(bytes,name){
   $('database-name').textContent=dbName;
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
-  const oldExamples=readMetadata(opened,'numbers_manual_reference_v1');
-  if(oldExamples){opened.run("DELETE FROM web_metadata WHERE key='numbers_manual_reference_v1'");dbChanged=true;}
+  const oldExamples=readMetadata(db,'numbers_manual_reference_v1');
+  if(oldExamples){db.run("DELETE FROM web_metadata WHERE key='numbers_manual_reference_v1'");dbChanged=true;}
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
   setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+'.','ok');
   return true;
- }catch(error){try{opened?.close();}catch{}data=[];years=[];$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
+ }catch(error){try{opened?.close();}catch{}data=[];years=[];rangeFrom='';rangeTo='';selectedMonthKey='';$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
  finally{loading=false;}
 }
 function downloadDatabase(){
