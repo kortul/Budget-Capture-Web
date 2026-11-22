@@ -603,6 +603,26 @@ $('manual-file').addEventListener('change',async event=>{
 $('year').addEventListener('change',renderAll);
 $('save-settings').addEventListener('click',saveSettings);
 $('download-db').addEventListener('click',downloadDatabase);
-(async()=>{try{await loadSql();setStatus('SQLite готова. Выбери свой файл .budget — все отчёты загрузятся из него.');}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
+function listenForDatabaseFromBudgetCapture(){
+ const token=new URLSearchParams(location.search).get('bc_transfer');
+ const source=window.opener;
+ if(!token||!source)return false;
+ const receive=async event=>{
+  if(event.origin!==location.origin||event.source!==source||event.data?.type!=='BUDGET_CAPTURE_DATABASE'||event.data?.token!==token)return;
+  window.removeEventListener('message',receive);
+  try{
+   const loaded=await loadDatabaseBytes(event.data.bytes,event.data.name);
+   if(loaded){
+    const cleanUrl=new URL(location.href);cleanUrl.searchParams.delete('bc_transfer');
+    history.replaceState(null,'',cleanUrl.pathname+cleanUrl.search+cleanUrl.hash);
+   }
+  }catch(error){showError(error.message);setStatus('Не удалось получить базу из Budget Capture.','error');}
+ };
+ window.addEventListener('message',receive);
+ source.postMessage({type:'BUDGET_ANALYTICS_READY',token},location.origin);
+ setStatus('Получаю открытую базу из Budget Capture…');
+ return true;
+}
+(async()=>{try{await loadSql();if(!listenForDatabaseFromBudgetCapture())setStatus('SQLite готова. Открой аналитику из Budget Capture с открытой базой или выбери файл .budget здесь.');}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
 </script>
 </body></html>
