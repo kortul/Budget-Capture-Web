@@ -56,9 +56,7 @@ try {
     db.run('INSERT INTO categories(name) VALUES (?), (?), (?), (?)', ['Зарплата', 'Продукты', 'ВВОДЫ ДИМА СПЕЦ', 'ВЫВОДЫ ДИМА СПЕЦ']);
     db.run('CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)');
     db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['budget_profile_v1', JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'Продукты',kind:'expense'},{name:'ВВОДЫ ДИМА СПЕЦ',kind:'special_input'},{name:'ВЫВОДЫ ДИМА СПЕЦ',kind:'special_output'}],numbers:{specialInput:{category:'ВВОДЫ ДИМА СПЕЦ'},specialOutput:{category:'ВЫВОДЫ ДИМА СПЕЦ'}}})]);
-    const reportMonths = Array.from({length:12},(_,index)=>index+1);
-    const manualReference = {schemaVersion:1,lifeAnnualSummary:{year:2024,months:reportMonths,refunds:0,statedTotal:78},annualBalance:{year:2024,months:Array(12).fill(0),statedTotal:0},lifeCategories:{year:2024,items:[{name:'Учебная категория',total:12,sharePercent:100,averageMonthly:1}],statedTotal:12,statedAverageMonthly:1},sashaExpenses:{sharedCafeTaxiShare:0.75,items:[],statedTotal:0,statedAverageMonthly:0},shop:{year:2024,withdrawalsByMonth:Array(12).fill(0),depositsByMonth:Array(12).fill(0),statedWithdrawalsTotal:0,statedDepositsTotal:0,statedNet:0},credit:{sberForWorkBorrowed:0,lenaBorrowedSeparately:0,repaymentsByYear:[],statedRepaymentsTotal:0,finalOverpaymentBalance:0,note:''},projects:{items:[],statedPaidTotal:0,statedSpentTotal:0,statedProfitTotal:0,duration:''},additionalAnnualSeries:{monthly2026:Array(12).fill(0),stated2026Total:0,byYear:[],statedTotal:0},workBalance:{byYear:[],statedTotal:0}};
-    db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['numbers_manual_reference_v1', JSON.stringify(manualReference)]);
+    db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['numbers_manual_reference_v1', JSON.stringify({exampleOnly:true})]);
     db.run("CREATE TABLE transactions (id TEXT PRIMARY KEY, batch_id TEXT NOT NULL DEFAULT '', account TEXT NOT NULL DEFAULT '', tx_date TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', merchant TEXT NOT NULL DEFAULT '', merchant_key TEXT NOT NULL DEFAULT '', transaction_type TEXT NOT NULL DEFAULT 'unknown', source_ref TEXT NOT NULL DEFAULT '', amount REAL, currency TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'Не распределено', status TEXT NOT NULL DEFAULT 'Needs review', confidence REAL, source_file TEXT NOT NULL DEFAULT '', source_frame INTEGER, raw_text TEXT NOT NULL DEFAULT '', duplicate_of TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '', manually_adjusted INTEGER NOT NULL DEFAULT 0, highlighted_flag INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, delete_action_id TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT '')");
     db.run('INSERT INTO transactions(id, description) VALUES (?, ?)', ['sentinel-transaction', 'Must remain unchanged']);
     const bytes = Array.from(db.export());
@@ -220,7 +218,7 @@ try {
   assert.equal(await analytics.locator('#manual-references').count(), 0, 'the illustrative manual summary section must not be displayed');
   assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
-  assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты|Учебная категория/, 'monthly drilldown must show category totals');
+  assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'monthly drilldown must show category totals');
 
   await analytics.locator('#sasha-shared-percent').fill('60');
   await analytics.locator('#save-settings').click();
