@@ -134,7 +134,7 @@ try {
     });
     const db = new SQL.Database(new Uint8Array(bytes));
     const count = sql => Number(db.exec(sql)[0].values[0][0]);
-    const totals = db.exec("SELECT kind, SUM(amount) FROM numbers_history WHERE source='numbers' GROUP BY kind ORDER BY kind")[0].values;
+    const totals = db.exec("SELECT kind, SUM(amount) FROM numbers_history WHERE source='numbers' AND role IN ('income','expense') GROUP BY kind ORDER BY kind")[0].values;
     const result = {
       historyRows: count("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'"),
       transactionRows: count('SELECT COUNT(*) FROM transactions'),
@@ -183,7 +183,7 @@ try {
     });
     const db = new SQL.Database(new Uint8Array(bytes));
     const count = sql => Number(db.exec(sql)[0].values[0][0]);
-    const totals = db.exec("SELECT kind, SUM(amount) FROM numbers_history WHERE source='numbers' GROUP BY kind ORDER BY kind")[0].values;
+    const totals = db.exec("SELECT kind, SUM(amount) FROM numbers_history WHERE source='numbers' AND role IN ('income','expense') GROUP BY kind ORDER BY kind")[0].values;
     const result = {
       historyRows: count("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'"),
       transactionRows: count('SELECT COUNT(*) FROM transactions'),
