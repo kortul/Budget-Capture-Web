@@ -286,7 +286,7 @@ try {
     fixture.run("CREATE TABLE numbers_history (id TEXT PRIMARY KEY,source TEXT NOT NULL DEFAULT 'numbers',month_key TEXT NOT NULL,year INTEGER NOT NULL,month INTEGER NOT NULL,kind TEXT NOT NULL,category TEXT NOT NULL,amount REAL NOT NULL DEFAULT 0,role TEXT NOT NULL DEFAULT '',imported_at TEXT NOT NULL DEFAULT '')");
     fixture.run("CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)");
     fixture.run("CREATE TABLE transactions (id TEXT PRIMARY KEY,tx_date TEXT,amount REAL,currency TEXT,category TEXT,transaction_type TEXT,description TEXT,merchant TEXT,notes TEXT,raw_text TEXT,deleted_at TEXT)");
-    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)", [JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'KGR',kind:'other'},{name:'Остальные расходы',kind:'expense'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
+    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)", [JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'KGR',kind:'other'},{name:'Остальные расходы',kind:'expense'},{name:'Прочий доход',kind:'other'},{name:'Прочий расход',kind:'other'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
     const history = fixture.prepare('INSERT INTO numbers_history(id,source,month_key,year,month,kind,category,amount,role,imported_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
     const addHistory = (id,month,kind,category,amount,role=kind) => {
       const [year,monthNumber] = month.split('-').map(Number);
@@ -312,6 +312,8 @@ try {
     addTx('sep-internal','2026-09-12',-50000,'Зарплата','internal_transfer','internal transfer');
     addTx('nov-income','2026-11-01',50000,'Зарплата','income');
     addTx('nov-expense','2026-11-02',-10000,'Остальные расходы');
+    addTx('dec-other-income','2026-12-01',41000,'Прочий доход','income');
+    addTx('dec-other-expense','2026-12-02',-12000,'Прочий расход','expense');
     addTx('internal','2026-10-20',-999999,'Зарплата','internal_transfer','internal transfer');
     tx.run(['deleted','2026-10-30',-500000,'RUB','Остальные расходы','expense','','','','','2026-10-31']);
     tx.free();
@@ -320,9 +322,16 @@ try {
     await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
     return document.querySelector('#status')?.textContent || '';
   });
-  assert.match(ledgerStatus, /2 мес\. Numbers \/ 2 мес\. транзакции · пропущено валютных операций не в RUB: 1/, 'Analytics must identify source months and disclose excluded foreign-currency transactions');
+  assert.match(ledgerStatus, /2 мес\. Numbers \/ 3 мес\. транзакции · пропущено валютных операций не в RUB: 1/, 'Analytics must identify source months and disclose excluded foreign-currency transactions');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-11');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-12');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /41.?000/, 'an other-kind category must still contribute income according to transaction_type');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /12.?000/, 'an other-kind category must still contribute expenses according to transaction_type');
+  assert.match(await ledgerAnalytics.locator('#month-overall-net').textContent(), /29.?000/, 'other-kind cash flows must affect monthly net');
+  assert.match(await ledgerAnalytics.locator('#month-income-list').textContent(), /Прочий доход/, 'other-kind income must remain visible under its category name');
+  assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Прочий расход/, 'other-kind expense must remain visible under its category name');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-10');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /312.?366,88/, 'October income must come from the transaction ledger');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /236.?620,17/, 'October expenses must be recalculated from transactions, including the positive KGR transaction');
