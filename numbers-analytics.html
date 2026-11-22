@@ -204,37 +204,62 @@
   <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th><th class="num">Доля сбережений</th><th class="num">Спец. вводы</th><th class="num">Спец. выводы</th></tr></thead><tbody id="yearRows"></tbody></table></div>
 </section>
 
-<section class="a-card">
-  <div class="a-section-head"><div><h2>Сводки из старой таблицы Numbers</h2><p>Ручные исторические значения, переданные отдельно от помесячных категорий</p></div></div>
-  <div class="a-note">Эти значения перенесены из твоей сводки как справочные. Они не пересчитываются по категориям автоматически и не входят повторно в общий баланс.</div>
-  <div class="a-manual-grid" style="margin-top:16px">
-    <div><h3>Проекты, кредиты и займы</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Проект / обязательство</th><th class="num">Оплачено</th><th class="num">Потрачено</th><th class="num">Прибыль</th></tr></thead><tbody>
-      <tr><td>Fresh Grill</td><td class="num">727 000 ₽</td><td class="num">552 365 ₽</td><td class="num a-positive">174 635 ₽</td></tr>
-      <tr><td>Дроны</td><td class="num">2 000 000 ₽</td><td class="num">1 578 093 ₽</td><td class="num a-positive">421 907 ₽</td></tr>
-      <tr><td>Alita</td><td class="num">7 535 040 ₽</td><td class="num">5 584 733 ₽</td><td class="num a-positive">1 950 307 ₽</td></tr>
-      <tr><td>Суд</td><td class="num">855 500 ₽</td><td class="num">1 465 000 ₽</td><td class="num a-negative">−609 500 ₽</td></tr>
-      <tr><td>Кредит Сбер</td><td class="num">1 787 700 ₽</td><td class="num">2 206 201 ₽</td><td class="num a-negative">−418 501 ₽</td></tr>
-      <tr><td>Кредит Лены</td><td class="num">800 000 ₽</td><td class="num">800 000 ₽</td><td class="num">0 ₽</td></tr>
-      <tr class="total-row"><td>Итого · 36 месяцев</td><td class="num">13 705 240 ₽</td><td class="num">12 186 392 ₽</td><td class="num a-positive">1 518 848 ₽</td></tr>
-    </tbody></table></div><p class="a-small">По кредиту Лены в исходной таблице указано: «Ещё не вернул, но здесь пишу как вернул». По Alita срок: декабрь 2020 — 2024.</p></div>
-    <div><h3>Возвраты по кредитам</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Возвраты</th></tr></thead><tbody>
-      <tr><td>2023</td><td class="num">681 000 ₽</td></tr><tr><td>2024</td><td class="num">637 424 ₽</td></tr><tr><td>2025</td><td class="num">721 213 ₽</td></tr><tr><td>2026</td><td class="num">166 564 ₽</td></tr>
-      <tr class="total-row"><td>Всего</td><td class="num">2 206 201 ₽</td></tr>
-    </tbody></table></div>
-    <p class="a-small">Возвраты за январь–март 2026: 56 141 ₽, 55 520 ₽ и 54 903 ₽. Всего за эти три месяца — 166 564 ₽. Кредит Сбер для работы: взято 1 787 700 ₽; дополнительно указан кредит Лены 800 000 ₽.</p></div>
+<section class="a-card" id="manual-references">
+  <div class="a-section-head"><div><h2>Сводки из старой таблицы Numbers</h2><p>Личные исторические значения хранятся отдельно от публичного кода приложения</p></div></div>
+  <div class="a-controls">
+    <label>Загрузить личный файл сводок (.json)<input id="manual-reference-file" type="file" accept=".json,application/json"></label>
+    <span class="a-pill" id="manual-reference-status">Личный файл ещё не загружен</span>
   </div>
-  <details class="a-details"><summary>Дополнительные годовые значения из старого отчёта</summary>
-    <div class="a-manual-grid" style="margin-top:14px">
-      <div><h3>Годовой ряд 1</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Значение</th></tr></thead><tbody>
-        <tr><td>2021</td><td class="num">−5 657 347 ₽</td></tr><tr><td>2022</td><td class="num">4 680 068 ₽</td></tr><tr><td>2023</td><td class="num">920 879 ₽</td></tr><tr><td>2024</td><td class="num">44 662 ₽</td></tr><tr><td>2025</td><td class="num">6 775 ₽</td></tr><tr><td>2026</td><td class="num">31 479 ₽</td></tr><tr class="total-row"><td>Итого указано в Numbers</td><td class="num">−49 625 ₽</td></tr>
-      </tbody></table></div><p class="a-small">В сообщении заголовок этого ряда был неполным, поэтому здесь сохранены значения без самостоятельной трактовки.</p><p class="a-note">Проверка арифметики: перечисленные значения по годам дают 26 516 ₽, а в исходной ячейке указан итог −49 625 ₽. Разница составляет −76 141 ₽; возможно, в исходной формуле участвовали дополнительные строки.</p></div>
-      <div><h3>Баланс по работе — годовые значения</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Баланс</th></tr></thead><tbody>
-        <tr><td>2021</td><td class="num">2 387 056 ₽</td></tr><tr><td>2022</td><td class="num">3 347 728 ₽</td></tr><tr><td>2023</td><td class="num">−2 177 212 ₽</td></tr><tr><td>2024</td><td class="num">−452 360 ₽</td></tr><tr><td>2025</td><td class="num">973 295 ₽</td></tr><tr><td>2026</td><td class="num">1 028 092 ₽</td></tr><tr class="total-row"><td>Итого указано в Numbers</td><td class="num">4 133 304 ₽</td></tr>
-      </tbody></table></div><p class="a-note">Проверка арифметики: сумма всех шести перечисленных лет составляет 5 106 599 ₽. Указанный итог 4 133 304 ₽ равен сумме без строки 2025 (+973 295 ₽). Возможно, 2025 в исходной формуле не включён.</p></div>
+  <div class="a-note">Этот JSON-файл хранится только в локальном хранилище браузера. Он не добавляется в GitHub Pages и не меняет базу .budget. Загрузить его достаточно один раз на этом устройстве и в этом браузере.</div>
+  <div id="manual-reference-content" class="hidden">
+    <div class="a-manual-grid" style="margin-top:16px">
+      <div>
+        <h3>Расходы только на жизнь · помесячно</h3><p class="a-small" id="manual-life-year"></p>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Расходы</th></tr></thead><tbody id="manual-life-months"></tbody><tfoot id="manual-life-total"></tfoot></table></div>
+        <p class="a-small" id="manual-life-refunds"></p>
+      </div>
+      <div>
+        <h3>Баланс за год · помесячно</h3><p class="a-small" id="manual-balance-year"></p>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Баланс</th></tr></thead><tbody id="manual-balance-months"></tbody><tfoot id="manual-balance-total"></tfoot></table></div>
+      </div>
+      <div>
+        <h3>Категории расходов на жизнь</h3><p class="a-small" id="manual-life-categories-year"></p>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Всего</th><th class="num">Доля</th><th class="num">В месяц</th></tr></thead><tbody id="manual-life-categories"></tbody><tfoot id="manual-life-categories-total"></tfoot></table></div>
+      </div>
+      <div>
+        <h3>Расходы Саши</h3>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Учтено</th><th class="num">Доля</th><th class="num">В месяц</th></tr></thead><tbody id="manual-sasha-categories"></tbody><tfoot id="manual-sasha-total"></tfoot></table></div>
+        <p class="a-small" id="manual-sasha-note"></p>
+      </div>
+      <div>
+        <h3>Магазин · вводы и выводы</h3><p class="a-small" id="manual-shop-year"></p>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Вводы</th><th class="num">Выводы</th><th class="num">Разница</th></tr></thead><tbody id="manual-shop-months"></tbody><tfoot id="manual-shop-total"></tfoot></table></div>
+      </div>
+      <div>
+        <h3>Кредиты и возвраты</h3>
+        <div id="manual-credit-summary" class="a-summary-grid"></div>
+        <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Возвраты</th></tr></thead><tbody id="manual-credit-years"></tbody><tfoot id="manual-credit-years-total"></tfoot></table></div>
+        <p class="a-small" id="manual-credit-month-note"></p>
+      </div>
+      <div>
+        <h3>Проекты и обязательства</h3>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Проект</th><th class="num">Оплачено</th><th class="num">Потрачено</th><th class="num">Прибыль</th><th>Сроки / примечание</th></tr></thead><tbody id="manual-projects"></tbody><tfoot id="manual-projects-total"></tfoot></table></div>
+        <p class="a-small" id="manual-project-duration"></p>
+      </div>
+      <div>
+        <h3>Дополнительный показатель · название не указано</h3>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц 2026</th><th class="num">Значение</th></tr></thead><tbody id="manual-extra-months"></tbody><tfoot id="manual-extra-months-total"></tfoot></table></div>
+        <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Значение</th></tr></thead><tbody id="manual-extra-years"></tbody><tfoot id="manual-extra-years-total"></tfoot></table></div>
+        <p class="a-small" id="manual-extra-note"></p>
+      </div>
+      <div>
+        <h3>Баланс по работе · годовые значения</h3>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Баланс</th></tr></thead><tbody id="manual-work-years"></tbody><tfoot id="manual-work-years-total"></tfoot></table></div>
+        <p class="a-small" id="manual-work-note"></p>
+      </div>
     </div>
-  </details>
+  </div>
 </section>
-
 <section class="a-card" id="report-settings">
   <div class="a-section-head"><div><h2>Настройка состава отчётов</h2><p>Выбери, какие категории относятся к жизни, расходам Саши, работе, магазину и кредитам</p></div></div>
   <details id="settings-details" class="a-details">
@@ -443,6 +468,80 @@ function renderYearRows(){function renderGroupYears(group,prefix){
   return '<tr><td>'+row.year+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(net>=0?'a-positive':'a-negative')+'">'+money(net)+'</td><td class="num">'+rate.toFixed(1).replace('.',',')+'%</td><td class="num">'+money(row.special_input)+'</td><td class="num">'+money(row.special_output)+'</td></tr>';
  }).join('');
 }
+
+function renderManualReference(reference){
+ const content=$('manual-reference-content');
+ if(!reference){content.classList.add('hidden');return;}
+ const yearLabel=year=>year?String(year)+' год':'Год в исходной сводке не указан';
+ const months=MONTHS;
+ const monthTable=(values)=>values.map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num">'+money(value)+'</td></tr>').join('');
+ const totalRow=(label,value,cols=2)=>'<tr class="total-row"><td>'+escapeHtml(label)+'</td><td class="num">'+money(value)+'</td></tr>';
+ const life=reference.lifeAnnualSummary||{};
+ $('manual-life-year').textContent=yearLabel(life.year);
+ $('manual-life-months').innerHTML=monthTable(life.months||[]);
+ $('manual-life-total').innerHTML=totalRow('Итого по исходной таблице',life.statedTotal||0);
+ $('manual-life-refunds').textContent='Возвраты, указанные отдельно: '+money(life.refunds||0);
+ const balance=reference.annualBalance||{};
+ $('manual-balance-year').textContent=yearLabel(balance.year);
+ $('manual-balance-months').innerHTML=(balance.months||[]).map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num '+(value<0?'a-negative':'a-positive')+'">'+money(value)+'</td></tr>').join('');
+ $('manual-balance-total').innerHTML=totalRow('Итого по исходной таблице',balance.statedTotal||0);
+ const cats=reference.lifeCategories||{};
+ $('manual-life-categories-year').textContent=yearLabel(cats.year);
+ $('manual-life-categories').innerHTML=(cats.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+Number(item.sharePercent||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+'%</td><td class="num">'+money(item.averageMonthly)+'</td></tr>').join('');
+ $('manual-life-categories-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(cats.statedTotal||0)+'</td><td class="num">—</td><td class="num">'+money(cats.statedAverageMonthly||0)+'</td></tr>';
+ const sasha=reference.sashaExpenses||{};
+ $('manual-sasha-categories').innerHTML=(sasha.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+(item.note?' <span class="a-pill">'+escapeHtml(item.note)+'</span>':'')+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+Number(item.sharePercent||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+'%</td><td class="num">'+money(item.averageMonthly)+'</td></tr>').join('');
+ $('manual-sasha-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(sasha.statedTotal||0)+'</td><td class="num">100%</td><td class="num">'+money(sasha.statedAverageMonthly||0)+'</td></tr>';
+ $('manual-sasha-note').textContent='Для кафе и такси применялась доля '+Math.round((sasha.sharedCafeTaxiShare||0)*100)+'% от общих расходов.';
+ const shop=reference.shop||{};
+ $('manual-shop-year').textContent=yearLabel(shop.year);
+ $('manual-shop-months').innerHTML=(shop.withdrawalsByMonth||[]).map((withdrawal,index)=>{const deposit=Number(shop.depositsByMonth?.[index]||0);return '<tr><td>'+months[index]+'</td><td class="num">'+money(deposit)+'</td><td class="num">'+money(withdrawal)+'</td><td class="num">'+money(deposit-withdrawal)+'</td></tr>';}).join('');
+ $('manual-shop-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(shop.statedDepositsTotal||0)+'</td><td class="num">'+money(shop.statedWithdrawalsTotal||0)+'</td><td class="num">'+money(shop.statedNet||0)+'</td></tr>';
+ const credit=reference.credit||{};
+ $('manual-credit-summary').innerHTML=[
+  ['Кредит Сбер для работы · получено',money(credit.sberForWorkBorrowed||0)],
+  ['Кредит Лены · отдельно указано',money(credit.lenaBorrowedSeparately||0)],
+  ['Итоговая переплата за кредит',money(credit.finalOverpaymentBalance||0)]
+ ].map(([label,value])=>'<div class="a-summary"><small>'+label+'</small><strong>'+value+'</strong></div>').join('');
+ $('manual-credit-years').innerHTML=(credit.repaymentsByYear||[]).map(row=>'<tr><td>'+row.year+'</td><td class="num">'+money(row.amount)+'</td></tr>').join('');
+ $('manual-credit-years-total').innerHTML=totalRow('Всего возвратов',credit.statedRepaymentsTotal||0);
+ $('manual-credit-month-note').textContent=credit.note||'';
+ const projects=reference.projects||{};
+ $('manual-projects').innerHTML=(projects.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+'</td><td class="num">'+money(item.paid)+'</td><td class="num">'+money(item.spent)+'</td><td class="num '+(item.profit<0?'a-negative':'a-positive')+'">'+money(item.profit)+'</td><td>'+escapeHtml([item.term,item.note].filter(Boolean).join(' · '))+'</td></tr>').join('');
+ $('manual-projects-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(projects.statedPaidTotal||0)+'</td><td class="num">'+money(projects.statedSpentTotal||0)+'</td><td class="num">'+money(projects.statedProfitTotal||0)+'</td><td>'+escapeHtml(projects.duration||'')+'</td></tr>';
+ $('manual-project-duration').textContent='Продолжительность в исходной сводке: '+(projects.duration||'не указана')+'.';
+ const extra=reference.additionalAnnualSeries||{};
+ $('manual-extra-months').innerHTML=(extra.monthly2026||[]).map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num">'+money(value)+'</td></tr>').join('');
+ $('manual-extra-months-total').innerHTML=totalRow('Итого за 2026 год',extra.stated2026Total||0);
+ $('manual-extra-years').innerHTML=(extra.byYear||[]).map(row=>'<tr><td>'+row.year+'</td><td class="num">'+money(row.amount)+'</td></tr>').join('');
+ $('manual-extra-years-total').innerHTML=totalRow('Итого указано в Numbers',extra.statedTotal||0);
+ const extraCalculated=sum(extra.byYear||[],row=>Number(row.amount||0)),extraDiff=Number(extra.statedTotal||0)-extraCalculated;
+ $('manual-extra-note').textContent='Сумма перечисленных годовых значений: '+money(extraCalculated)+'. Отличие от указанного итога: '+money(extraDiff)+'. Заголовок показателя в исходном тексте отсутствует.';
+ const work=reference.workBalance||{};
+ $('manual-work-years').innerHTML=(work.byYear||[]).map(row=>'<tr><td>'+row.year+'</td><td class="num '+(row.amount<0?'a-negative':'a-positive')+'">'+money(row.amount)+'</td></tr>').join('');
+ $('manual-work-years-total').innerHTML=totalRow('Итого указано в Numbers',work.statedTotal||0);
+ const workCalculated=sum(work.byYear||[],row=>Number(row.amount||0)),workDiff=Number(work.statedTotal||0)-workCalculated;
+ $('manual-work-note').textContent='Сумма перечисленных годовых значений: '+money(workCalculated)+'. Отличие от указанного итога: '+money(workDiff)+'.';
+ content.classList.remove('hidden');
+}
+async function loadManualReference(){
+ try{
+  const saved=await window.BudgetSharedDb?.loadSetting('analytics-manual-reference-v1');
+  if(saved){renderManualReference(saved);$('manual-reference-status').textContent='Личная сводка загружена из локального хранилища браузера';}
+ }catch(error){$('manual-reference-status').textContent='Не удалось прочитать личную сводку: '+error.message;}
+}
+async function importManualReference(event){
+ const file=event.target.files?.[0];if(!file)return;
+ try{
+  const payload=JSON.parse(await file.text());
+  if(payload?.schemaVersion!==1||!payload.lifeAnnualSummary||!payload.lifeCategories||!payload.projects)throw new Error('Формат файла Numbers не распознан.');
+  await window.BudgetSharedDb?.saveSetting('analytics-manual-reference-v1',payload);
+  renderManualReference(payload);
+  $('manual-reference-status').textContent='Личная сводка сохранена локально · '+file.name;
+ }catch(error){$('manual-reference-status').textContent='Не удалось загрузить сводку: '+error.message;}
+ event.target.value='';
+}
+
 function renderAll(){
  const year=selectedYear(),rows=filterYear(data,year);
  const stats=totalsFor(rows),months=new Set(rows.map(row=>row.month_key)).size,monthsCount=year==='all'?months:12;
@@ -518,9 +617,10 @@ $('manual-file').addEventListener('change',async event=>{
 });
 $('year').addEventListener('change',renderAll);
 $('save-settings').addEventListener('click',saveSettings);
+$('manual-reference-file').addEventListener('change',importManualReference);
 if(window.BudgetSharedDb?.subscribe)unsubscribe=window.BudgetSharedDb.subscribe(()=>{void reloadFromLocalCache();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void reloadFromLocalCache();});
 window.addEventListener('focus',()=>{void reloadFromLocalCache();});
-(async()=>{try{await loadSql();await loadFromLocalCache();}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
+(async()=>{try{await loadSql();await Promise.all([loadFromLocalCache(),loadManualReference()]);}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
 </script>
 </body></html>
