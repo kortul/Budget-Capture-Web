@@ -32,6 +32,7 @@ assert.match(analytics,/function renderMonthDetail\(\)/,'monthly drilldown must 
 assert.match(analytics,/const MONTH_DETAIL_MANUAL_RULES=\{/,'monthly no-shop calculation must use the manually specified income and expense category lists, not the configurable shop tags');
 assert.match(analytics,/function noShopTotals\(rows\)[\s\S]*?const ledger=monthCategoriesWithoutShop\(rows\)/,'no-shop net must be calculated from the manual ledger');
 assert.match(analytics,/function monthCategoriesWithoutShop\(monthRows\)[\s\S]*?MONTH_DETAIL_MANUAL_RULES\[side\]/,'the selected month must use the fixed manual list and represent missing categories as zero');
+assert.match(analytics,/function renderMonthCategoryList\\(targetId,items,role\\)/,'monthly drilldown must define the renderer used for both manual category ledgers');
 assert.match(analytics,/aliases:\['Наличные взнос','Налиные взнос'\]/,'cash deposit category spelling variants must map to the same manual line');
 assert.match(analytics,/id="month-overall-net"[\s\S]*id="month-no-shop-net"[\s\S]*id="month-sasha-expense"[\s\S]*id="month-dima-net"/,'the monthly snapshot must expose the four requested priority metrics');
 assert.match(analytics,/id="month-income-list"[\s\S]*id="month-expense-list"/,'the monthly snapshot must list all income and expense categories without the shop');

@@ -387,7 +387,7 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
   </div>
   <div class="a-month-focus-grid">
     <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong><span class="a-month-metric-note">Все обычные категории, включая магазин</span></article>
-    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Доходы за вычетом расходов (без магазина)</span><strong id="month-no-shop-net">—</strong><span class="a-month-metric-note">Исключены категории, отмеченные как магазин</span></article>
+    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Доходы за вычетом расходов (без магазина)</span><strong id="month-no-shop-net">—</strong><span class="a-month-metric-note">Только фиксированный ручной список категорий, независимо от настроек магазина</span></article>
     <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong><span class="a-month-metric-note">Сумма строки «Саша Расходы» в Numbers</span></article>
     <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong><span class="a-month-metric-note">Вводы минус выводы</span></article>
   </div>
@@ -708,6 +708,18 @@ function comparisonText(current,previous){
  if(previous===null)return 'Нет данных за предыдущий месяц';
  const difference=current-previous,percent=previous?difference/Math.abs(previous)*100:null;
  return (difference>0?'+':'')+money(difference)+(percent===null?'':' · '+(percent>0?'+':'')+percent.toFixed(1).replace('.',',')+'%');
+}
+
+
+function renderMonthCategoryList(targetId,items,role){
+ const target=$(targetId);if(!target)return;
+ const list=Array.isArray(items)?items:[];
+ const maximum=Math.max(1,...list.map(item=>Math.max(0,Number(item.total)||0)));
+ target.innerHTML=list.map(item=>{
+  const total=Math.max(0,Number(item.total)||0),isZero=total===0;
+  const width=isZero?0:Math.max(1,total/maximum*100),category=String(item.category??'');
+  return '<div class="a-month-category-row'+(isZero?' is-zero':'')+'" data-role="'+escapeHtml(role)+'" data-category="'+escapeHtml(category)+'"><span class="a-month-category-name" title="'+escapeHtml(category)+'">'+escapeHtml(category)+'</span><span class="a-month-category-track"><i style="width:'+width.toFixed(1)+'%"></i></span><strong class="a-month-category-value">'+money(total)+'</strong></div>';
+ }).join('')||'<div class="a-viz-empty">Нет категорий в ручном списке</div>';
 }
 
 function renderMonthDetail(){
