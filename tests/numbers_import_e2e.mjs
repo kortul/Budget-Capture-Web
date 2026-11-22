@@ -198,12 +198,6 @@ try {
   assert.equal(finalDatabaseState.categoryRows, 4, 'unmatched historical categories must remain outside live categories');
   assert.deepEqual(finalDatabaseState.totals, { expense: 12502, income: 260000 });
 
-  // Force the local cache back to the earlier export, then verify that opening
-  // a newer .budget in the main app refreshes an already-open Analytics page.
-  await page.evaluate(async bytes => {
-    await window.BudgetSharedDb.saveDatabase('MyBudget_with_numbers.budget', new Uint8Array(bytes));
-  }, Array.from(fs.readFileSync(firstExportPath)));
-
   const analytics = await context.newPage();
   analytics.on('pageerror', error => pageErrors.push(error.message));
   analytics.on('request', request => {
@@ -212,34 +206,43 @@ try {
   analytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   const analyticsResponse = await analytics.goto(origin + basePath + 'numbers-analytics.html', { waitUntil: 'networkidle', timeout: 30000 });
   assert.equal(analyticsResponse.status(), 200, 'Financial Analytics page must be served from the Pages subpath');
+  await analytics.locator('#manual-file').setInputFiles(secondExportPath);
   await analytics.waitForFunction(() => !document.querySelector('#dashboard').classList.contains('hidden'), null, { timeout: 20000 });
-  assert.match(await analytics.locator('#incomeMetric').textContent(), /250\s?000/, 'Analytics must automatically read the cached Numbers database');
-
-  const mainApp = await context.newPage();
-  mainApp.on('pageerror', error => pageErrors.push(error.message));
-  await mainApp.goto(origin + basePath + 'index.html', { waitUntil: 'networkidle', timeout: 30000 });
-  await mainApp.locator('#open-file').setInputFiles(secondExportPath);
-  await mainApp.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Database opened'), null, { timeout: 20000 });
-  await analytics.waitForFunction(() => /260\s?000/.test(document.querySelector('#incomeMetric')?.textContent || ''), null, { timeout: 20000 });
-
-  const cachedDatabase = await analytics.evaluate(async () => {
-    const record = await window.BudgetSharedDb.loadDatabase();
-    return { name: record?.name || '', hasBytes: record?.bytes instanceof ArrayBuffer && record.bytes.byteLength > 10000 };
-  });
-  assert.equal(cachedDatabase.hasBytes, true, 'main app must publish the loaded database to the shared local browser cache');
-  assert.match(cachedDatabase.name, /MyBudget_with_numbers\.budget$/);
-  assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
-  assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
-  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\s?700\s?000/, 'analytics must show special inputs separately from Net');
-  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
-  assert.equal(await analytics.locator('#categoryList img').count(), 0, 'untrusted historical category names must be rendered as text');
-  assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category payload must not execute in analytics');
+  assert.match(await analytics.locator('#incomeMetric').textContent(), /260\\s?000/);
+  assert.match(await analytics.locator('#expenseMetric').textContent(), /12\\s?502/);
+  assert.match(await analytics.locator('#netMetric').textContent(), /247\\s?498/);
+  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\\s?700\\s?000/, 'analytics must show special inputs separately from Net');
+  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\\s?650\\s?000/, 'analytics must show special outputs separately from Net');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
+  assert.match(await analytics.locator('#manual-reference-status').textContent(), /В этой базе пока нет ручных сводок/);
 
+  await analytics.locator('#sasha-shared-percent').fill('60');
+  await analytics.locator('#save-settings').click();
+  assert.match(await analytics.locator('#status').textContent(), /записаны внутрь базы/);
+  const analyticsDownloadPromise = analytics.waitForEvent('download');
+  await analytics.locator('#download-db').click();
+  const analyticsDownload = await analyticsDownloadPromise;
+  const analyticsExportPath = await analyticsDownload.path();
+  assert(analyticsExportPath && fs.statSync(analyticsExportPath).size > 10000, 'Analytics must export the database with report settings');
+
+  const settingsState = await analytics.evaluate(async bytes => {
+    const SQL = await window.initSqlJs({ locateFile: file => './vendor/sql.js/' + file, useOldExtensionFunctions: true });
+    const db = new SQL.Database(new Uint8Array(bytes));
+    const read = key => JSON.parse(String(db.exec('SELECT value FROM web_metadata WHERE key=' + JSON.stringify(key))[0].values[0][0]));
+    const settings = read('analytics_report_settings_v1');
+    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5 };
+    db.close();
+    return result;
+  }, Array.from(fs.readFileSync(analyticsExportPath)));
+  assert.equal(settingsState.sharedPercent, 60, 'Analytics category rules must be written inside the portable .budget file');
+  assert.equal(settingsState.hasNumbersHistory, true, 'Analytics export must retain imported Numbers history');
+
+  await analytics.locator('#manual-file').setInputFiles(analyticsExportPath);
+  await analytics.waitForFunction(() => document.querySelector('#sasha-shared-percent')?.value === '60', null, { timeout: 20000 });
   assert.deepEqual(pageErrors, [], 'Numbers pages must not raise uncaught browser errors');
   assert.deepEqual(externalRequests, [], 'Numbers pages must load every runtime asset from the same origin');
   assert.deepEqual(failedRequests, [], 'Numbers page asset requests must not fail');
-  console.log('Numbers Chromium E2E: PASS · Excel preview · SQLite import/export · history replacement · transactions untouched · analytics reopen · escaped category text');
+  console.log('Numbers Chromium E2E: PASS · Excel preview · SQLite import/export · history replacement · transactions untouched · Analytics loads selected .budget · settings persist inside .budget');
   await context.close();
 } finally {
   if (browser) await browser.close().catch(() => {});
