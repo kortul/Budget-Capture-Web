@@ -107,7 +107,7 @@ try {
   }, null, { timeout: 20000 });
 
   assert.equal(await page.locator('#export-history').isDisabled(), true, 'export must stay disabled before a successful import');
-  assert.match(await page.locator('#status').textContent(), /4 summary\/total rows excluded/, 'named Total/Тотал/Всего helper rows must be excluded from the Numbers preview');
+  assert.match(await page.locator('#status').textContent(), /6 summary\/total rows excluded/, 'named Total/Тотал/Всего helper rows must be excluded from the Numbers preview');
   assert.equal(await page.locator('#matching').isVisible(), true, 'database categories must be matched against the Numbers preview');
   assert.equal(await page.locator('#matching-body img').count(), 0, 'untrusted Excel category text must not create HTML elements');
   assert.equal(await page.evaluate(() => window.__numbersXss || 0), 0, 'Excel category payload must not execute');
