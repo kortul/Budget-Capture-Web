@@ -300,6 +300,10 @@ try {
     addHistory('oct-kgr','2026-10','expense','KGR',96784.78);
     addHistory('oct-other','2026-10','expense','Остальные расходы',180835.39);
     addHistory('oct-stale','2026-10','expense','Numbers only October',123);
+    addHistory('jun-income','2026-06','income','Зарплата',8000);
+    addHistory('jun-expense','2026-06','expense','Еда',3000);
+    addHistory('jul-income','2026-07','income','Зарплата',7000);
+    addHistory('jul-expense','2026-07','expense','Еда',2500);
     history.free();
     const tx = fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
     const addTx = (id,date,amount,category,type='expense',description='',currency='RUB') =>
@@ -314,6 +318,11 @@ try {
     addTx('nov-expense','2026-11-02',-10000,'Остальные расходы');
     addTx('dec-other-income','2026-12-01',41000,'Прочий доход','income');
     addTx('dec-other-expense','2026-12-02',-12000,'Прочий расход','expense');
+    addTx('sep-transfer-type','2026-09-13',-30000,'Зарплата','transfer','ordinary transfer label');
+    addTx('sep-category-transfer','2026-09-14',-40000,'Внутренний перевод (не расход)','expense','uncategorized movement');
+    addTx('oct-failed-review','2026-10-29',-50000,'Остальные расходы','review','Unable to transfer to card');
+    addTx('jun-zero','2026-06-05',0,'Зарплата','income');
+    addTx('jul-failed-review','2026-07-02',-8000,'Не распределено','review','Unable to transfer to card');
     addTx('internal','2026-10-20',-999999,'Зарплата','internal_transfer','internal transfer');
     tx.run(['deleted','2026-10-30',-500000,'RUB','Остальные расходы','expense','','','','','2026-10-31']);
     tx.free();
@@ -322,7 +331,7 @@ try {
     await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
     return document.querySelector('#status')?.textContent || '';
   });
-  assert.match(ledgerStatus, /2 мес\. Numbers \/ 3 мес\. транзакции · пропущено валютных операций не в RUB: 1/, 'Analytics must identify source months and disclose excluded foreign-currency transactions');
+  assert.match(ledgerStatus, /4 мес\. Numbers \/ 3 мес\. транзакции · пропущено валютных операций не в RUB: 1 · операций на проверку: 2/, 'Analytics must identify month sources and disclose excluded foreign-currency and review transactions');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-11');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
@@ -344,7 +353,40 @@ try {
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-08');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000,00/, 'a USD-only transaction must not replace August Numbers history');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000,00/, 'August Numbers expenses must remain when there are no RUB ledger rows');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-06');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /8.?000,00/, 'a zero-value ledger row must not replace June Numbers income');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /3.?000,00/, 'a zero-value ledger row must not replace June Numbers expenses');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-07');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /7.?000,00/, 'review-only activity must not replace July Numbers income');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?500,00/, 'review-only activity must not replace July Numbers expenses');
   await ledgerAnalytics.close();
+
+  const ledgerOnlyAnalytics=await context.newPage();
+  ledgerOnlyAnalytics.on('pageerror',error=>pageErrors.push(error.message));
+  ledgerOnlyAnalytics.on('request',request=>{if(new URL(request.url()).origin!==origin)externalRequests.push(request.url());});
+  ledgerOnlyAnalytics.on('requestfailed',request=>failedRequests.push(request.url()+' · '+(request.failure()?.errorText||'failed')));
+  await ledgerOnlyAnalytics.goto(origin+basePath+'numbers-analytics.html',{waitUntil:'networkidle',timeout:30000});
+  const ledgerOnlyStatus=await ledgerOnlyAnalytics.evaluate(async()=>{
+    const SQL=await window.initSqlJs({locateFile:file=>'./vendor/sql.js/'+file,useOldExtensionFunctions:true});
+    const fixture=new SQL.Database();
+    fixture.run("CREATE TABLE web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)");
+    fixture.run("CREATE TABLE transactions(id TEXT PRIMARY KEY,tx_date TEXT,amount REAL,currency TEXT,category TEXT,transaction_type TEXT,description TEXT,merchant TEXT,notes TEXT,raw_text TEXT,deleted_at TEXT)");
+    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)",[JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'Аренда',kind:'expense'},{name:'Прочий доход',kind:'other'},{name:'Прочий расход',kind:'other'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
+    const tx=fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+    tx.run(['salary','2027-03-01',50000,'RUB','Зарплата','income','','','','',null]);
+    tx.run(['rent','2027-03-02',-20000,'RUB','Аренда','expense','','','','',null]);
+    tx.run(['other-income','2027-03-03',10000,'RUB','Прочий доход','income','','','','',null]);
+    tx.run(['other-expense','2027-03-04',-5000,'RUB','Прочий расход','expense','','','','',null]);
+    tx.free();
+    const bytes=fixture.export();fixture.close();
+    await window.loadDatabaseBytes(bytes,'Ledger-only.budget');
+    return document.querySelector('#status')?.textContent||'';
+  });
+  assert.match(ledgerOnlyStatus,/0 мес\. Numbers \/ 1 мес\. транзакции/,'Analytics must load transaction-only databases without Numbers history');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-income-total').textContent(),/60.?000,00/,'transaction-only databases must report all income categories');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-expense-total').textContent(),/25.?000,00/,'transaction-only databases must report all expense categories');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-overall-net').textContent(),/35.?000,00/,'transaction-only databases must calculate net cash flow');
+  await ledgerOnlyAnalytics.close();
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
   assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');
