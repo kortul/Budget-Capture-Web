@@ -1,0 +1,11 @@
+{
+  "app_version": "0.1.6.0",
+  "packages": {
+    "sql.js": "1.16.0",
+    "pdfjs-dist": "6.5.438",
+    "xlsx": "0.20.3"
+  },
+  "xlsx_source": "official SheetJS CDN tarball, vendored into this build; runtime stays same-origin",
+  "pdfjs_build": "legacy ESM build for broader browser compatibility",
+  "delivery": "same-origin GitHub Pages assets; no third-party CDN runtime fallback"
+}
