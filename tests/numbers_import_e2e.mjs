@@ -272,20 +272,70 @@ try {
   assert.equal(monthCategoryFixture.specialVisible,false,'special flows must stay outside ordinary category rankings');
   assert.equal(monthCategoryFixture.selectedMonth,'2026-10','month selector must reflect the active month');
   assert.ok(monthCategoryFixture.donut>=1,'expense donut must reflect monthly category totals');
-  const kgrAdjustmentFixture = await analytics.evaluate(() => {
-    const base = [
-      {month_key:'2026-10',year:2026,month:10,kind:'income',role:'income',category:'Приход магазин',amount:312366.88},
-      {month_key:'2026-10',year:2026,month:10,kind:'expense',role:'expense',category:'KGR',amount:96784.78},
-      {month_key:'2026-10',year:2026,month:10,kind:'expense',role:'expense',category:'Остальные расходы',amount:180835.39}
-    ];
-    const changes = [{base_category:'Не распределено',base_kind:'other',tx_date:'2026-10-23',amount:41000,currency:'RUB',current_category:'KGR'}];
-    const kinds = new Map([['kgr','other']]);
-    const adjusted=applyNumbersCategoryAdjustments(base,changes,kinds);
-    const october=adjusted.rows.filter(row=>row.month_key==='2026-10'),totals=totalsFor(october);
-    return {kgr:october.find(row=>row.category==='KGR')?.amount,expense:totals.expense,income:totals.income,net:totals.net,applied:adjusted.applied};
+  // Transaction-backed months must replace their duplicate Numbers snapshot.
+  const ledgerAnalytics = await context.newPage();
+  ledgerAnalytics.on('pageerror', error => pageErrors.push(error.message));
+  ledgerAnalytics.on('request', request => {
+    if (new URL(request.url()).origin !== origin) externalRequests.push(request.url());
   });
-  assert.deepEqual(kgrAdjustmentFixture,{kgr:55784.78,expense:236620.17,income:312366.88,net:75746.71,applied:1},'Numbers history role must override an incomplete profile kind when applying a positive transaction to KGR expense');
-
+  ledgerAnalytics.on('requestfailed', request => failedRequests.push(request.url() + ' · ' + (request.failure()?.errorText || 'failed')));
+  await ledgerAnalytics.goto(origin + basePath + 'numbers-analytics.html', { waitUntil: 'networkidle', timeout: 30000 });
+  const ledgerStatus = await ledgerAnalytics.evaluate(async () => {
+    const SQL = await window.initSqlJs({ locateFile: file => './vendor/sql.js/' + file, useOldExtensionFunctions: true });
+    const fixture = new SQL.Database();
+    fixture.run("CREATE TABLE numbers_history (id TEXT PRIMARY KEY,source TEXT NOT NULL DEFAULT 'numbers',month_key TEXT NOT NULL,year INTEGER NOT NULL,month INTEGER NOT NULL,kind TEXT NOT NULL,category TEXT NOT NULL,amount REAL NOT NULL DEFAULT 0,role TEXT NOT NULL DEFAULT '',imported_at TEXT NOT NULL DEFAULT '')");
+    fixture.run("CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)");
+    fixture.run("CREATE TABLE transactions (id TEXT PRIMARY KEY,tx_date TEXT,amount REAL,currency TEXT,category TEXT,transaction_type TEXT,description TEXT,merchant TEXT,notes TEXT,raw_text TEXT,deleted_at TEXT)");
+    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)", [JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'KGR',kind:'other'},{name:'Остальные расходы',kind:'expense'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
+    const history = fixture.prepare('INSERT INTO numbers_history(id,source,month_key,year,month,kind,category,amount,role,imported_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
+    const addHistory = (id,month,kind,category,amount,role=kind) => {
+      const [year,monthNumber] = month.split('-').map(Number);
+      history.run([id,'numbers',month,year,monthNumber,kind,category,amount,role,'']);
+    };
+    addHistory('aug-income','2026-08','income','Зарплата',12000);
+    addHistory('aug-expense','2026-08','expense','Еда',4000);
+    addHistory('sep-income','2026-09','income','Зарплата',10000);
+    addHistory('sep-expense','2026-09','expense','Еда',2000);
+    addHistory('oct-income','2026-10','income','Зарплата',312366.88);
+    addHistory('oct-kgr','2026-10','expense','KGR',96784.78);
+    addHistory('oct-other','2026-10','expense','Остальные расходы',180835.39);
+    addHistory('oct-stale','2026-10','expense','Numbers only October',123);
+    history.free();
+    const tx = fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+    const addTx = (id,date,amount,category,type='expense',description='',currency='RUB') =>
+      tx.run([id,date,amount,currency,category,type,description,'','','',null]);
+    addTx('salary','2026-10-01',312366.88,'Зарплата','income');
+    addTx('kgr-expense','2026-10-05',-96784.78,'KGR');
+    addTx('kgr-positive','2026-10-23',41000,'KGR','income');
+    addTx('other-expense','2026-10-14',-180835.39,'Остальные расходы');
+    addTx('aug-usd','2026-08-12',90000,'Зарплата','income','USD income','USD');
+    addTx('sep-internal','2026-09-12',-50000,'Зарплата','internal_transfer','internal transfer');
+    addTx('nov-income','2026-11-01',50000,'Зарплата','income');
+    addTx('nov-expense','2026-11-02',-10000,'Остальные расходы');
+    addTx('internal','2026-10-20',-999999,'Зарплата','internal_transfer','internal transfer');
+    tx.run(['deleted','2026-10-30',-500000,'RUB','Остальные расходы','expense','','','','','2026-10-31']);
+    tx.free();
+    const bytes = fixture.export();
+    fixture.close();
+    await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
+    return document.querySelector('#status')?.textContent || '';
+  });
+  assert.match(ledgerStatus, /2 мес\. Numbers \/ 2 мес\. транзакции · пропущено валютных операций не в RUB: 1/, 'Analytics must identify source months and disclose excluded foreign-currency transactions');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-10');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /312.?366,88/, 'October income must come from the transaction ledger');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /236.?620,17/, 'October expenses must be recalculated from transactions, including the positive KGR transaction');
+  assert.match(await ledgerAnalytics.locator('#month-overall-net').textContent(), /75.?746,71/, 'October net must use the transaction ledger only once');
+  assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /KGR[\s\S]*55.?784,78/, 'KGR must total 55,784.78 after the positive transaction is treated as an expense-category credit');
+  assert.doesNotMatch(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Numbers only October/, 'October Numbers category rows must be fully replaced when ledger transactions exist');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-09');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000,00/, 'September must retain Numbers history when its only live transaction is internal');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?000,00/, 'September expenses must remain sourced from Numbers history');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-08');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000,00/, 'a USD-only transaction must not replace August Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000,00/, 'August Numbers expenses must remain when there are no RUB ledger rows');
+  await ledgerAnalytics.close();
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
   assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');
