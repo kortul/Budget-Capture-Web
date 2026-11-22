@@ -440,7 +440,7 @@ function deltaCell(value){
 function renderMonthly(rows){
  const months=rangeMonthRows(rows);
  $('monthlyRows').innerHTML=months.map(row=>{
-  const previous=rows.filter(item=>item.month_key===shiftMonthKey(row.key,-1));
+  const previous=data.filter(item=>item.month_key===shiftMonthKey(row.key,-1));
   const prevNet=previous.length?totalsFor(previous).net:null;
   const delta=prevNet===null?null:(row.income-row.expense)-prevNet;
   return '<tr data-month-key="'+row.key+'" class="'+(row.key===selectedMonthKey?'selected-month':'')+'"><td><button class="a-month-link" type="button" data-month-key="'+row.key+'">'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</button></td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(row.income-row.expense>=0?'a-positive':'a-negative')+'">'+money(row.income-row.expense)+'</td><td class="num">'+deltaCell(delta)+'</td></tr>';
@@ -519,11 +519,15 @@ function renderSasha(rows,monthsCount,lifeTotal){
  $('sashaTotal').textContent=money(total);$('sashaAverage').textContent=money(total/Math.max(1,monthsCount));$('sashaShare').textContent=(lifeTotal?total/lifeTotal*100:0).toFixed(1).replace('.',',')+'%';
  $('sashaRows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+( /кафе|такси/i.test(item.category)?' <span class="a-pill">'+settings.sharedPercent+'% Саши</span>':'')+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+(total?item.total/total*100:0).toFixed(2).replace('.',',')+'%</td><td class="num">'+money(item.total/Math.max(1,monthsCount))+'</td></tr>').join('')||'<tr><td colspan="4">Выбери категории в настройках отчёта</td></tr>';
 }
+function renderGroupMonthlyTable(targetId,rows){
+ const months=rangeMonthRows(rows);
+ $(targetId).innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(row.income-row.expense>=0?'a-positive':'a-negative')+'">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет данных в выбранном периоде</td></tr>';
+}
 function renderBusinessArea(group,prefix,rows){
  const result=groupTotals(group,rows),cats=totalsByCategory(result.rows);
  $(prefix+'Income').textContent=money(result.income);$(prefix+'Expense').textContent=money(result.expense);$(prefix+'Net').textContent=money(result.net);
  $(prefix+'Rows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
- if(group==='work')renderGroupYears('work','work');
+ if(group==='work'){renderGroupYears('work','work');renderGroupMonthlyTable('workMonthlyRows',result.rows);}
  return result;
 }
 function renderShop(rows){
@@ -537,7 +541,7 @@ function renderLoans(rows){
  const result=groupTotals('loans',rows);
  $('loanIncome').textContent=money(result.income);$('loanExpense').textContent=money(result.expense);$('loanNet').textContent=money(result.net);
  $('loanRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
- renderGroupYears('loans','loan');
+ renderGroupYears('loans','loan');renderGroupMonthlyTable('loanMonthlyRows',result.rows);
 }
 function renderGroupYears(group,prefix){
  const tbody=$(prefix+'YearRows');
