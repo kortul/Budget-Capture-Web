@@ -68,7 +68,10 @@ assert.doesNotMatch(app,/BudgetSharedDb|sharedSnapshot/, 'main app must not keep
 assert.match(db,/CREATE TABLE IF NOT EXISTS numbers_category_adjustments/,'database must persist category reconciliation baselines');
 assert.match(app,/function saveNumbersCategoryAdjustment\(row,nextCategory\)/,'category edits must save an idempotent history adjustment');
 assert.match(app,/function markNumbersCategoryAsNewCorrection\(row\)/,'pre-existing category edits must be explicitly addable to the Numbers baseline');
+assert.match(app,/function numbersHistoryCategoryKind\(category\)/,'transaction correction eligibility must fall back to the imported Numbers category role');
 assert.match(analytics,/function applyNumbersCategoryAdjustments\(baseRows,adjustments,categoryKinds\)/,'Analytics must apply signed category deltas');
+assert.match(analytics,/const effectiveCategoryKinds=new Map\(categoryKinds\|\|\[\]\)/,'Analytics must resolve incomplete profile categories from imported Numbers history');
+assert.match(analytics,/корректировки: .*сохранено .*найдено .*применено/,'Analytics must expose reconciliation diagnostics instead of silently skipping adjustments');
 assert.match(analytics,/numbers_category_adjustments a JOIN transactions t ON t.id=a.transaction_id/,'Analytics must reconcile adjustments with live transactions');
 assert.match(numbersImport,/DELETE FROM numbers_category_adjustments/,'a new Numbers import must reset manual category deltas');
 assert.match(app,/openAnalyticsWithCurrentDatabase/,'the Analytics link must hand off the currently opened database');
