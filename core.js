@@ -78,6 +78,16 @@ export function categoryDropdownGroups(categories=[]) {
   return groups;
 }
 
+export function categoryLedgerContribution(amount,kind) {
+  const value=Number(amount);
+  if(!Number.isFinite(value))return 0;
+  if(kind==='expense')return -value;
+  if(kind==='income')return value;
+  return 0;
+}
+export function categoryReclassificationDeltas(amount,fromKind,toKind) {
+  return {from:-categoryLedgerContribution(amount,fromKind),to:categoryLedgerContribution(amount,toKind)};
+}
 export function numbersCategoryTotals(rows=[], categories=[]) {
   const totals={
     expense:{items:[],cents:0},

@@ -30,6 +30,12 @@ CREATE TABLE IF NOT EXISTS transaction_delete_actions(id TEXT PRIMARY KEY,transa
 CREATE TABLE IF NOT EXISTS web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS numbers_history (id TEXT PRIMARY KEY, source TEXT NOT NULL DEFAULT 'numbers', month_key TEXT NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('income','expense')), category TEXT NOT NULL, amount REAL NOT NULL DEFAULT 0, role TEXT NOT NULL DEFAULT '', imported_at TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS idx_numbers_history_month ON numbers_history(month_key);
+CREATE TABLE IF NOT EXISTS numbers_category_adjustments (
+ transaction_id TEXT PRIMARY KEY,
+ base_category TEXT NOT NULL DEFAULT 'Не распределено',
+ base_kind TEXT NOT NULL DEFAULT 'other',
+ created_at TEXT NOT NULL DEFAULT ''
+);
 `;
 
 export function createDatabase(SQL) {
@@ -80,6 +86,7 @@ function databaseSnapshot(db) {
   safe('category_rules','SELECT * FROM category_rules ORDER BY merchant_key');
   safe('merchant_rules','SELECT * FROM merchant_rules ORDER BY merchant_key');
   safe('web_metadata','SELECT * FROM web_metadata ORDER BY key');
+  safe('numbers_category_adjustments','SELECT * FROM numbers_category_adjustments ORDER BY transaction_id');
   const txCols=new Set(all(db,'PRAGMA table_info(transactions)').map(r=>r.name));
   const txFields=['id','category','status','transaction_type','highlighted_flag'].filter(f=>txCols.has(f));
   safe('transaction_migrations',`SELECT ${txFields.join(',')} FROM transactions ORDER BY id`);

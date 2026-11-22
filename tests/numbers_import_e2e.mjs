@@ -272,6 +272,20 @@ try {
   assert.equal(monthCategoryFixture.specialVisible,false,'special flows must stay outside ordinary category rankings');
   assert.equal(monthCategoryFixture.selectedMonth,'2026-10','month selector must reflect the active month');
   assert.ok(monthCategoryFixture.donut>=1,'expense donut must reflect monthly category totals');
+  const kgrAdjustmentFixture = await analytics.evaluate(() => {
+    const base = [
+      {month_key:'2026-10',year:2026,month:10,kind:'income',role:'income',category:'Приход магазин',amount:312366.88},
+      {month_key:'2026-10',year:2026,month:10,kind:'expense',role:'expense',category:'KGR',amount:96784.78},
+      {month_key:'2026-10',year:2026,month:10,kind:'expense',role:'expense',category:'Остальные расходы',amount:180835.39}
+    ];
+    const changes = [{base_category:'Не распределено',base_kind:'other',tx_date:'2026-10-23',amount:41000,currency:'RUB',current_category:'KGR'}];
+    const kinds = new Map([['kgr','expense']]);
+    const adjusted=applyNumbersCategoryAdjustments(base,changes,kinds);
+    const october=adjusted.rows.filter(row=>row.month_key==='2026-10'),totals=totalsFor(october);
+    return {kgr:october.find(row=>row.category==='KGR')?.amount,expense:totals.expense,income:totals.income,net:totals.net,applied:adjusted.applied};
+  });
+  assert.deepEqual(kgrAdjustmentFixture,{kgr:55784.78,expense:236620.17,income:312366.88,net:75746.71,applied:1},'positive RUB transaction assigned to KGR expense lowers it by 41,000 exactly once');
+
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
   assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');

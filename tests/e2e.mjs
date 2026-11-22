@@ -202,6 +202,9 @@ try {
     income:select.querySelector('optgroup.income-group option')?.classList.contains('income-option')||false
   }));
   assert.deepEqual(optionColors,{expense:true,income:true},'expense and income options must carry their distinct red/green styles');
+  await page.locator('#transactions-body select[data-action="category"]').selectOption('Еда');
+  assert.equal(await page.locator('#transactions-body .numbers-adjust-button.active').count(),1,'manual category reassignment must be linked to financial history');
+
 
   // Reimport the same bytes. Stable source refs must prevent a duplicate row.
   await page.locator('[data-tab="import"]').click();
@@ -226,6 +229,8 @@ try {
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
+  assert.equal(await page.locator('#transactions-body .numbers-adjust-button.active').count(),1,'saved adjustment must persist after reopening .budget');
+
 
   assert.deepEqual(pageErrors,[],'browser page must not raise uncaught errors');
   assert.deepEqual(externalRequests,[],'all runtime assets must be same-origin');

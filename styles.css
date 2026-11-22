@@ -28,3 +28,9 @@
 .category-select option.income-option,#filter-category option.income-option{color:var(--green)}
 .category-select.expense{color:var(--red);border-color:#773a39;background:#2b1d20}
 .category-select.income{color:var(--green);border-color:#28644e;background:#1a2d28}
+
+/* Numbers-history reconciliation action */
+.transaction-action-cell{white-space:nowrap}
+.numbers-adjust-button{width:26px;height:26px;margin-right:4px;border:1px solid var(--line,#35414d);border-radius:7px;background:#1b2731;color:#8899a5;font-size:13px;font-weight:800;cursor:pointer;vertical-align:middle}
+.numbers-adjust-button:hover{border-color:#68b995;color:#9ee1c1}
+.numbers-adjust-button.active{background:rgba(93,189,149,.17);border-color:rgba(105,205,161,.5);color:#8ce1b5}

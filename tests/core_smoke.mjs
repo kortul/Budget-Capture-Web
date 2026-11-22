@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseSberLinePages, parseTbankRows, parseRaiffeisenCSV, decodeStatementBytes, defaultCategory,
-  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
+  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, categoryLedgerContribution, categoryReclassificationDeltas, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
 } from '../core.js';
 
 const sberLines=[{x:20,top:10,text:'25 октября,'}];
@@ -71,6 +71,11 @@ assert.equal(defaultCategory('Перевод со счёта', 'internal_transfe
 assert.equal(defaultCategory('Перевод со счёта', 'transfer'),'Внутренний перевод (не расход)');
 assert.equal(defaultCategory('ATM cash deposit', 'income'),'Внесение наличных','ATM deposit suggestions use a generic category label, not a user-specific one.');
 assert.equal(numbersValue(amountCents(474164.51)),'474164,51');
+assert.equal(categoryLedgerContribution(41000,'expense'),-41000,'positive bank inflow assigned to expense reduces expense');
+assert.equal(categoryLedgerContribution(-41000,'expense'),41000,'negative bank outflow assigned to expense increases expense');
+assert.deepEqual(categoryReclassificationDeltas(41000,'other','expense'),{from:0,to:-41000});
+assert.deepEqual(categoryReclassificationDeltas(-41000,'other','expense'),{from:0,to:41000});
+
 const numberGroups=numbersCategoryTotals([
   {category:'Food',amount:-100.25},
   {category:'Food',amount:20},

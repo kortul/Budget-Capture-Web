@@ -741,6 +741,36 @@ function comparisonText(current,previous){
 }
 
 
+function ledgerContribution(amount,role){
+ const value=Number(amount)||0;
+ if(role==='expense')return -value;
+ if(role==='income')return value;
+ return 0;
+}
+function applyNumbersCategoryAdjustments(baseRows,adjustments,categoryKinds){
+ const rows=baseRows.map(row=>({...row}));let applied=0;
+ const addDelta=(monthKey,year,month,category,role,delta)=>{
+  if(!['income','expense'].includes(role)||Math.abs(delta)<0.0001)return;
+  const target=rows.find(row=>row.month_key===monthKey&&row.role===role&&normalized(row.category)===normalized(category));
+  if(target)target.amount=(Number(target.amount)||0)+delta;
+  else rows.push({month_key:monthKey,year,month,kind:role,role,category,amount:delta});
+ };
+ for(const item of adjustments||[]){
+  const txDate=String(item.tx_date||''),monthKey=txDate.slice(0,7),parts=monthKey.split('-').map(Number);
+  if(parts.length!==2||!parts[0]||!parts[1])continue;
+  const currency=String(item.currency||'RUB').toUpperCase();
+  if(currency&&!['RUB','RUR','₽'].includes(currency))continue;
+  const amount=Number(item.amount)||0,baseCategory=String(item.base_category||'Не распределено'),baseKind=String(item.base_kind||'other');
+  const currentCategory=String(item.current_category||''),currentKind=categoryKinds.get(normalized(currentCategory))||'other';
+  const baseWasInHistory=rows.some(row=>row.month_key===monthKey&&row.role===baseKind&&normalized(row.category)===normalized(baseCategory)&&Math.abs(Number(row.amount)||0)>0.0001);
+  if(baseWasInHistory)addDelta(monthKey,parts[0],parts[1],baseCategory,baseKind,-ledgerContribution(amount,baseKind));
+  const contribution=ledgerContribution(amount,currentKind);
+  addDelta(monthKey,parts[0],parts[1],currentCategory,currentKind,contribution);
+  if(baseWasInHistory||contribution!==0)applied++;
+ }
+ rows.sort((a,b)=>a.month_key.localeCompare(b.month_key)||String(a.role).localeCompare(String(b.role))||String(a.category).localeCompare(String(b.category),'ru'));
+ return {rows,applied};
+}
 function renderMonthCategoryList(targetId,items,total,role){
  const target=$(targetId);if(!target)return;
  const list=(items||[]).filter(item=>Math.abs(Number(item.total)||0)>0.0001).slice().sort((a,b)=>Number(b.total)-Number(a.total));
@@ -1014,14 +1044,35 @@ async function loadDatabaseBytes(bytes,name){
   const hasRole=columns.includes('role');
   const result=opened.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");
   if(!result.length||!result[0].values.length)throw new Error('Таблица истории Numbers пуста. Импортируй Excel в выбранную базу.');
-  const roleMap=new Map();
+  const roleMap=new Map(),categoryKinds=new Map();
   const profileRow=opened.exec("SELECT value FROM web_metadata WHERE key='budget_profile_v1'")[0]?.values?.[0]?.[0];
-  if(profileRow){try{const profile=JSON.parse(String(profileRow));for(const item of profile.categories||[])if(item?.name&&['special_input','special_output'].includes(item.kind))roleMap.set(normalized(item.name),item.kind);const a=profile.numbers?.specialInput?.category,b=profile.numbers?.specialOutput?.category;if(a)roleMap.set(normalized(a),'special_input');if(b)roleMap.set(normalized(b),'special_output');}catch{}}
+  if(profileRow){try{
+   const profile=JSON.parse(String(profileRow));
+   for(const item of profile.categories||[])if(item?.name&&item?.kind){
+    categoryKinds.set(normalized(item.name),item.kind);
+    if(['special_input','special_output'].includes(item.kind))roleMap.set(normalized(item.name),item.kind);
+   }
+   const a=profile.numbers?.specialInput?.category,b=profile.numbers?.specialOutput?.category;
+   if(a){roleMap.set(normalized(a),'special_input');categoryKinds.set(normalized(a),'special_input');}
+   if(b){roleMap.set(normalized(b),'special_output');categoryKinds.set(normalized(b),'special_output');}
+  }catch{}}
   data=result[0].values.map(row=>{
    const category=String(row[4]),rawRole=hasRole?String(row[6]||''):'';
    const role=rawRole||roleMap.get(normalized(category))||String(row[3]);
    return {month_key:String(row[0]),year:Number(row[1]),month:Number(row[2]),kind:String(row[3]),category,amount:Number(row[5])||0,role};
   });
+  let categoryAdjustmentsApplied=0;
+  if(tables.has('numbers_category_adjustments')&&tables.has('transactions')){
+   const txColumns=opened.exec('PRAGMA table_info(transactions)')[0]?.values.map(r=>String(r[1]))||[];
+   const activeClause=txColumns.includes('deleted_at')?"WHERE COALESCE(t.deleted_at,'')=''":"";
+   const adjustmentResult=opened.exec("SELECT a.base_category,a.base_kind,t.tx_date,t.amount,t.currency,t.category FROM numbers_category_adjustments a JOIN transactions t ON t.id=a.transaction_id "+activeClause);
+   const adjustments=adjustmentResult[0]?.values.map(row=>({
+    base_category:String(row[0]),base_kind:String(row[1]),tx_date:String(row[2]),amount:Number(row[3])||0,
+    currency:String(row[4]||'RUB'),current_category:String(row[5]||'')
+   }))||[];
+   const applied=applyNumbersCategoryAdjustments(data,adjustments,categoryKinds);
+   data=applied.rows;categoryAdjustmentsApplied=applied.applied;
+  }
   years=[...new Set(data.map(row=>row.year))].sort((a,b)=>a-b);
   if(!years.length)throw new Error('В истории Numbers не найдены годы.');
   db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');dbChanged=false;
@@ -1032,7 +1083,7 @@ async function loadDatabaseBytes(bytes,name){
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
-  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+'.','ok');
+  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+(categoryAdjustmentsApplied?' · учтено корректировок: '+categoryAdjustmentsApplied:'')+'.','ok');
   return true;
  }catch(error){try{opened?.close();}catch{}data=[];years=[];rangeFrom='';rangeTo='';selectedMonthKey='';$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
  finally{loading=false;}
