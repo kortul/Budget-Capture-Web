@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 
 const port = Number(process.env.PORT || 4175);
 const basePath = '/budget-capture-e2e/';
@@ -203,7 +204,7 @@ try {
   }));
   assert.deepEqual(optionColors,{expense:true,income:true},'expense and income options must carry their distinct red/green styles');
   await page.locator('#transactions-body select[data-action="category"]').selectOption('Еда');
-  assert.equal(await page.locator('#transactions-body .numbers-adjust-button.active').count(),1,'manual category reassignment must be linked to financial history');
+  assert.equal(await page.locator('#transactions-body select[data-action="category"]').inputValue(),'Еда','manual category reassignment must update the transaction itself');
 
 
   // Reimport the same bytes. Stable source refs must prevent a duplicate row.
@@ -224,12 +225,21 @@ try {
   assert.equal(download.suggestedFilename(),'MyBudget.budget');
   const savedPath=await download.path();
   assert(savedPath&&fs.statSync(savedPath).size>10000,'saved SQLite file must be non-empty');
+  const savedDb=new DatabaseSync(savedPath);
+  try {
+    const savedCategory=savedDb.prepare("SELECT category FROM transactions WHERE merchant LIKE '%E2E MARKET%' ORDER BY tx_date DESC LIMIT 1").get()?.category;
+    assert.equal(savedCategory,'Еда','manual category reassignment must persist in the saved transaction ledger');
+    const legacyAdjustments=Number(savedDb.prepare('SELECT COUNT(*) AS count FROM numbers_category_adjustments').get()?.count||0);
+    assert.equal(legacyAdjustments,0,'manual category reassignment must not recreate the removed Sigma adjustment workflow');
+  } finally {
+    savedDb.close();
+  }
   await page.locator('#open-file').setInputFiles(savedPath);
   await page.waitForFunction(()=>document.querySelector('#db-state')?.textContent.includes('Database open'));
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
-  assert.equal(await page.locator('#transactions-body .numbers-adjust-button.active').count(),1,'saved adjustment must persist after reopening .budget');
+  assert.equal(await page.locator('#transactions-body select[data-action="category"]').inputValue(),'Еда','reassigned transaction category must survive .budget save and reopen');
 
 
   assert.deepEqual(pageErrors,[],'browser page must not raise uncaught errors');
