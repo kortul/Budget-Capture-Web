@@ -207,7 +207,11 @@ try {
   analytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   const analyticsResponse = await analytics.goto(origin + basePath + 'numbers-analytics.html', { waitUntil: 'networkidle', timeout: 30000 });
   assert.equal(analyticsResponse.status(), 200, 'Financial Analytics page must be served from the Pages subpath');
-  await analytics.locator('#manual-file').setInputFiles(secondExportPath);
+  await analytics.locator('#manual-file').setInputFiles({
+    name: secondDownload.suggestedFilename(),
+    mimeType: 'application/octet-stream',
+    buffer: fs.readFileSync(secondExportPath),
+  });
   await analytics.waitForFunction(() => !document.querySelector('#dashboard').classList.contains('hidden'), null, { timeout: 20000 });
   assert.match(await analytics.locator('#incomeMetric').textContent(), /260\s?000/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
@@ -229,17 +233,20 @@ try {
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
   assert.equal(await analytics.locator('#month-detail-select option').count(), 1, 'month selector must list available months in the reporting range');
   assert.equal(await analytics.locator('#month-income-list .a-month-category-row').count(), 1, 'income list must show active imported income categories');
-  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 1, 'expense list must show active imported expense categories');
+  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'expense list must preserve both nonzero imported expense categories');
+  assert.equal(await analytics.locator('#month-expense-list img').count(), 0, 'untrusted historical category text must not create HTML elements');
+  assert.match(await analytics.locator('#month-expense-list').textContent(), /<img src=x onerror=/, 'the untrusted category must remain visible as escaped plain text');
+  assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category text must not execute as HTML');
   assert.match(await analytics.locator('#month-income-list').innerText(), /Зарплата/, 'income list must show actual imported categories');
   assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'expense list must include categories assigned to the shop in settings');
   assert.equal(await analytics.locator('#month-expense-chart svg').count(), 1, 'expense composition must render a donut chart');
   assert.equal(await analytics.locator('#month-insights .a-month-insight').count(), 3, 'month view must include three concise data-driven insights');
-  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 1, 'zero-valued categories must not be rendered');
+  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'both nonzero expense categories must render while zero-valued categories stay hidden');
   assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
-  assert.match(await analytics.locator('#month-overall-net').textContent(), /247\\s?498/, 'month headline must show income less expense including all ordinary categories');
+  assert.match(await analytics.locator('#month-overall-net').textContent(), /247\s?498/, 'month headline must show income less expense including all ordinary categories');
   assert.match(await analytics.locator('#month-no-shop-net').textContent(), /0/, 'manual no-shop total must stay zero when imported categories do not match its fixed lists');
   assert.match(await analytics.locator('#month-sasha-expense').textContent(), /0/, 'missing Sasha category must safely display zero');
-  assert.match(await analytics.locator('#month-dima-net').textContent(), /50\\s?000/, 'Dima inputs minus outputs must appear as a separate monthly metric');
+  assert.match(await analytics.locator('#month-dima-net').textContent(), /50\s?000/, 'Dima inputs minus outputs must appear as a separate monthly metric');
   assert.match(await analytics.locator('#month-income-list').textContent(), /Зарплата/, 'income list must use imported month categories');
   assert.doesNotMatch(await analytics.locator('#month-income-list').textContent(), /Приход от работы Дима/, 'manual no-shop rules must not replace the actual month category set');
   assert.match(await analytics.locator('#month-expense-list').textContent(), /Продукты/, 'expense list must show the imported category');
@@ -286,7 +293,7 @@ try {
     fixture.run("CREATE TABLE numbers_history (id TEXT PRIMARY KEY,source TEXT NOT NULL DEFAULT 'numbers',month_key TEXT NOT NULL,year INTEGER NOT NULL,month INTEGER NOT NULL,kind TEXT NOT NULL,category TEXT NOT NULL,amount REAL NOT NULL DEFAULT 0,role TEXT NOT NULL DEFAULT '',imported_at TEXT NOT NULL DEFAULT '')");
     fixture.run("CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)");
     fixture.run("CREATE TABLE transactions (id TEXT PRIMARY KEY,tx_date TEXT,amount REAL,currency TEXT,category TEXT,transaction_type TEXT,description TEXT,merchant TEXT,notes TEXT,raw_text TEXT,deleted_at TEXT)");
-    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)", [JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'KGR',kind:'other'},{name:'Остальные расходы',kind:'expense'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
+    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)", [JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'KGR',kind:'other'},{name:'Остальные расходы',kind:'expense'},{name:'Прочий доход',kind:'other'},{name:'Прочий расход',kind:'other'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
     const history = fixture.prepare('INSERT INTO numbers_history(id,source,month_key,year,month,kind,category,amount,role,imported_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
     const addHistory = (id,month,kind,category,amount,role=kind) => {
       const [year,monthNumber] = month.split('-').map(Number);
@@ -300,18 +307,31 @@ try {
     addHistory('oct-kgr','2026-10','expense','KGR',96784.78);
     addHistory('oct-other','2026-10','expense','Остальные расходы',180835.39);
     addHistory('oct-stale','2026-10','expense','Numbers only October',123);
+    addHistory('jun-income','2026-06','income','Зарплата',8000);
+    addHistory('jun-expense','2026-06','expense','Еда',3000);
+    addHistory('jul-income','2026-07','income','Зарплата',7000);
+    addHistory('jul-expense','2026-07','expense','Еда',2500);
     history.free();
     const tx = fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
     const addTx = (id,date,amount,category,type='expense',description='',currency='RUB') =>
       tx.run([id,date,amount,currency,category,type,description,'','','',null]);
-    addTx('salary','2026-10-01',312366.88,'Зарплата','income');
+    addTx('salary','2026-10-01',271366.88,'Зарплата','income');
+    addTx('other-income-oct','2026-10-24',41000,'Прочий доход','income');
     addTx('kgr-expense','2026-10-05',-96784.78,'KGR');
     addTx('kgr-positive','2026-10-23',41000,'KGR','income');
-    addTx('other-expense','2026-10-14',-180835.39,'Остальные расходы');
+    addTx('other-expense','2026-10-14',-168835.39,'Остальные расходы');
+    addTx('other-expense-oct','2026-10-16',-12000,'Прочий расход','expense');
     addTx('aug-usd','2026-08-12',90000,'Зарплата','income','USD income','USD');
     addTx('sep-internal','2026-09-12',-50000,'Зарплата','internal_transfer','internal transfer');
     addTx('nov-income','2026-11-01',50000,'Зарплата','income');
     addTx('nov-expense','2026-11-02',-10000,'Остальные расходы');
+    addTx('dec-other-income','2026-12-01',41000,'Прочий доход','income');
+    addTx('dec-other-expense','2026-12-02',-12000,'Прочий расход','expense');
+    addTx('sep-transfer-type','2026-09-13',-30000,'Зарплата','transfer','ordinary transfer label');
+    addTx('sep-category-transfer','2026-09-14',-40000,'Внутренний перевод (не расход)','expense','uncategorized movement');
+    addTx('oct-failed-review','2026-10-29',-50000,'Остальные расходы','review','Unable to transfer to card');
+    addTx('jun-zero','2026-06-05',0,'Зарплата','income');
+    addTx('jul-failed-review','2026-07-02',-8000,'Не распределено','review','Unable to transfer to card');
     addTx('internal','2026-10-20',-999999,'Зарплата','internal_transfer','internal transfer');
     tx.run(['deleted','2026-10-30',-500000,'RUB','Остальные расходы','expense','','','','','2026-10-31']);
     tx.free();
@@ -320,22 +340,64 @@ try {
     await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
     return document.querySelector('#status')?.textContent || '';
   });
-  assert.match(ledgerStatus, /2 мес\. Numbers \/ 2 мес\. транзакции · пропущено валютных операций не в RUB: 1/, 'Analytics must identify source months and disclose excluded foreign-currency transactions');
+  assert.match(ledgerStatus, /4 мес\. Numbers \/ 3 мес\. транзакции · пропущено валютных операций не в RUB: 1 · операций на проверку: 2/, 'Analytics must identify month sources and disclose excluded foreign-currency and review transactions');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-11');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-12');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /41.?000/, 'an other-kind category must still contribute income according to transaction_type');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /12.?000/, 'an other-kind category must still contribute expenses according to transaction_type');
+  assert.match(await ledgerAnalytics.locator('#month-overall-net').textContent(), /29.?000/, 'other-kind cash flows must affect monthly net');
+  assert.match(await ledgerAnalytics.locator('#month-income-list').textContent(), /Прочий доход/, 'other-kind income must remain visible under its category name');
+  assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Прочий расход/, 'other-kind expense must remain visible under its category name');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-10');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /312.?366,88/, 'October income must come from the transaction ledger');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /236.?620,17/, 'October expenses must be recalculated from transactions, including the positive KGR transaction');
   assert.match(await ledgerAnalytics.locator('#month-overall-net').textContent(), /75.?746,71/, 'October net must use the transaction ledger only once');
   assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /KGR[\s\S]*55.?784,78/, 'KGR must total 55,784.78 after the positive transaction is treated as an expense-category credit');
+  assert.match(await ledgerAnalytics.locator('#month-income-list').textContent(), /Прочий доход[\s\S]*41.?000/, 'the missing 41,000 income must be recovered from an other-kind category by transaction direction');
+  assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Прочий расход[\s\S]*12.?000/, 'the missing 12,000 expense must be recovered from an other-kind category by transaction direction');
   assert.doesNotMatch(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Numbers only October/, 'October Numbers category rows must be fully replaced when ledger transactions exist');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-09');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000,00/, 'September must retain Numbers history when its only live transaction is internal');
-  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?000,00/, 'September expenses must remain sourced from Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000/, 'September must retain Numbers history when its only live transaction is internal');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?000/, 'September expenses must remain sourced from Numbers history');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-08');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000,00/, 'a USD-only transaction must not replace August Numbers history');
-  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000,00/, 'August Numbers expenses must remain when there are no RUB ledger rows');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000/, 'a USD-only transaction must not replace August Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000/, 'August Numbers expenses must remain when there are no RUB ledger rows');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-06');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /8.?000/, 'a zero-value ledger row must not replace June Numbers income');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /3.?000/, 'a zero-value ledger row must not replace June Numbers expenses');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-07');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /7.?000/, 'review-only activity must not replace July Numbers income');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?500/, 'review-only activity must not replace July Numbers expenses');
   await ledgerAnalytics.close();
+
+  const ledgerOnlyAnalytics=await context.newPage();
+  ledgerOnlyAnalytics.on('pageerror',error=>pageErrors.push(error.message));
+  ledgerOnlyAnalytics.on('request',request=>{if(new URL(request.url()).origin!==origin)externalRequests.push(request.url());});
+  ledgerOnlyAnalytics.on('requestfailed',request=>failedRequests.push(request.url()+' · '+(request.failure()?.errorText||'failed')));
+  await ledgerOnlyAnalytics.goto(origin+basePath+'numbers-analytics.html',{waitUntil:'networkidle',timeout:30000});
+  const ledgerOnlyStatus=await ledgerOnlyAnalytics.evaluate(async()=>{
+    const SQL=await window.initSqlJs({locateFile:file=>'./vendor/sql.js/'+file,useOldExtensionFunctions:true});
+    const fixture=new SQL.Database();
+    fixture.run("CREATE TABLE web_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)");
+    fixture.run("CREATE TABLE transactions(id TEXT PRIMARY KEY,tx_date TEXT,amount REAL,currency TEXT,category TEXT,transaction_type TEXT,description TEXT,merchant TEXT,notes TEXT,raw_text TEXT,deleted_at TEXT)");
+    fixture.run("INSERT INTO web_metadata(key,value) VALUES ('budget_profile_v1',?)",[JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'Аренда',kind:'expense'},{name:'Прочий доход',kind:'other'},{name:'Прочий расход',kind:'other'}],numbers:{specialInput:{category:''},specialOutput:{category:''}}})]);
+    const tx=fixture.prepare('INSERT INTO transactions(id,tx_date,amount,currency,category,transaction_type,description,merchant,notes,raw_text,deleted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+    tx.run(['salary','2027-03-01',50000,'RUB','Зарплата','income','','','','',null]);
+    tx.run(['rent','2027-03-02',-20000,'RUB','Аренда','expense','','','','',null]);
+    tx.run(['other-income','2027-03-03',10000,'RUB','Прочий доход','income','','','','',null]);
+    tx.run(['other-expense','2027-03-04',-5000,'RUB','Прочий расход','expense','','','','',null]);
+    tx.free();
+    const bytes=fixture.export();fixture.close();
+    await window.loadDatabaseBytes(bytes,'Ledger-only.budget');
+    return document.querySelector('#status')?.textContent||'';
+  });
+  assert.match(ledgerOnlyStatus,/0 мес\. Numbers \/ 1 мес\. транзакции/,'Analytics must load transaction-only databases without Numbers history');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-income-total').textContent(),/60.?000/,'transaction-only databases must report all income categories');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-expense-total').textContent(),/25.?000/,'transaction-only databases must report all expense categories');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-overall-net').textContent(),/35.?000/,'transaction-only databases must calculate net cash flow');
+  await ledgerOnlyAnalytics.close();
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
   assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');
@@ -426,7 +488,11 @@ try {
   });
   mainApp.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   await mainApp.goto(origin + basePath + 'index.html', { waitUntil: 'networkidle', timeout: 30000 });
-  await mainApp.locator('#open-file').setInputFiles(analyticsExportPath);
+  await mainApp.locator('#open-file').setInputFiles({
+    name: analyticsDownload.suggestedFilename(),
+    mimeType: 'application/octet-stream',
+    buffer: fs.readFileSync(analyticsExportPath),
+  });
   await mainApp.waitForFunction(() => document.querySelector('#db-name')?.textContent !== 'No database open', null, { timeout: 20000 });
   const popupPromise = context.waitForEvent('page');
   await mainApp.locator('#open-analytics').click();

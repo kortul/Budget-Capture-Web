@@ -1,0 +1,37 @@
+name: Quality gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'fix/**']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify dependency lock
+        run: npm run verify:lock
+      - name: Install pinned dependencies
+        run: npm ci
+      - name: Run unit and source-contract tests
+        run: npm test
+      - name: Build static Pages site
+        run: npm run build:pages
+      - name: Verify built artifact and asset hashes
+        run: npm run test:dist
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run browser end-to-end tests
+        run: npm run test:e2e

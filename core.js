@@ -86,7 +86,11 @@ export function categoryLedgerContribution(amount,kind) {
   return 0;
 }
 export function categoryReclassificationDeltas(amount,fromKind,toKind) {
-  return {from:-categoryLedgerContribution(amount,fromKind),to:categoryLedgerContribution(amount,toKind)};
+  const from=-categoryLedgerContribution(amount,fromKind);
+  const to=categoryLedgerContribution(amount,toKind);
+  // JSON and strict test comparisons distinguish -0 from 0; database
+  // reclassification deltas should always use canonical positive zero.
+  return {from:from===0?0:from,to:to===0?0:to};
 }
 export function numbersCategoryTotals(rows=[], categories=[]) {
   const totals={

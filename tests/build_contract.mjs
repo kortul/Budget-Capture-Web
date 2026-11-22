@@ -30,7 +30,7 @@ assert.doesNotMatch(analytics,/DELETE FROM web_metadata WHERE key='numbers_manua
 assert.match(analytics,/function writeMetadata\(database,key,value\)\{database\.run\('CREATE TABLE IF NOT EXISTS web_metadata/,'the settings metadata table may be created only when the user explicitly saves report settings');
 assert.doesNotMatch(analytics,/manual-references|renderManualReference|manual-reference-status/,'the illustrative old Numbers block must not appear in Financial Analytics');
 assert.match(analytics,/id="range-from"[\s\S]*id="range-to"/,'analytics must expose a month-to-month range');
-assert.match(analytics,/function renderMonthDetail\(\)/,'monthly drilldown must show the selected month's financial snapshot');
+assert.match(analytics,/function renderMonthDetail\(\)/,"monthly drilldown must show the selected month's financial snapshot");
 assert.match(analytics,/const MONTH_DETAIL_MANUAL_RULES=\{/,'monthly no-shop calculation must use the manually specified income and expense category lists, not the configurable shop tags');
 assert.match(analytics,/function noShopTotals\(rows\)[\s\S]*?const ledger=monthCategoriesWithoutShop\(rows\)/,'no-shop net must be calculated from the manual ledger');
 assert.match(analytics,/function monthCategoriesWithoutShop\(monthRows\)[\s\S]*?MONTH_DETAIL_MANUAL_RULES\[side\]/,'the selected month must use the fixed manual list and represent missing categories as zero');
@@ -68,6 +68,12 @@ assert.doesNotMatch(app,/BudgetSharedDb|sharedSnapshot/, 'main app must not keep
 assert.match(db,/CREATE TABLE IF NOT EXISTS numbers_category_adjustments/,'database must persist category reconciliation baselines');
 assert.match(analytics,/function resolveMonthlySources\(historyRows,transactionRows,categoryKinds\)/,'Analytics must resolve one authoritative source for each month');
 assert.match(analytics,/function buildTransactionMonthlyRows\(transactionRows,categoryKinds\)/,'Analytics must aggregate live transactions using Budget Capture category roles');
+assert.match(analytics,/function transactionFallbackRole\(row,rawAmount\)/,'transactions in categories marked other must still contribute to cash flow by their transaction direction');
+assert.match(analytics,/function isReviewTransactionRow\(row\)/,'failed or review-only bank operations must not affect financial totals');
+assert.match(analytics,/if\(rawAmount===0\)continue/,'zero-value ledger rows must not replace historical month totals');
+assert.match(analytics,/function isInternalTransactionRow\(row\)[\s\S]*?row\.category/,'internal transfer categories must be excluded even without a transfer description');
+assert.doesNotMatch(analytics,/if\(!tables\.has\('numbers_history'\)\)throw/,'transaction-only databases must not require Numbers history');
+assert.match(analytics,/операций на проверку:/,'excluded review operations must be disclosed in the Analytics status');
 assert.match(analytics,/function isAnalyticsRubleCurrency\(value\)/,'rubles-only analytics must not mix foreign-currency values');
 assert.match(analytics,/excludedCurrencyTransactions/,'Analytics must report excluded foreign-currency transactions');
 assert.match(analytics,/const historicalRows=\(historyRows\|\|\[\]\)\.filter\(row=>!ledgerMonthSet\.has\(row\.month_key\)\)/,'a transaction-backed month must replace its Numbers snapshot');

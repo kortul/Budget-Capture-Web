@@ -74,6 +74,7 @@ assert.equal(numbersValue(amountCents(474164.51)),'474164,51');
 assert.equal(categoryLedgerContribution(41000,'expense'),-41000,'positive bank inflow assigned to expense reduces expense');
 assert.equal(categoryLedgerContribution(-41000,'expense'),41000,'negative bank outflow assigned to expense increases expense');
 assert.deepEqual(categoryReclassificationDeltas(41000,'other','expense'),{from:0,to:-41000});
+assert.equal(Object.is(categoryReclassificationDeltas(41000,'other','expense').from,-0),false,'zero category deltas must never leak negative zero');
 assert.deepEqual(categoryReclassificationDeltas(-41000,'other','expense'),{from:0,to:41000});
 
 const numberGroups=numbersCategoryTotals([
