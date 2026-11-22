@@ -306,6 +306,8 @@ try {
     addTx('kgr-expense','2026-10-05',-96784.78,'KGR');
     addTx('kgr-positive','2026-10-23',41000,'KGR','income');
     addTx('other-expense','2026-10-14',-180835.39,'Остальные расходы');
+    addTx('nov-income','2026-11-01',50000,'Зарплата','income');
+    addTx('nov-expense','2026-11-02',-10000,'Остальные расходы');
     addTx('internal','2026-10-20',-999999,'Зарплата','internal_transfer','internal transfer');
     tx.run(['deleted','2026-10-30',-500000,'RUB','Остальные расходы','expense','','','','','2026-10-31']);
     tx.free();
@@ -314,7 +316,10 @@ try {
     await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
     return document.querySelector('#status')?.textContent || '';
   });
-  assert.match(ledgerStatus, /1 мес\. Numbers \/ 1 мес\. транзакции/, 'Analytics must identify the months provided by each source');
+  assert.match(ledgerStatus, /1 мес\. Numbers \/ 2 мес\. транзакции/, 'Analytics must identify historical and transaction-backed months');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
+  await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-10');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /312.?366,88/, 'October income must come from the transaction ledger');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /236.?620,17/, 'October expenses must be recalculated from transactions, including the positive KGR transaction');
   assert.match(await ledgerAnalytics.locator('#month-overall-net').textContent(), /75.?746,71/, 'October net must use the transaction ledger only once');
