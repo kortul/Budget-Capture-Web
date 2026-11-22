@@ -242,8 +242,8 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
       <label>По<input id="range-to" type="month" aria-label="Конец периода"></label>
       <div class="a-range-presets">
         <button class="button secondary button-small" id="range-6" type="button" aria-pressed="false">6 мес.</button>
-        <button class="button secondary button-small active" id="range-12" type="button" aria-pressed="true">12 мес.</button>
-        <button class="button secondary button-small" id="range-year" type="button" aria-pressed="false">Этот год</button>
+        <button class="button secondary button-small" id="range-12" type="button" aria-pressed="false">12 мес.</button>
+        <button class="button secondary button-small active" id="range-year" type="button" aria-pressed="true">Этот год</button>
         <button class="button secondary button-small" id="range-all" type="button" aria-pressed="false">Вся история</button>
       </div>
       <div class="a-file"><label>Открыть другую базу (.budget)<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
@@ -632,7 +632,7 @@ function renderPeriodInsights(rows,months){
 function selectMonth(key){
  if(!keyInsideRange(key))return;
  selectedMonthKey=key;
- $('cashflow-chart').querySelectorAll('[data-month-key]').forEach(el=>el.classList.toggle('selected',el.dataset.monthKey===key));
+ renderChart(rangeMonthRows(filterYear(data)));
  $('monthlyRows').querySelectorAll('tr[data-month-key]').forEach(el=>el.classList.toggle('selected-month',el.dataset.monthKey===key));
  renderMonthDetail();
 }function renderLife(rows,monthsCount){

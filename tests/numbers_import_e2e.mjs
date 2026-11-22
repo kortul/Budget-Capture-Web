@@ -222,6 +222,8 @@ try {
   assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
   assert.equal(await analytics.locator('#month-category-chart svg.a-donut-svg').count(), 1, 'monthly category composition must render as a donut chart');
   assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');
+  assert.equal(await analytics.locator('#range-year').getAttribute('aria-pressed'), 'true', 'the initial selected range preset must match the current-year period');
+  assert.equal(await analytics.locator('#range-12').getAttribute('aria-pressed'), 'false', 'the 12-month preset must not be highlighted for the current-year range');
   assert.equal(await analytics.locator('#download-db').isDisabled(), true, 'opening Analytics must not silently modify or mark the selected .budget as changed');
 
   await analytics.locator('#sasha-shared-percent').fill('60');
