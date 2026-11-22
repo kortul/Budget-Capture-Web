@@ -30,7 +30,7 @@ assert.doesNotMatch(analytics,/DELETE FROM web_metadata WHERE key='numbers_manua
 assert.match(analytics,/function writeMetadata\(database,key,value\)\{database\.run\('CREATE TABLE IF NOT EXISTS web_metadata/,'the settings metadata table may be created only when the user explicitly saves report settings');
 assert.doesNotMatch(analytics,/manual-references|renderManualReference|manual-reference-status/,'the illustrative old Numbers block must not appear in Financial Analytics');
 assert.match(analytics,/id="range-from"[\s\S]*id="range-to"/,'analytics must expose a month-to-month range');
-assert.match(analytics,/function renderMonthDetail\(\)/,'monthly drilldown must show the selected month's financial snapshot');
+assert.match(analytics,/function renderMonthDetail\(\)/,"monthly drilldown must show the selected month's financial snapshot");
 assert.match(analytics,/const MONTH_DETAIL_MANUAL_RULES=\{/,'monthly no-shop calculation must use the manually specified income and expense category lists, not the configurable shop tags');
 assert.match(analytics,/function noShopTotals\(rows\)[\s\S]*?const ledger=monthCategoriesWithoutShop\(rows\)/,'no-shop net must be calculated from the manual ledger');
 assert.match(analytics,/function monthCategoriesWithoutShop\(monthRows\)[\s\S]*?MONTH_DETAIL_MANUAL_RULES\[side\]/,'the selected month must use the fixed manual list and represent missing categories as zero');
