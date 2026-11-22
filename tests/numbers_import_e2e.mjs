@@ -198,6 +198,12 @@ try {
   assert.equal(finalDatabaseState.categoryRows, 2, 'unmatched historical categories must remain outside live categories');
   assert.deepEqual(finalDatabaseState.totals, { expense: 12502, income: 260000 });
 
+  // Force the local cache back to the earlier export, then verify that opening
+  // a newer .budget in the main app refreshes an already-open Analytics page.
+  await page.evaluate(async bytes => {
+    await window.BudgetSharedDb.saveDatabase('MyBudget_with_numbers.budget', new Uint8Array(bytes));
+  }, Array.from(fs.readFileSync(firstExportPath)));
+
   const analytics = await context.newPage();
   analytics.on('pageerror', error => pageErrors.push(error.message));
   analytics.on('request', request => {
@@ -207,13 +213,21 @@ try {
   const analyticsResponse = await analytics.goto(origin + basePath + 'numbers-analytics.html', { waitUntil: 'networkidle', timeout: 30000 });
   assert.equal(analyticsResponse.status(), 200, 'Financial Analytics page must be served from the Pages subpath');
   await analytics.waitForFunction(() => !document.querySelector('#dashboard').classList.contains('hidden'), null, { timeout: 20000 });
+  assert.match(await analytics.locator('#incomeMetric').textContent(), /250\s?000/, 'Analytics must automatically read the cached Numbers database');
+
+  const mainApp = await context.newPage();
+  mainApp.on('pageerror', error => pageErrors.push(error.message));
+  await mainApp.goto(origin + basePath + 'index.html', { waitUntil: 'networkidle', timeout: 30000 });
+  await mainApp.locator('#open-file').setInputFiles(secondExportPath);
+  await mainApp.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Database opened'), null, { timeout: 20000 });
+  await analytics.waitForFunction(() => /260\s?000/.test(document.querySelector('#incomeMetric')?.textContent || ''), null, { timeout: 20000 });
+
   const cachedDatabase = await analytics.evaluate(async () => {
     const record = await window.BudgetSharedDb.loadDatabase();
     return { name: record?.name || '', hasBytes: record?.bytes instanceof ArrayBuffer && record.bytes.byteLength > 10000 };
   });
-  assert.equal(cachedDatabase.hasBytes, true, 'Numbers Import must publish the updated database to the shared local browser cache');
+  assert.equal(cachedDatabase.hasBytes, true, 'main app must publish the loaded database to the shared local browser cache');
   assert.match(cachedDatabase.name, /MyBudget_with_numbers\.budget$/);
-  assert.match(await analytics.locator('#incomeMetric').textContent(), /260\s?000/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
   assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
   assert.match(await analytics.locator('#specialFlowMetric').textContent(), /203\s?700\s?000.*203\s?650\s?000/, 'analytics must show special input/output separately from Net');
