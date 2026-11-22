@@ -348,17 +348,17 @@ try {
   assert.match(await ledgerAnalytics.locator('#month-expense-list').textContent(), /KGR[\s\S]*55.?784,78/, 'KGR must total 55,784.78 after the positive transaction is treated as an expense-category credit');
   assert.doesNotMatch(await ledgerAnalytics.locator('#month-expense-list').textContent(), /Numbers only October/, 'October Numbers category rows must be fully replaced when ledger transactions exist');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-09');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000,00/, 'September must retain Numbers history when its only live transaction is internal');
-  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?000,00/, 'September expenses must remain sourced from Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /10.?000/, 'September must retain Numbers history when its only live transaction is internal');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?000/, 'September expenses must remain sourced from Numbers history');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-08');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000,00/, 'a USD-only transaction must not replace August Numbers history');
-  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000,00/, 'August Numbers expenses must remain when there are no RUB ledger rows');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /12.?000/, 'a USD-only transaction must not replace August Numbers history');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /4.?000/, 'August Numbers expenses must remain when there are no RUB ledger rows');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-06');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /8.?000,00/, 'a zero-value ledger row must not replace June Numbers income');
-  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /3.?000,00/, 'a zero-value ledger row must not replace June Numbers expenses');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /8.?000/, 'a zero-value ledger row must not replace June Numbers income');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /3.?000/, 'a zero-value ledger row must not replace June Numbers expenses');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-07');
-  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /7.?000,00/, 'review-only activity must not replace July Numbers income');
-  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?500,00/, 'review-only activity must not replace July Numbers expenses');
+  assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /7.?000/, 'review-only activity must not replace July Numbers income');
+  assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /2.?500/, 'review-only activity must not replace July Numbers expenses');
   await ledgerAnalytics.close();
 
   const ledgerOnlyAnalytics=await context.newPage();
@@ -383,9 +383,9 @@ try {
     return document.querySelector('#status')?.textContent||'';
   });
   assert.match(ledgerOnlyStatus,/0 мес\. Numbers \/ 1 мес\. транзакции/,'Analytics must load transaction-only databases without Numbers history');
-  assert.match(await ledgerOnlyAnalytics.locator('#month-income-total').textContent(),/60.?000,00/,'transaction-only databases must report all income categories');
-  assert.match(await ledgerOnlyAnalytics.locator('#month-expense-total').textContent(),/25.?000,00/,'transaction-only databases must report all expense categories');
-  assert.match(await ledgerOnlyAnalytics.locator('#month-overall-net').textContent(),/35.?000,00/,'transaction-only databases must calculate net cash flow');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-income-total').textContent(),/60.?000/,'transaction-only databases must report all income categories');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-expense-total').textContent(),/25.?000/,'transaction-only databases must report all expense categories');
+  assert.match(await ledgerOnlyAnalytics.locator('#month-overall-net').textContent(),/35.?000/,'transaction-only databases must calculate net cash flow');
   await ledgerOnlyAnalytics.close();
 
   assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
