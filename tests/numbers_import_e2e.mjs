@@ -219,7 +219,7 @@ try {
   assert.match(await analytics.locator('#specialFlowMetric').textContent(), /203\s?700\s?000.*203\s?650\s?000/, 'analytics must show special input/output separately from Net');
   assert.equal(await analytics.locator('#categoryList img').count(), 0, 'untrusted historical category names must be rendered as text');
   assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category payload must not execute in analytics');
-  assert.match(await analytics.locator('#categoryRows').innerText(), /Продукты/);
+  assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
 
   assert.deepEqual(pageErrors, [], 'Numbers pages must not raise uncaught browser errors');
   assert.deepEqual(externalRequests, [], 'Numbers pages must load every runtime asset from the same origin');
