@@ -230,7 +230,8 @@ try {
   assert.match(cachedDatabase.name, /MyBudget_with_numbers\.budget$/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
   assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
-  assert.match(await analytics.locator('#specialFlowMetric').textContent(), /203\s?700\s?000.*203\s?650\s?000/, 'analytics must show special input/output separately from Net');
+  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\\s?700\\s?000/, 'analytics must show special inputs separately from Net');
+  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\\s?650\\s?000/, 'analytics must show special outputs separately from Net');
   assert.equal(await analytics.locator('#categoryList img').count(), 0, 'untrusted historical category names must be rendered as text');
   assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category payload must not execute in analytics');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
