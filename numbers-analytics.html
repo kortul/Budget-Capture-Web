@@ -397,11 +397,11 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
   </div>
   <div class="a-month-category-panels">
     <section class="a-month-category-panel income-panel">
-      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПРИХОД</span><h3>Поступления без магазина</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПРИХОД</span><h3>Поступления по ручному списку</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
       <div id="month-income-list" class="a-month-category-list income-list"></div>
     </section>
     <section class="a-month-category-panel expense-panel">
-      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОД</span><h3>Расходы без магазина</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОД</span><h3>Расходы по ручному списку</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
       <div id="month-expense-list" class="a-month-category-list expense-list"></div>
     </section>
   </div>
@@ -713,16 +713,16 @@ function comparisonText(current,previous){
 function renderMonthDetail(){
  const month=selectedMonthKey;if(!month)return;
  const rows=data.filter(row=>row.month_key===month),previousMonth=shiftMonthKey(month,-1),previous=data.filter(row=>row.month_key===previousMonth);
- const current=totalsFor(rows),noShop=noShopTotals(rows),shopImpact=current.net-noShop.net,dimaNet=current.specialInput-current.specialOutput;
+ const current=totalsFor(rows),noShop=noShopTotals(rows),shopResult=groupTotals('shop',rows),dimaNet=current.specialInput-current.specialOutput;
  const sashaExpense=exactCategoryExpense(rows,'Саша Расходы'),categories=monthCategoriesWithoutShop(rows);
  const [year,monthNumber]=month.split('-').map(Number),monthLabel=MONTHS[monthNumber-1]+' '+year;
  $('month-detail-title').textContent=monthLabel;
- $('month-detail-subtitle').textContent='Все категории без магазина · '+(categories.income.length+categories.expense.length)+' статей, включая нулевые';
+ $('month-detail-subtitle').textContent='Фиксированный ручной список без магазина · '+categories.income.length+' поступления и '+categories.expense.length+' расходных статей, включая нулевые';
  $('month-compare-label').textContent=previous.length?'Сравнение с '+MONTHS[Number(previousMonth.slice(5))-1]+' '+previousMonth.slice(0,4):'Предыдущий месяц без данных';
  $('month-overall-net').textContent=money(current.net);$('month-overall-net').className=current.net>=0?'a-positive':'a-negative';
  $('month-no-shop-net').textContent=money(noShop.net);$('month-no-shop-net').className=noShop.net>=0?'a-positive':'a-negative';
  $('month-sasha-expense').textContent=money(sashaExpense);$('month-dima-net').textContent=money(dimaNet);
- $('month-shop-contribution').textContent='Вклад магазина: '+(shopImpact>0?'+':'')+money(shopImpact);
+ $('month-shop-contribution').textContent='Магазин (по настройкам): '+(shopResult.net>0?'+':'')+money(shopResult.net);
  $('month-special-breakdown').textContent='Вводы: '+money(current.specialInput)+' · Выводы: '+money(current.specialOutput);
  const incomeTotal=sum(categories.income,item=>item.total),expenseTotal=sum(categories.expense,item=>item.total);
  $('month-income-total').textContent=money(incomeTotal);$('month-expense-total').textContent=money(expenseTotal);
@@ -732,41 +732,60 @@ function renderMonthDetail(){
  renderMonthCategoryList('month-expense-list',categories.expense,'expense');
 }
 
-const MONTH_DETAIL_CATEGORY_ORDER=[
- 'Приход от работы Дима','Кредит','Возвраты','Наличные взнос','Налиные взнос',
- 'Дом/ Locker(аренда, ипотека, налоги, страховка)','Кафе','Коммунальные услуги','Рестораны','Медицина / корона','Еда','iTunes','Подарки Саше','Образование','Пени за снятие наличных/ Комиссии','Снятие наличных','Для дома','Одежда','Путешествия','Подарки нг/ семья','Авиабилеты','Развлечения','Долг Саше','Виза','Уход за собой','Бензин Съем машины','Цветы','Такси','Саша Расходы','Налоги','Погашения кредита','Саша Обучение Part Academy','Саша Квартира Дедушки'
-].map(normalized);
+
+const MONTH_DETAIL_MANUAL_RULES={
+ income:[
+  {label:'Приход от работы Дима',aliases:['Приход от работы Дима']},
+  {label:'Кредит',aliases:['Кредит']},
+  {label:'Возвраты',aliases:['Возвраты']},
+  {label:'Наличные взнос',aliases:['Наличные взнос','Налиные взнос']}
+ ],
+ expense:[
+  {label:'Дом/ Locker(аренда, ипотека, налоги, страховка)',aliases:['Дом/ Locker(аренда, ипотека, налоги, страховка)']},
+  {label:'Кафе',aliases:['Кафе']},
+  {label:'Коммунальные услуги',aliases:['Коммунальные услуги']},
+  {label:'Рестораны',aliases:['Рестораны']},
+  {label:'Медицина / корона',aliases:['Медицина / корона','Медицина/корона']},
+  {label:'Еда',aliases:['Еда']},
+  {label:'iTunes',aliases:['iTunes']},
+  {label:'Подарки Саше',aliases:['Подарки Саше']},
+  {label:'Образование',aliases:['Образование']},
+  {label:'Пени за снятие наличных/ Комиссии',aliases:['Пени за снятие наличных/ Комиссии','Пени за снятие наличных / Комиссии']},
+  {label:'Снятие наличных',aliases:['Снятие наличных']},
+  {label:'Для дома',aliases:['Для дома']},
+  {label:'Одежда',aliases:['Одежда']},
+  {label:'Путешествия',aliases:['Путешествия']},
+  {label:'Подарки нг/ семья',aliases:['Подарки нг/ семья','Подарки нг/  семья','Подарки нг / семья']},
+  {label:'Авиабилеты',aliases:['Авиабилеты']},
+  {label:'Развлечения',aliases:['Развлечения','Развлечения ']},
+  {label:'Долг Саше',aliases:['Долг Саше']},
+  {label:'Виза',aliases:['Виза']},
+  {label:'Уход за собой',aliases:['Уход за собой']},
+  {label:'Бензин Съем машины',aliases:['Бензин Съем машины','Бензин Съём машины']},
+  {label:'Цветы',aliases:['Цветы']},
+  {label:'Такси',aliases:['Такси']},
+  {label:'Саша Расходы',aliases:['Саша Расходы']},
+  {label:'Налоги',aliases:['Налоги']},
+  {label:'Погашения кредита',aliases:['Погашения кредита']},
+  {label:'Саша Обучение Part Academy',aliases:['Саша Обучение Part Academy']},
+  {label:'Саша Квартира Дедушки',aliases:['Саша Квартира Дедушки']}
+ ]
+};
 function monthCategoriesWithoutShop(monthRows){
- const shopNames=new Set((settings?.shop||[]).map(normalized)),catalog=new Map(),amounts=new Map();
- const keyFor=row=>row.role+'|'+normalized(row.category);
- for(const row of data){
-  if((row.role!=='income'&&row.role!=='expense')||shopNames.has(normalized(row.category)))continue;
-  const key=keyFor(row);if(!catalog.has(key))catalog.set(key,{category:row.category,role:row.role});
- }
- for(const row of monthRows){
-  if((row.role!=='income'&&row.role!=='expense')||shopNames.has(normalized(row.category)))continue;
-  const key=keyFor(row);amounts.set(key,(amounts.get(key)||0)+Number(row.amount||0));
- }
- const items=[...catalog.entries()].map(([key,item])=>({...item,total:amounts.get(key)||0}));
- const orderOf=item=>{const index=MONTH_DETAIL_CATEGORY_ORDER.indexOf(normalized(item.category));return index<0?10000:index;};
- const sortItems=items=>items.sort((a,b)=>{const ai=orderOf(a),bi=orderOf(b);return ai===bi?a.category.localeCompare(b.category,'ru'):ai-bi;});
- return {income:sortItems(items.filter(item=>item.role==='income')),expense:sortItems(items.filter(item=>item.role==='expense'))};
-}
-function renderMonthCategoryList(targetId,items,colorRole){
- const target=$(targetId);if(!target)return;
- const max=Math.max(0,...items.map(item=>Math.abs(Number(item.total)||0)));
- if(!items.length){target.innerHTML='<div class="a-month-empty">В истории Numbers пока нет категорий этого типа</div>';return;}
- target.innerHTML=items.map(item=>{
-  const amount=Number(item.total)||0,zero=Math.abs(amount)<0.005,width=max?Math.max(0,Math.min(100,Math.abs(amount)/max*100)):0;
-  return '<div class="a-month-category-row'+(zero?' is-zero':'')+'" title="'+escapeHtml(item.category)+' · '+escapeHtml(money(amount))+'"><span class="a-month-category-name">'+escapeHtml(item.category)+'</span><span class="a-month-category-track"><i style="width:'+width.toFixed(1)+'%"></i></span><strong class="a-month-category-value">'+money(amount)+'</strong></div>';
- }).join('');
+ const buildSide=side=>MONTH_DETAIL_MANUAL_RULES[side].map(rule=>{
+  const names=new Set([rule.label,...rule.aliases].map(normalized));
+  const storedName=data.find(row=>names.has(normalized(row.category)))?.category;
+  const total=sum(monthRows.filter(row=>names.has(normalized(row.category))),row=>Math.abs(Number(row.amount)||0));
+  return {category:storedName||rule.label,role:side==='income'?'income':'expense',total};
+ });
+ return {income:buildSide('income'),expense:buildSide('expense')};
 }
 function noShopTotals(rows){
- const shopNames=new Set((settings?.shop||[]).map(normalized));
- const selected=rows.filter(row=>(row.role==='income'||row.role==='expense')&&!shopNames.has(normalized(row.category)));
- const income=sum(selected.filter(row=>row.role==='income'),row=>row.amount),expense=sum(selected.filter(row=>row.role==='expense'),row=>row.amount);
+ const ledger=monthCategoriesWithoutShop(rows);
+ const income=sum(ledger.income,item=>item.total),expense=sum(ledger.expense,item=>item.total);
  return {income,expense,net:income-expense};
 }
+
 function exactCategoryExpense(rows,name){
  const target=normalized(name);
  return sum(rows.filter(row=>row.role==='expense'&&normalized(row.category)===target),row=>row.amount);

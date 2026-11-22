@@ -243,6 +243,46 @@ try {
 
   await analytics.locator('#settings-details > summary').click();
   await analytics.locator('[data-report-group="shop"][value="Продукты"]').check();
+
+  const manualSeptember = await analytics.evaluate(() => {
+    const rows = [
+      {category:'Приход от работы Дима',amount:94000,role:'income'},
+      {category:'Возвраты',amount:477,role:'income'},
+      {category:'Дом/ Locker(аренда, ипотека, налоги, страховка)',amount:12500,role:'expense'},
+      {category:'Кафе',amount:817,role:'expense'},
+      {category:'Коммунальные услуги',amount:960,role:'expense'},
+      {category:'Еда',amount:38912,role:'expense'},
+      {category:'Для дома',amount:10938,role:'expense'},
+      {category:'Путешествия',amount:58097,role:'expense'},
+      {category:'Бензин Съем машины',amount:4025,role:'expense'},
+      {category:'Такси',amount:1000,role:'expense'},
+      {category:'Саша Расходы',amount:19739,role:'expense'},
+      {category:'Саша Квартира Дедушки',amount:4892,role:'expense'},
+      {category:'Продукты',amount:90000,role:'expense'},
+      {category:'Магазин — вводы',amount:49000,role:'income'},
+    ];
+    const ledger = monthCategoriesWithoutShop(rows);
+    const totals = noShopTotals(rows);
+    return {
+      income: totals.income,
+      expense: totals.expense,
+      net: totals.net,
+      incomeRows: ledger.income.length,
+      expenseRows: ledger.expense.length,
+      cashDeposit: ledger.income.find(item => /наличные взнос/i.test(item.category))?.total ?? null,
+      missingZero: ledger.expense.find(item => item.category === 'Рестораны')?.total ?? null,
+    };
+  });
+  assert.deepEqual(manualSeptember, {
+    income: 94477,
+    expense: 151880,
+    net: -57403,
+    incomeRows: 4,
+    expenseRows: 28,
+    cashDeposit: 0,
+    missingZero: 0,
+  }, 'manual no-shop ledger must reproduce the September 2026 hand calculation and exclude unrelated categories');
+
   await analytics.locator('#sasha-shared-percent').fill('60');
   await analytics.locator('#save-settings').click();
   assert.match(await analytics.locator('#status').textContent(), /записаны внутрь базы/);
