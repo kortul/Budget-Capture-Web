@@ -477,6 +477,7 @@ function renderManualReference(reference){
  const monthTable=(values)=>values.map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num">'+money(value)+'</td></tr>').join('');
  const totalRow=(label,value,cols=2)=>'<tr class="total-row"><td>'+escapeHtml(label)+'</td><td class="num">'+money(value)+'</td></tr>';
  const life=reference.lifeAnnualSummary||{};
+ const cats=reference.lifeCategories||{};
  $('manual-life-year').textContent=yearLabel(life.year);
  $('manual-life-months').innerHTML=monthTable(life.months||[]);
  $('manual-life-total').innerHTML=totalRow('Итого по исходной таблице',life.statedTotal||0);
@@ -485,7 +486,6 @@ function renderManualReference(reference){
  $('manual-balance-year').textContent=yearLabel(balance.year);
  $('manual-balance-months').innerHTML=(balance.months||[]).map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num '+(value<0?'a-negative':'a-positive')+'">'+money(value)+'</td></tr>').join('');
  $('manual-balance-total').innerHTML=totalRow('Итого по исходной таблице',balance.statedTotal||0);
- const cats=reference.lifeCategories||{};
  $('manual-life-categories-year').textContent=yearLabel(cats.year);
  $('manual-life-categories').innerHTML=(cats.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+Number(item.sharePercent||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+'%</td><td class="num">'+money(item.averageMonthly)+'</td></tr>').join('');
  $('manual-life-categories-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(cats.statedTotal||0)+'</td><td class="num">—</td><td class="num">'+money(cats.statedAverageMonthly||0)+'</td></tr>';
