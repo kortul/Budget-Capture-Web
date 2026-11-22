@@ -227,20 +227,53 @@ try {
   assert.equal(await analytics.locator('#manual-references').count(), 0, 'the illustrative manual summary section must not be displayed');
   assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
-  assert.match(await analytics.locator('#month-expense-list').innerText(), /Еда/, 'monthly drilldown must render the fixed manual expense list');
-  assert.equal(await analytics.locator('#month-income-list .a-month-category-row').count(), 4, 'monthly drilldown must render all four manually specified income categories');
-  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 28, 'monthly drilldown must render all 28 manually specified expense categories');
-  assert.equal(await analytics.locator('.a-month-category-row.is-zero').count(), 32, 'missing manual categories must remain visible as zero rows');
-  assert.doesNotMatch(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'unrelated imported categories must not leak into the fixed manual ledger');
+  assert.equal(await analytics.locator('#month-detail-select option').count(), 1, 'month selector must list available months in the reporting range');
+  assert.equal(await analytics.locator('#month-income-list .a-month-category-row').count(), 1, 'income list must show active imported income categories');
+  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 1, 'expense list must show active imported expense categories');
+  assert.match(await analytics.locator('#month-income-list').innerText(), /Зарплата/, 'income list must show actual imported categories');
+  assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'expense list must include categories assigned to the shop in settings');
+  assert.equal(await analytics.locator('#month-expense-chart svg').count(), 1, 'expense composition must render a donut chart');
+  assert.equal(await analytics.locator('#month-insights .a-month-insight').count(), 3, 'month view must include three concise data-driven insights');
+  assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 1, 'zero-valued categories must not be rendered');
   assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
   assert.match(await analytics.locator('#month-overall-net').textContent(), /247\\s?498/, 'month headline must show income less expense including all ordinary categories');
   assert.match(await analytics.locator('#month-no-shop-net').textContent(), /0/, 'manual no-shop total must stay zero when imported categories do not match its fixed lists');
   assert.match(await analytics.locator('#month-sasha-expense').textContent(), /0/, 'missing Sasha category must safely display zero');
   assert.match(await analytics.locator('#month-dima-net').textContent(), /50\\s?000/, 'Dima inputs minus outputs must appear as a separate monthly metric');
-  assert.match(await analytics.locator('#month-income-list').textContent(), /Приход от работы Дима/, 'income ledger must render fixed manual categories even when absent from imported data');
-  assert.doesNotMatch(await analytics.locator('#month-income-list').textContent(), /Зарплата/, 'income categories outside the manual list must be excluded');
-  assert.match(await analytics.locator('#month-expense-list').textContent(), /Саша Квартира Дедушки/, 'expense ledger must render its last fixed manual category');
-  assert.match(await analytics.locator('#month-expense-total').textContent(), /0/, 'manual expense total must include only the fixed manual categories');
+  assert.match(await analytics.locator('#month-income-list').textContent(), /Зарплата/, 'income list must use imported month categories');
+  assert.doesNotMatch(await analytics.locator('#month-income-list').textContent(), /Приход от работы Дима/, 'manual no-shop rules must not replace the actual month category set');
+  assert.match(await analytics.locator('#month-expense-list').textContent(), /Продукты/, 'expense list must show the imported category');
+  const monthCategoryFixture = await analytics.evaluate(() => {
+    const originalData = data, originalMonth = selectedMonthKey;
+    data = [
+      {month_key:'2026-10',year:2026,month:10,role:'income',category:'Зарплата',amount:150000},
+      {month_key:'2026-10',year:2026,month:10,role:'income',category:'Подработка',amount:35000},
+      {month_key:'2026-10',year:2026,month:10,role:'expense',category:'Аренда',amount:50000},
+      {month_key:'2026-10',year:2026,month:10,role:'expense',category:'Еда',amount:18000},
+      {month_key:'2026-10',year:2026,month:10,role:'expense',category:'Такси',amount:4000},
+      {month_key:'2026-10',year:2026,month:10,role:'expense',category:'Нулевая категория',amount:0},
+      {month_key:'2026-10',year:2026,month:10,role:'special_input',category:'ВВОДЫ ДИМА',amount:1000000}
+    ];
+    selectedMonthKey='2026-10';renderMonthDetail();
+    const result={
+      expenses:[...document.querySelectorAll('#month-expense-list .a-month-category-name')].map(el=>el.textContent),
+      incomes:[...document.querySelectorAll('#month-income-list .a-month-category-name')].map(el=>el.textContent),
+      zeroVisible:document.querySelector('#month-expense-list')?.textContent.includes('Нулевая категория')||false,
+      specialVisible:document.querySelector('#month-expense-list')?.textContent.includes('ВВОДЫ ДИМА')||false,
+      selectedMonth:document.querySelector('#month-detail-select')?.value,
+      donut:document.querySelectorAll('#month-expense-chart svg circle.a-month-donut-segment').length
+    };
+    data=originalData;selectedMonthKey=originalMonth;renderAll();
+    return result;
+  });
+  assert.deepEqual(monthCategoryFixture.expenses,['Аренда','Еда','Такси'],'expenses must sort by descending amount');
+  assert.deepEqual(monthCategoryFixture.incomes,['Зарплата','Подработка'],'income categories must sort by descending amount');
+  assert.equal(monthCategoryFixture.zeroVisible,false,'zero categories must be hidden');
+  assert.equal(monthCategoryFixture.specialVisible,false,'special flows must stay outside ordinary category rankings');
+  assert.equal(monthCategoryFixture.selectedMonth,'2026-10','month selector must reflect the active month');
+  assert.ok(monthCategoryFixture.donut>=1,'expense donut must reflect monthly category totals');
+
+  assert.match(await analytics.locator('#month-expense-total').textContent(), /12.?502/, 'month expense total must use all ordinary expense categories');
   assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');
   assert.equal(await analytics.locator('#range-year').getAttribute('aria-pressed'), 'true', 'the initial selected range preset must match the current-year period');
   assert.equal(await analytics.locator('#range-12').getAttribute('aria-pressed'), 'false', 'the 12-month preset must not be highlighted for the current-year range');
@@ -343,6 +376,8 @@ try {
   assert.match(await transferredAnalytics.locator('#incomeMetric').textContent(), /260\s?000/, 'Analytics must receive the main app database without a second file selection');
   assert.equal(await transferredAnalytics.locator('#manual-references').count(), 0, 'the handoff must not display illustrative manual figures');
   assert.ok(await transferredAnalytics.locator('#month-detail-title').textContent(), 'the handoff must render month detail');
+  assert.equal(await transferredAnalytics.locator('#month-detail-select option').count(), 1, 'transferred history must populate the month selector');
+  assert.equal(await transferredAnalytics.locator('#month-income-list .a-month-category-row').count(), 1, 'transferred history must render actual income categories');
   assert.equal(await transferredAnalytics.locator('#manual-file').inputValue(), '', 'the handoff must avoid a second file selection');
   assert.match(await transferredAnalytics.locator('#database-name').textContent(), /MyBudget|Budget/i, 'the transferred database name must be displayed');
   await transferredAnalytics.close();

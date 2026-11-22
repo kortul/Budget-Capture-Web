@@ -315,6 +315,51 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 @media(max-width:700px){.a-month-focus{padding:16px!important}.a-month-header{align-items:flex-start;flex-direction:column;gap:8px}.a-month-header h2{font-size:24px}.a-month-focus-grid{gap:8px}.a-month-focus-metric{padding:12px;min-height:119px;gap:7px}.a-month-focus-metric strong{font-size:19px}.a-month-metric-label{font-size:9px}.a-month-metric-note{font-size:8px}.a-month-bridge{align-items:flex-start;flex-direction:column;margin-bottom:14px}.a-month-category-panel{padding:12px}.a-month-category-list.expense-list{grid-template-columns:1fr}}
 @media(max-width:420px){.a-month-focus-grid{grid-template-columns:1fr 1fr}.a-month-focus-metric strong{font-size:17px}.a-month-category-list.income-list{grid-template-columns:1fr}.a-month-category-row{grid-template-columns:minmax(85px,1.15fr) minmax(38px,.7fr) auto;gap:7px;padding:7px}.a-month-category-name{font-size:9px}.a-month-category-value{font-size:9px}}
 
+
+/* Monthly dashboard refresh: real monthly category rankings */
+.a-month-focus{padding:25px!important;background:radial-gradient(ellipse at 6% 0%,rgba(70,156,119,.12),transparent 34rem),linear-gradient(145deg,#17232d,#111b24)!important;border:1px solid rgba(132,174,166,.19)!important;box-shadow:0 22px 60px rgba(0,0,0,.19)}
+.a-month-header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px}
+.a-month-heading{min-width:0}.a-month-header h2{font-size:clamp(27px,3vw,36px);letter-spacing:-.055em;margin:4px 0 5px}.a-month-header p{font-size:11px;color:#899ba8;margin:0}
+.a-month-select-wrap{display:grid;gap:6px;min-width:180px;color:#7f929f;font-size:8px;font-weight:850;letter-spacing:.16em}
+.a-month-select-wrap select{appearance:none;width:100%;padding:10px 38px 10px 13px;border-radius:10px;border:1px solid rgba(145,171,184,.19);background:#172630;color:#e4edf1;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0;outline:none;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,#86a99d 50%),linear-gradient(135deg,#86a99d 50%,transparent 50%);background-position:calc(100% - 17px) 15px,calc(100% - 12px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+.a-month-select-wrap select:focus{border-color:#69b995;box-shadow:0 0 0 3px rgba(105,185,149,.12)}
+.a-month-focus-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.a-month-focus-metric{min-height:112px;padding:15px 16px 16px;border-radius:13px;background:linear-gradient(145deg,rgba(12,22,30,.94),rgba(22,34,44,.94));border-color:rgba(145,169,181,.13);gap:12px}
+.a-month-focus-metric:after{width:100px;height:100px;right:-44px;top:-45px;filter:blur(12px);opacity:.7}
+.a-month-metric-label{font-size:10px;min-height:28px;line-height:1.35;color:#99aab5}
+.a-month-focus-metric strong{font-size:clamp(20px,2.15vw,29px);line-height:1.05}
+.a-month-insight-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0 17px}
+.a-month-insight{min-width:0;padding:13px 15px 14px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(145,169,181,.1)}
+.a-month-insight-label{display:block;margin-bottom:8px;color:#8194a1;font-size:8px;font-weight:850;letter-spacing:.14em}
+.a-month-insight-value{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e7eff2;font-size:16px;font-weight:760;letter-spacing:-.025em}
+.a-month-insight-note{display:block;margin-top:5px;color:#81939f;font-size:9px;line-height:1.4}
+.a-month-analysis-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(275px,.8fr);gap:12px;align-items:start}
+.a-month-category-panel{min-width:0;padding:17px 17px 18px;border:1px solid rgba(145,169,181,.12);border-radius:15px;background:linear-gradient(155deg,rgba(16,27,36,.9),rgba(19,30,39,.94))}
+.a-month-category-head{padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid rgba(145,169,181,.1)}
+.a-month-category-head h3{font-size:16px;margin:4px 0;color:#e5edf1}.a-month-category-head p{font-size:9px;color:#80929f}
+.a-month-category-head>strong{font-size:clamp(19px,2vw,25px);color:#f19c8e}.income-panel .a-month-category-head>strong{color:#82d8b1}
+.a-month-section-kicker{font-size:8px;letter-spacing:.17em}
+.a-month-expense-overview{display:grid;grid-template-columns:172px minmax(0,1fr);gap:13px;align-items:center;padding:4px 0 15px;margin-bottom:13px;border-bottom:1px solid rgba(145,169,181,.1)}
+.a-month-donut{width:172px;max-width:100%;margin:auto}.a-month-donut svg{display:block;width:100%;height:auto;overflow:visible}
+.a-month-donut-track{fill:none;stroke:rgba(139,162,175,.12);stroke-width:19}.a-month-donut-segment{fill:none;stroke-width:19;stroke-linecap:butt;transition:opacity .15s}.a-month-donut-segment:hover{opacity:.78}
+.a-month-donut-label{fill:#7f929f;font-size:9px;font-weight:800;letter-spacing:1.5px;text-anchor:middle}.a-month-donut-value{fill:#edf4f5;font-size:15px;font-weight:800;text-anchor:middle}
+.a-month-donut-legend{display:grid;grid-template-columns:1fr;gap:7px;min-width:0}
+.a-month-legend-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:8px;align-items:center;min-width:0}
+.a-month-legend-dot{width:8px;height:8px;border-radius:3px}.a-month-legend-name{font-size:9px;color:#a9b8c1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.a-month-legend-share{font-size:9px;color:#e0e9ec;font-weight:750;font-variant-numeric:tabular-nums}
+.a-month-list-heading{display:flex;justify-content:space-between;align-items:center;margin:0 1px 8px;color:#7e919d;font-size:8px;font-weight:850;letter-spacing:.12em}
+.a-month-category-list{display:grid;gap:6px;min-width:0}.a-month-category-list.expense-list{grid-template-columns:repeat(2,minmax(0,1fr))}.a-month-category-list.income-list{grid-template-columns:1fr}
+.a-month-category-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;min-height:43px;padding:7px 8px;border:1px solid rgba(145,169,181,.075);border-radius:9px;background:rgba(255,255,255,.018)}
+.a-month-category-rank{color:#607581;font-size:8px;font-weight:800;font-variant-numeric:tabular-nums}
+.a-month-category-info{display:grid;gap:6px;min-width:0}.a-month-category-name{overflow:hidden;color:#b8c5cd;font-size:9px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+.a-month-category-track{display:block;height:4px;overflow:hidden;border-radius:20px;background:rgba(139,162,175,.12)}
+.a-month-category-fill{display:block;height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#d98779,#f1b09a)}
+.income-panel .a-month-category-fill{background:linear-gradient(90deg,#5dbd95,#9bd9b6)}
+.a-month-category-metrics{display:grid;justify-items:end;gap:3px;white-space:nowrap}.a-month-category-value{color:#e4ecef;font-size:10px;font-weight:750;font-variant-numeric:tabular-nums}.a-month-category-share{color:#718692;font-size:8px;font-variant-numeric:tabular-nums}
+.a-month-empty{display:grid;place-items:center;min-height:130px;padding:20px;color:#81939f;text-align:center;font-size:10px;border:1px dashed rgba(145,169,181,.14);border-radius:10px}
+@media(max-width:1000px){.a-month-analysis-grid{grid-template-columns:1fr}.a-month-category-list.income-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.a-month-focus{padding:16px!important}.a-month-header{align-items:flex-start;flex-direction:column;gap:13px}.a-month-select-wrap{width:100%;min-width:0}.a-month-focus-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.a-month-focus-metric{min-height:102px;padding:12px}.a-month-focus-metric strong{font-size:19px}.a-month-metric-label{font-size:9px}.a-month-insight-grid{grid-template-columns:1fr;gap:7px}.a-month-insight{padding:11px 13px}.a-month-insight-value{font-size:14px}.a-month-category-panel{padding:13px 11px}.a-month-expense-overview{grid-template-columns:130px minmax(0,1fr);gap:8px}.a-month-donut{width:130px}.a-month-category-list.expense-list,.a-month-category-list.income-list{grid-template-columns:1fr}}
+@media(max-width:390px){.a-month-expense-overview{grid-template-columns:1fr}.a-month-donut{width:150px}.a-month-donut-legend{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 10px}.a-month-focus-metric strong{font-size:17px}}
+
 </style>
 </head>
 <body>
@@ -382,31 +427,30 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 
 <section class="a-card a-month-focus" id="month-detail">
   <div class="a-month-header">
-    <div><span class="a-month-eyebrow">МЕСЯЧНЫЙ ФИНАНСОВЫЙ СРЕЗ</span><h2 id="month-detail-title">Детализация месяца</h2><p id="month-detail-subtitle">Выбери месяц на графике или в таблице</p></div>
-    <span class="a-pill a-month-compare" id="month-compare-label">Сравнение с предыдущим месяцем</span>
+    <div class="a-month-heading"><span class="a-month-eyebrow">ФИНАНСЫ ЗА МЕСЯЦ</span><h2 id="month-detail-title">Выбери месяц</h2><p id="month-detail-subtitle">Все поступления и расходы по категориям</p></div>
+    <label class="a-month-select-wrap"><span>МЕСЯЦ</span><select id="month-detail-select" aria-label="Выбрать месяц"></select></label>
   </div>
   <div class="a-month-focus-grid">
-    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong><span class="a-month-metric-note">Все обычные категории, включая магазин</span></article>
-    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Доходы за вычетом расходов (без магазина)</span><strong id="month-no-shop-net">—</strong><span class="a-month-metric-note">Только фиксированный ручной список категорий, независимо от настроек магазина</span></article>
-    <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong><span class="a-month-metric-note">Сумма строки «Саша Расходы» в Numbers</span></article>
-    <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong><span class="a-month-metric-note">Вводы минус выводы</span></article>
+    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong></article>
+    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Доходы за вычетом расходов (без магазина)</span><strong id="month-no-shop-net">—</strong></article>
+    <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong></article>
+    <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong></article>
   </div>
-  <div class="a-month-bridge">
-    <span id="month-shop-contribution">Вклад магазина: —</span>
-    <span id="month-special-breakdown">Вводы: — · Выводы: —</span>
-  </div>
-  <div class="a-month-category-panels">
-    <section class="a-month-category-panel income-panel">
-      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПРИХОД</span><h3>Поступления по ручному списку</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
-      <div id="month-income-list" class="a-month-category-list income-list"></div>
-    </section>
+  <div class="a-month-insight-grid" id="month-insights" aria-live="polite"></div>
+  <div class="a-month-analysis-grid">
     <section class="a-month-category-panel expense-panel">
-      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОД</span><h3>Расходы по ручному списку</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОДЫ</span><h3>Куда ушли деньги</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
+      <div class="a-month-expense-overview"><div id="month-expense-chart" class="a-month-donut" aria-label="Структура расходов"></div><div id="month-expense-legend" class="a-month-donut-legend"></div></div>
+      <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
       <div id="month-expense-list" class="a-month-category-list expense-list"></div>
+    </section>
+    <section class="a-month-category-panel income-panel">
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПОСТУПЛЕНИЯ</span><h3>Откуда пришли деньги</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
+      <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
+      <div id="month-income-list" class="a-month-category-list income-list"></div>
     </section>
   </div>
 </section>
-
 
 <details class="a-card a-foldout" id="monthly-balance"><summary class="a-foldout-summary">
 <span class="a-foldout-heading"><span class="a-foldout-index">01 · ДЕНЕЖНЫЙ ПОТОК</span><span class="a-foldout-title">Баланс по месяцам</span><span class="a-foldout-description">Доходы, расходы и результат каждого месяца</span></span>
@@ -642,20 +686,6 @@ function renderChart(months){
  $('cashflow-chart').innerHTML='<svg class="a-chart-svg" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Динамика поступлений и расходов за выбранный период"><defs><linearGradient id="income-area-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#6cddb1" stop-opacity=".23"></stop><stop offset="100%" stop-color="#6cddb1" stop-opacity="0"></stop></linearGradient><linearGradient id="expense-area-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#ff9588" stop-opacity=".16"></stop><stop offset="100%" stop-color="#ff9588" stop-opacity="0"></stop></linearGradient></defs>'+grid+(selectedX===null?'':'<line class="chart-guide" x1="'+selectedX+'" y1="'+top+'" x2="'+selectedX+'" y2="'+baseY+'"></line>')+'<path class="income-area" d="'+areaPath(incomePoints)+'"></path><path class="expense-area" d="'+areaPath(expensePoints)+'"></path><path class="income-line" d="'+linePath(incomePoints)+'"></path><path class="expense-line" d="'+linePath(expensePoints)+'"></path>'+points+ticks+'</svg>';
  $('chart-caption').textContent='Показано '+list.length+' из '+months.length+' месяцев · '+rangeFrom+' — '+rangeTo+(months.length>24?' · график показывает последние 24 месяца':'');
 }
-function renderExpenseDonut(rows){
- const categories=totalsByCategory(rows.filter(row=>row.role==='expense'));
- const total=sum(categories,row=>row.total);
- $('month-category-total').textContent=total?money(total):'Нет расходов';
- if(!total){$('month-category-chart').innerHTML='<div class="a-donut-empty">Нет расходов за выбранный месяц</div>';$('month-category-legend').innerHTML='';return;}
- const visible=categories.slice(0,5),rest=sum(categories.slice(5),row=>row.total);
- if(rest>0)visible.push({category:'Прочее',total:rest});
- const colors=['#70d6ae','#83aaf4','#c49aef','#f2bd78','#f28d86','#6db6c9'],circumference=2*Math.PI*72;
- let offset=0;
- const segments=visible.map((item,i)=>{const length=item.total/total*circumference;const segment='<circle class="donut-segment" cx="110" cy="110" r="72" stroke="'+colors[i%colors.length]+'" stroke-dasharray="'+length.toFixed(2)+' '+(circumference-length).toFixed(2)+'" stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 110 110)"><title>'+escapeHtml(item.category)+' · '+money(item.total)+'</title></circle>';offset+=length;return segment;}).join('');
- const legend=visible.map((item,i)=>'<div class="a-donut-item"><i class="a-donut-swatch" style="background:'+colors[i%colors.length]+'"></i><span class="a-donut-name" title="'+escapeHtml(item.category)+'">'+escapeHtml(item.category)+'</span><strong class="a-donut-value">'+(item.total/total*100).toFixed(1).replace('.',',')+'%</strong></div>').join('');
- $('month-category-chart').innerHTML='<svg class="a-donut-svg" viewBox="0 0 220 220" role="img" aria-label="Структура расходов: '+escapeHtml(money(total))+'"><circle class="donut-track" cx="110" cy="110" r="72"></circle>'+segments+'<text class="donut-label" x="110" y="100">РАСХОДЫ</text><text class="donut-value" x="110" y="124">'+escapeHtml(compactMoney(total))+'</text></svg>';
- $('month-category-legend').innerHTML=legend;
-}
 function deltaCell(value){
  if(value===null||!Number.isFinite(value))return '<span class="a-small">—</span>';
  const cls=value>0?'a-change-up':value<0?'a-change-down':'';
@@ -711,38 +741,73 @@ function comparisonText(current,previous){
 }
 
 
-function renderMonthCategoryList(targetId,items,role){
+function renderMonthCategoryList(targetId,items,total,role){
  const target=$(targetId);if(!target)return;
- const list=Array.isArray(items)?items:[];
- const maximum=Math.max(1,...list.map(item=>Math.max(0,Number(item.total)||0)));
- target.innerHTML=list.map(item=>{
-  const total=Math.max(0,Number(item.total)||0),isZero=total===0;
-  const width=isZero?0:Math.max(1,total/maximum*100),category=String(item.category??'');
-  return '<div class="a-month-category-row'+(isZero?' is-zero':'')+'" data-role="'+escapeHtml(role)+'" data-category="'+escapeHtml(category)+'"><span class="a-month-category-name" title="'+escapeHtml(category)+'">'+escapeHtml(category)+'</span><span class="a-month-category-track"><i style="width:'+width.toFixed(1)+'%"></i></span><strong class="a-month-category-value">'+money(total)+'</strong></div>';
- }).join('')||'<div class="a-viz-empty">Нет категорий в ручном списке</div>';
+ const list=(items||[]).filter(item=>Math.abs(Number(item.total)||0)>0.0001).slice().sort((a,b)=>Number(b.total)-Number(a.total));
+ if(!list.length){target.innerHTML='<div class="a-month-empty">За этот месяц нет '+(role==='expense'?'расходов':'поступлений')+' в загруженной истории</div>';return;}
+ const maximum=Math.max(1,...list.map(item=>Math.abs(Number(item.total)||0))),denominator=Math.max(1,Math.abs(Number(total)||0));
+ target.innerHTML=list.map((item,index)=>{
+  const amount=Number(item.total)||0,share=Math.abs(amount)/denominator*100,width=Math.max(1,Math.abs(amount)/maximum*100);
+  return '<div class="a-month-category-row"><span class="a-month-category-rank">'+String(index+1).padStart(2,'0')+'</span><div class="a-month-category-info"><span class="a-month-category-name" title="'+escapeHtml(item.category)+'">'+escapeHtml(item.category)+'</span><span class="a-month-category-track"><i class="a-month-category-fill" style="width:'+Math.min(100,width).toFixed(1)+'%"></i></span></div><span class="a-month-category-metrics"><strong class="a-month-category-value">'+money(amount)+'</strong><small class="a-month-category-share">'+share.toFixed(1).replace('.',',')+'%</small></span></div>';
+ }).join('');
 }
-
+function renderMonthExpenseComposition(items,total){
+ const chart=$('month-expense-chart'),legend=$('month-expense-legend');if(!chart||!legend)return;
+ const colors=['#e68d7e','#e8b16e','#82aef0','#b49be7','#75c9ae','#6f9fae'];
+ const positive=(items||[]).filter(item=>Math.abs(Number(item.total)||0)>0.0001).slice().sort((a,b)=>b.total-a.total);
+ const absTotal=positive.reduce((acc,item)=>acc+Math.abs(Number(item.total)||0),0);
+ if(!absTotal){chart.innerHTML='<div class="a-month-empty">Нет расходов для структуры</div>';legend.innerHTML='';return;}
+ const visible=positive.slice(0,5),restTotal=positive.slice(5).reduce((acc,item)=>acc+Math.abs(Number(item.total)||0),0);
+ if(restTotal>0)visible.push({category:'Остальные категории',total:restTotal});
+ const circumference=2*Math.PI*69;let offset=0;
+ const segments=visible.map((item,index)=>{
+  const value=Math.abs(Number(item.total)||0),length=value/absTotal*circumference,colour=colors[index%colors.length];
+  const markup='<circle class="a-month-donut-segment" cx="100" cy="100" r="69" stroke="'+colour+'" stroke-dasharray="'+length.toFixed(2)+' '+(circumference-length).toFixed(2)+'" stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 100 100)"><title>'+escapeHtml(item.category)+' · '+money(value)+'</title></circle>';
+  offset+=length;return markup;
+ }).join('');
+ chart.innerHTML='<svg viewBox="0 0 200 200" role="img" aria-label="Структура расходов на сумму '+escapeHtml(money(total))+'"><circle class="a-month-donut-track" cx="100" cy="100" r="69"></circle>'+segments+'<text class="a-month-donut-label" x="100" y="94">РАСХОДЫ</text><text class="a-month-donut-value" x="100" y="117">'+escapeHtml(compactMoney(total))+'</text></svg>';
+ legend.innerHTML=visible.map((item,index)=>{
+  const value=Math.abs(Number(item.total)||0),share=value/absTotal*100;
+  return '<div class="a-month-legend-row" title="'+escapeHtml(item.category)+' · '+money(value)+'"><i class="a-month-legend-dot" style="background:'+colors[index%colors.length]+'"></i><span class="a-month-legend-name">'+escapeHtml(item.category)+'</span><strong class="a-month-legend-share">'+share.toFixed(1).replace('.',',')+'%</strong></div>';
+ }).join('');
+}
+function renderMonthInsights(incomes,expenses,totals){
+ const topExpense=expenses[0],topIncome=incomes[0],topThree=expenses.slice(0,3).reduce((acc,item)=>acc+Math.abs(Number(item.total)||0),0);
+ const expenseBase=Math.max(0,Number(totals.expense)||0),incomeBase=Math.max(0,Number(totals.income)||0);
+ const cards=[
+  {label:'КРУПНЕЙШАЯ СТАТЬЯ РАСХОДОВ',value:topExpense?.category||'Нет расходов',note:topExpense?money(topExpense.total)+' · '+(expenseBase?Math.abs(topExpense.total)/expenseBase*100:0).toFixed(1).replace('.',',')+'% всех расходов':'За этот месяц расходов нет'},
+  {label:'ОСНОВНОЙ ИСТОЧНИК ДОХОДА',value:topIncome?.category||'Нет поступлений',note:topIncome?money(topIncome.total)+' · '+(incomeBase?Math.abs(topIncome.total)/incomeBase*100:0).toFixed(1).replace('.',',')+'% всех поступлений':'За этот месяц поступлений нет'},
+  {label:'ТРИ КРУПНЕЙШИЕ СТАТЬИ',value:expenseBase?(topThree/expenseBase*100).toFixed(1).replace('.',',')+'% расходов':'—',note:expenseBase?money(topThree)+' из '+money(expenseBase):'Нет данных для сравнения'}
+ ];
+ $('month-insights').innerHTML=cards.map(card=>'<article class="a-month-insight"><span class="a-month-insight-label">'+card.label+'</span><strong class="a-month-insight-value" title="'+escapeHtml(card.value)+'">'+escapeHtml(card.value)+'</strong><span class="a-month-insight-note">'+escapeHtml(card.note)+'</span></article>').join('');
+}
 function renderMonthDetail(){
  const month=selectedMonthKey;if(!month)return;
- const rows=data.filter(row=>row.month_key===month),previousMonth=shiftMonthKey(month,-1),previous=data.filter(row=>row.month_key===previousMonth);
- const current=totalsFor(rows),noShop=noShopTotals(rows),shopResult=groupTotals('shop',rows),dimaNet=current.specialInput-current.specialOutput;
- const sashaExpense=exactCategoryExpense(rows,'Саша Расходы'),categories=monthCategoriesWithoutShop(rows);
- const [year,monthNumber]=month.split('-').map(Number),monthLabel=MONTHS[monthNumber-1]+' '+year;
- $('month-detail-title').textContent=monthLabel;
- $('month-detail-subtitle').textContent='Фиксированный ручной список без магазина · '+categories.income.length+' поступления и '+categories.expense.length+' расходных статей, включая нулевые';
- $('month-compare-label').textContent=previous.length?'Сравнение с '+MONTHS[Number(previousMonth.slice(5))-1]+' '+previousMonth.slice(0,4):'Предыдущий месяц без данных';
+ const rows=data.filter(row=>row.month_key===month),current=totalsFor(rows),noShop=noShopTotals(rows);
+ const sashaExpense=exactCategoryExpense(rows,'Саша Расходы'),dimaNet=current.specialInput-current.specialOutput;
+ const incomes=totalsByCategory(rows.filter(row=>row.role==='income')).filter(item=>Math.abs(Number(item.total)||0)>0.0001);
+ const expenses=totalsByCategory(rows.filter(row=>row.role==='expense')).filter(item=>Math.abs(Number(item.total)||0)>0.0001);
+ const [year,monthNumber]=month.split('-').map(Number);
+ $('month-detail-title').textContent=MONTHS[monthNumber-1]+' '+year;
+ $('month-detail-subtitle').textContent=expenses.length+' категорий расходов · '+incomes.length+' источников поступлений · суммы отсортированы по убыванию';
+ const selector=$('month-detail-select');
+ if(selector){
+  const monthKeys=[...new Set(data.filter(row=>keyInsideRange(row.month_key)).map(row=>row.month_key))].sort();
+  selector.innerHTML=monthKeys.map(key=>{const [y,m]=key.split('-').map(Number);return '<option value="'+key+'">'+MONTHS[m-1]+' '+y+'</option>';}).join('');
+  selector.value=month;
+ }
  $('month-overall-net').textContent=money(current.net);$('month-overall-net').className=current.net>=0?'a-positive':'a-negative';
  $('month-no-shop-net').textContent=money(noShop.net);$('month-no-shop-net').className=noShop.net>=0?'a-positive':'a-negative';
  $('month-sasha-expense').textContent=money(sashaExpense);$('month-dima-net').textContent=money(dimaNet);
- $('month-shop-contribution').textContent='Магазин (по настройкам): '+(shopResult.net>0?'+':'')+money(shopResult.net);
- $('month-special-breakdown').textContent='Вводы: '+money(current.specialInput)+' · Выводы: '+money(current.specialOutput);
- const incomeTotal=sum(categories.income,item=>item.total),expenseTotal=sum(categories.expense,item=>item.total);
- $('month-income-total').textContent=money(incomeTotal);$('month-expense-total').textContent=money(expenseTotal);
- $('month-income-count').textContent=categories.income.length+' категорий · включая нулевые значения';
- $('month-expense-count').textContent=categories.expense.length+' категорий · включая нулевые значения';
- renderMonthCategoryList('month-income-list',categories.income,'income');
- renderMonthCategoryList('month-expense-list',categories.expense,'expense');
+ $('month-income-total').textContent=money(current.income);$('month-expense-total').textContent=money(current.expense);
+ $('month-income-count').textContent=incomes.length+' активных категорий';
+ $('month-expense-count').textContent=expenses.length+' активных категорий · нулевые скрыты';
+ renderMonthInsights(incomes,expenses,current);
+ renderMonthExpenseComposition(expenses,current.expense);
+ renderMonthCategoryList('month-income-list',incomes,current.income,'income');
+ renderMonthCategoryList('month-expense-list',expenses,current.expense,'expense');
 }
+
 
 
 const MONTH_DETAIL_MANUAL_RULES={
@@ -819,7 +884,7 @@ function renderPeriodInsights(rows,months){
  $('period-top-category-note').textContent=topCategory?money(topCategory.total)+' · '+(currentExpense?((topCategory.total/currentExpense)*100).toFixed(1).replace('.',',')+'% всех расходов':'0%'):'Нет данных';
 }
 function selectMonth(key){
- if(!keyInsideRange(key))return;
+ if(!keyInsideRange(key)||!data.some(row=>row.month_key===key))return;
  selectedMonthKey=key;
  renderChart(rangeMonthRows(filterYear(data)));
  $('monthlyRows').querySelectorAll('tr[data-month-key]').forEach(el=>el.classList.toggle('selected-month',el.dataset.monthKey===key));
@@ -998,6 +1063,7 @@ $('range-all').addEventListener('click',()=>applyRangePreset('all'));
 $('cashflow-chart').addEventListener('click',event=>{const item=event.target.closest('[data-month-key]');if(item)selectMonth(item.dataset.monthKey);});
 $('cashflow-chart').addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-month-key]')){event.preventDefault();selectMonth(event.target.dataset.monthKey);}});
 $('monthlyRows').addEventListener('click',event=>{const item=event.target.closest('[data-month-key]');if(item)selectMonth(item.dataset.monthKey);});
+$('month-detail-select').addEventListener('change',event=>selectMonth(event.target.value));
 $('save-settings').addEventListener('click',saveSettings);
 $('download-db').addEventListener('click',downloadDatabase);
 function listenForDatabaseFromBudgetCapture(){
