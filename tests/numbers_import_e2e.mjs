@@ -217,8 +217,10 @@ try {
   assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\s?700\s?000/, 'analytics must show special inputs separately from Net');
   assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
-  assert.match(await analytics.locator('#manual-reference-status').textContent(), /Ручные сводки загружены из выбранного \.budget/);
-  assert.match(await analytics.locator('#manual-life-categories').innerText(), /Учебная категория/);
+  assert.equal(await analytics.locator('#manual-references').count(), 0, 'the illustrative manual summary section must not be displayed');
+  assert.equal(await analytics.locator('#range-from').inputValue(), '2024-01', 'analytics must default to the latest available year start');
+  assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
+  assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты|Учебная категория/, 'monthly drilldown must show category totals');
 
   await analytics.locator('#sasha-shared-percent').fill('60');
   await analytics.locator('#save-settings').click();
@@ -234,14 +236,14 @@ try {
     const db = new SQL.Database(new Uint8Array(bytes));
     const read = key => JSON.parse(String(db.exec('SELECT value FROM web_metadata WHERE key=' + JSON.stringify(key))[0].values[0][0]));
     const settings = read('analytics_report_settings_v1');
-    const manual = read('numbers_manual_reference_v1');
-    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5, manualCategory: manual.lifeCategories.items[0].name };
+    const legacyManualRows = Number(db.exec("SELECT COUNT(*) FROM web_metadata WHERE key='numbers_manual_reference_v1'")[0].values[0][0]);
+    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5, legacyManualRows };
     db.close();
     return result;
   }, Array.from(fs.readFileSync(analyticsExportPath)));
   assert.equal(settingsState.sharedPercent, 60, 'Analytics category rules must be written inside the portable .budget file');
   assert.equal(settingsState.hasNumbersHistory, true, 'Analytics export must retain imported Numbers history');
-  assert.equal(settingsState.manualCategory, 'Учебная категория', 'Analytics export must retain manual Numbers reference reports inside the .budget');
+  assert.equal(settingsState.legacyManualRows, 0, 'Analytics must remove illustrative legacy summaries from the exported .budget');
 
   await analytics.locator('#manual-file').setInputFiles(analyticsExportPath);
   await analytics.waitForFunction(() => document.querySelector('#sasha-shared-percent')?.value === '60', null, { timeout: 20000 });
@@ -267,7 +269,6 @@ try {
   transferredAnalytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   await transferredAnalytics.waitForFunction(() => !document.querySelector('#dashboard')?.classList.contains('hidden'), null, { timeout: 20000 });
   assert.match(await transferredAnalytics.locator('#incomeMetric').textContent(), /260\s?000/, 'Analytics must receive the main app database without a second file selection');
-  assert.match(await transferredAnalytics.locator('#manual-reference-status').textContent(), /Ручные сводки загружены из выбранного \.budget/, 'the direct handoff must include manual Numbers summaries');
   assert.match(await transferredAnalytics.locator('#database-name').textContent(), /MyBudget|Budget/i, 'the transferred database name must be displayed');
   await transferredAnalytics.close();
   await mainApp.close();
