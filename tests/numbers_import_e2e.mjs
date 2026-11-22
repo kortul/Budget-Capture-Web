@@ -56,6 +56,9 @@ try {
     db.run('INSERT INTO categories(name) VALUES (?), (?), (?), (?)', ['Зарплата', 'Продукты', 'ВВОДЫ ДИМА СПЕЦ', 'ВЫВОДЫ ДИМА СПЕЦ']);
     db.run('CREATE TABLE web_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL)');
     db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['budget_profile_v1', JSON.stringify({categories:[{name:'Зарплата',kind:'income'},{name:'Продукты',kind:'expense'},{name:'ВВОДЫ ДИМА СПЕЦ',kind:'special_input'},{name:'ВЫВОДЫ ДИМА СПЕЦ',kind:'special_output'}],numbers:{specialInput:{category:'ВВОДЫ ДИМА СПЕЦ'},specialOutput:{category:'ВЫВОДЫ ДИМА СПЕЦ'}}})]);
+    const reportMonths = Array.from({length:12},(_,index)=>index+1);
+    const manualReference = {schemaVersion:1,lifeAnnualSummary:{year:2024,months:reportMonths,refunds:0,statedTotal:78},annualBalance:{year:2024,months:Array(12).fill(0),statedTotal:0},lifeCategories:{year:2024,items:[{name:'Учебная категория',total:12,sharePercent:100,averageMonthly:1}],statedTotal:12,statedAverageMonthly:1},sashaExpenses:{sharedCafeTaxiShare:0.75,items:[],statedTotal:0,statedAverageMonthly:0},shop:{year:2024,withdrawalsByMonth:Array(12).fill(0),depositsByMonth:Array(12).fill(0),statedWithdrawalsTotal:0,statedDepositsTotal:0,statedNet:0},credit:{sberForWorkBorrowed:0,lenaBorrowedSeparately:0,repaymentsByYear:[],statedRepaymentsTotal:0,finalOverpaymentBalance:0,note:''},projects:{items:[],statedPaidTotal:0,statedSpentTotal:0,statedProfitTotal:0,duration:''},additionalAnnualSeries:{monthly2026:Array(12).fill(0),stated2026Total:0,byYear:[],statedTotal:0},workBalance:{byYear:[],statedTotal:0}};
+    db.run('INSERT INTO web_metadata(key,value) VALUES (?,?)', ['numbers_manual_reference_v1', JSON.stringify(manualReference)]);
     db.run("CREATE TABLE transactions (id TEXT PRIMARY KEY, batch_id TEXT NOT NULL DEFAULT '', account TEXT NOT NULL DEFAULT '', tx_date TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', merchant TEXT NOT NULL DEFAULT '', merchant_key TEXT NOT NULL DEFAULT '', transaction_type TEXT NOT NULL DEFAULT 'unknown', source_ref TEXT NOT NULL DEFAULT '', amount REAL, currency TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'Не распределено', status TEXT NOT NULL DEFAULT 'Needs review', confidence REAL, source_file TEXT NOT NULL DEFAULT '', source_frame INTEGER, raw_text TEXT NOT NULL DEFAULT '', duplicate_of TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '', manually_adjusted INTEGER NOT NULL DEFAULT 0, highlighted_flag INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, delete_action_id TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT '')");
     db.run('INSERT INTO transactions(id, description) VALUES (?, ?)', ['sentinel-transaction', 'Must remain unchanged']);
     const bytes = Array.from(db.export());
@@ -214,7 +217,8 @@ try {
   assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\s?700\s?000/, 'analytics must show special inputs separately from Net');
   assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
-  assert.match(await analytics.locator('#manual-reference-status').textContent(), /В этой базе пока нет ручных сводок/);
+  assert.match(await analytics.locator('#manual-reference-status').textContent(), /Ручные сводки загружены из выбранного \.budget/);
+  assert.match(await analytics.locator('#manual-life-categories').innerText(), /Учебная категория/);
 
   await analytics.locator('#sasha-shared-percent').fill('60');
   await analytics.locator('#save-settings').click();
@@ -230,12 +234,14 @@ try {
     const db = new SQL.Database(new Uint8Array(bytes));
     const read = key => JSON.parse(String(db.exec('SELECT value FROM web_metadata WHERE key=' + JSON.stringify(key))[0].values[0][0]));
     const settings = read('analytics_report_settings_v1');
-    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5 };
+    const manual = read('numbers_manual_reference_v1');
+    const result = { sharedPercent: settings.sharedPercent, hasNumbersHistory: Number(db.exec("SELECT COUNT(*) FROM numbers_history WHERE source='numbers'")[0].values[0][0]) === 5, manualCategory: manual.lifeCategories.items[0].name };
     db.close();
     return result;
   }, Array.from(fs.readFileSync(analyticsExportPath)));
   assert.equal(settingsState.sharedPercent, 60, 'Analytics category rules must be written inside the portable .budget file');
   assert.equal(settingsState.hasNumbersHistory, true, 'Analytics export must retain imported Numbers history');
+  assert.equal(settingsState.manualCategory, 'Учебная категория', 'Analytics export must retain manual Numbers reference reports inside the .budget');
 
   await analytics.locator('#manual-file').setInputFiles(analyticsExportPath);
   await analytics.waitForFunction(() => document.querySelector('#sasha-shared-percent')?.value === '60', null, { timeout: 20000 });
