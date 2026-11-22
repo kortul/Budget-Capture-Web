@@ -233,7 +233,7 @@
       </div>
       <div>
         <h3>Магазин · вводы и выводы</h3><p class="a-small" id="manual-shop-year"></p>
-        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Вводы</th><th class="num">Выводы</th><th class="num">Разница</th></tr></thead><tbody id="manual-shop-months"></tbody><tfoot id="manual-shop-total"></tfoot></table></div>
+        <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Вводы</th><th class="num">Выводы</th><th class="num">Чистый вывод</th></tr></thead><tbody id="manual-shop-months"></tbody><tfoot id="manual-shop-total"></tfoot></table></div>
       </div>
       <div>
         <h3>Кредиты и возвраты</h3>
@@ -480,7 +480,7 @@ function renderManualReference(reference){
  $('manual-life-year').textContent=yearLabel(life.year);
  $('manual-life-months').innerHTML=monthTable(life.months||[]);
  $('manual-life-total').innerHTML=totalRow('Итого по исходной таблице',life.statedTotal||0);
- $('manual-life-refunds').textContent='Возвраты, указанные отдельно: '+money(life.refunds||0);
+ const lifeGross=sum(life.months||[],value=>Number(value||0)),lifeAfterRefunds=lifeGross-Number(life.refunds||0),lifeCategoryDifference=Number(cats.statedTotal||0)-lifeGross;$('manual-life-refunds').textContent='Сумма помесячных расходов: '+money(lifeGross)+'. Возвраты: '+money(life.refunds||0)+'. После возвратов: '+money(lifeAfterRefunds)+' (в Numbers указано '+money(life.statedTotal||0)+'). Итого по категориям отличается от помесячной суммы на '+money(lifeCategoryDifference)+'.';
  const balance=reference.annualBalance||{};
  $('manual-balance-year').textContent=yearLabel(balance.year);
  $('manual-balance-months').innerHTML=(balance.months||[]).map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num '+(value<0?'a-negative':'a-positive')+'">'+money(value)+'</td></tr>').join('');
@@ -495,7 +495,7 @@ function renderManualReference(reference){
  $('manual-sasha-note').textContent='Для кафе и такси применялась доля '+Math.round((sasha.sharedCafeTaxiShare||0)*100)+'% от общих расходов.';
  const shop=reference.shop||{};
  $('manual-shop-year').textContent=yearLabel(shop.year);
- $('manual-shop-months').innerHTML=(shop.withdrawalsByMonth||[]).map((withdrawal,index)=>{const deposit=Number(shop.depositsByMonth?.[index]||0);return '<tr><td>'+months[index]+'</td><td class="num">'+money(deposit)+'</td><td class="num">'+money(withdrawal)+'</td><td class="num">'+money(deposit-withdrawal)+'</td></tr>';}).join('');
+ $('manual-shop-months').innerHTML=(shop.withdrawalsByMonth||[]).map((withdrawal,index)=>{const deposit=Number(shop.depositsByMonth?.[index]||0);return '<tr><td>'+months[index]+'</td><td class="num">'+money(deposit)+'</td><td class="num">'+money(withdrawal)+'</td><td class="num">'+money(withdrawal-deposit)+'</td></tr>';}).join('');
  $('manual-shop-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(shop.statedDepositsTotal||0)+'</td><td class="num">'+money(shop.statedWithdrawalsTotal||0)+'</td><td class="num">'+money(shop.statedNet||0)+'</td></tr>';
  const credit=reference.credit||{};
  $('manual-credit-summary').innerHTML=[
