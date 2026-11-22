@@ -264,6 +264,57 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 @media(max-width:520px){.a-foldout-summary{padding:14px;gap:10px}.a-foldout-description{font-size:9px}.a-foldout-glance{grid-template-columns:1fr;gap:4px}.a-foldout-spark{width:100%;height:28px}.a-foldout-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.a-foldout-stat small{font-size:8px}.a-foldout-stat strong{font-size:11px}.a-foldout-toggle{gap:5px;font-size:9px}.a-foldout-toggle i{width:23px;height:23px}.a-foldout-body{padding:0 11px 13px}.a-viz-panel{padding:12px 10px 10px}.a-finance-svg{min-width:500px}.a-foldout-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.a-foldout-kpis[style*="repeat(3"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}.a-category-item{grid-template-columns:minmax(75px,1fr) minmax(50px,1.1fr) auto;gap:7px}.a-category-item-name,.a-category-item-value{font-size:9px}.a-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.a-foldout,.a-foldout-toggle i,.a-finance-svg .viz-bar{transition:none}}
 
+
+/* Monthly report · decision-first layout */
+.a-month-focus{position:relative;overflow:hidden;padding:25px!important;background:radial-gradient(ellipse at 8% 0%,rgba(83,164,132,.14),transparent 31rem),radial-gradient(ellipse at 95% 12%,rgba(112,132,194,.12),transparent 28rem),linear-gradient(145deg,#1b2732,#141e28)!important;border-color:rgba(132,174,166,.2)!important}
+.a-month-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:19px}
+.a-month-header h2{font-size:clamp(24px,2.4vw,32px);font-weight:780;letter-spacing:-.045em;color:#f0f5f7;margin:3px 0 5px}
+.a-month-header p{font-size:11px;color:#8fa0ad;margin:0;line-height:1.5}
+.a-month-eyebrow{font-size:8px;color:#79d0ac;font-weight:850;letter-spacing:.2em}
+.a-month-compare{white-space:nowrap;font-size:9px}
+.a-month-focus-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.a-month-focus-metric{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;gap:9px;min-width:0;min-height:139px;padding:17px 17px 15px;border-radius:15px;border:1px solid rgba(148,169,188,.12);background:linear-gradient(145deg,rgba(16,27,37,.94),rgba(23,34,45,.95))}
+.a-month-focus-metric:after{content:"";position:absolute;z-index:-1;width:120px;height:120px;right:-45px;top:-52px;border-radius:50%;background:var(--month-glow,rgba(94,196,153,.15));filter:blur(8px)}
+.a-month-focus-metric.is-total{--month-glow:rgba(78,205,151,.22);border-color:rgba(92,208,160,.26)}
+.a-month-focus-metric.is-no-shop{--month-glow:rgba(242,133,126,.2)}
+.a-month-focus-metric.is-sasha{--month-glow:rgba(177,147,232,.2)}
+.a-month-focus-metric.is-dima{--month-glow:rgba(118,161,230,.2)}
+.a-month-metric-label{font-size:10px;line-height:1.45;color:#9baab5;font-weight:650;min-height:28px}
+.a-month-focus-metric strong{display:block;font-size:clamp(20px,2vw,28px);font-weight:790;letter-spacing:-.045em;color:#e7f0f2;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-month-focus-metric strong.a-positive{color:#85e0b6}.a-month-focus-metric strong.a-negative{color:#ff9a91}
+.a-month-focus-metric.is-total strong{color:#8ce4ba}
+.a-month-focus-metric.is-no-shop strong.a-negative{color:#ff9b93}
+.a-month-focus-metric.is-sasha strong{color:#c6b0f1}.a-month-focus-metric.is-dima strong{color:#a3c6fa}
+.a-month-metric-note{font-size:9px;line-height:1.4;color:#738594;margin-top:auto}
+.a-month-bridge{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 2px 20px;color:#8496a4;font-size:9px}
+.a-month-bridge span{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(145,168,184,.12);border-radius:99px;background:rgba(14,23,31,.47)}
+.a-month-category-panels{display:grid;grid-template-columns:1fr;gap:13px}
+.a-month-category-panel{min-width:0;padding:16px 17px;border:1px solid rgba(148,169,188,.11);border-radius:15px;background:linear-gradient(145deg,rgba(15,25,34,.86),rgba(20,30,40,.9))}
+.a-month-category-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid rgba(148,169,188,.1)}
+.a-month-category-head h3{font-size:14px;margin:3px 0 3px;color:#e4edf1;letter-spacing:-.02em}
+.a-month-category-head p{font-size:9px;margin:0;color:#7e909e}
+.a-month-category-head>strong{font-size:clamp(17px,1.7vw,22px);font-weight:780;letter-spacing:-.035em;color:#8fdfb9;font-variant-numeric:tabular-nums;white-space:nowrap}
+.expense-panel .a-month-category-head>strong{color:#f2a093}
+.a-month-section-kicker{font-size:8px;font-weight:850;letter-spacing:.18em;color:#73cba7}
+.expense-panel .a-month-section-kicker{color:#ed9a8d}
+.a-month-category-list{display:grid;gap:7px;min-width:0}
+.a-month-category-list.income-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+.a-month-category-list.expense-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.a-month-category-row{display:grid;grid-template-columns:minmax(95px,1.2fr) minmax(48px,.85fr) auto;align-items:center;gap:10px;min-width:0;min-height:37px;padding:7px 9px;border:1px solid rgba(142,164,180,.075);border-radius:9px;background:rgba(255,255,255,.018);transition:background .15s,border-color .15s}
+.a-month-category-row:hover{background:rgba(116,166,177,.075);border-color:rgba(135,174,177,.2)}
+.a-month-category-row.is-zero{background:rgba(255,255,255,.008)}
+.a-month-category-name{font-size:9px;color:#adbac4;line-height:1.35;overflow-wrap:anywhere;min-width:0}
+.a-month-category-row.is-zero .a-month-category-name{color:#788b99}
+.a-month-category-track{height:5px;min-width:0;border-radius:99px;background:rgba(138,162,179,.12);overflow:hidden}
+.a-month-category-track i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#65cda2,#9ad9bb)}
+.expense-panel .a-month-category-track i{background:linear-gradient(90deg,#db8c7c,#f4ae91)}
+.a-month-category-row.is-zero .a-month-category-track i{width:0!important}
+.a-month-category-value{font-size:10px;font-weight:730;color:#dce7ec;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.a-month-category-row.is-zero .a-month-category-value{color:#728391;font-weight:550}
+@media(max-width:1100px){.a-month-focus-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a-month-category-list.income-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.a-month-focus{padding:16px!important}.a-month-header{align-items:flex-start;flex-direction:column;gap:8px}.a-month-header h2{font-size:24px}.a-month-focus-grid{gap:8px}.a-month-focus-metric{padding:12px;min-height:119px;gap:7px}.a-month-focus-metric strong{font-size:19px}.a-month-metric-label{font-size:9px}.a-month-metric-note{font-size:8px}.a-month-bridge{align-items:flex-start;flex-direction:column;margin-bottom:14px}.a-month-category-panel{padding:12px}.a-month-category-list.expense-list{grid-template-columns:1fr}}
+@media(max-width:420px){.a-month-focus-grid{grid-template-columns:1fr 1fr}.a-month-focus-metric strong{font-size:17px}.a-month-category-list.income-list{grid-template-columns:1fr}.a-month-category-row{grid-template-columns:minmax(85px,1.15fr) minmax(38px,.7fr) auto;gap:7px;padding:7px}.a-month-category-name{font-size:9px}.a-month-category-value{font-size:9px}}
+
 </style>
 </head>
 <body>
@@ -328,17 +379,31 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
   </section>
 </div>
 
-<section class="a-card" id="month-detail">
-  <div class="a-section-head"><div><h2 id="month-detail-title">Детализация месяца</h2><p id="month-detail-subtitle">Выбери месяц на графике или в таблице ниже</p></div><span class="a-pill" id="month-compare-label">Сравнение с предыдущим месяцем</span></div>
-  <div class="a-grid a-month-metrics">
-    <div class="a-metric"><small>Поступления</small><strong id="month-income">—</strong><div class="sub" id="month-income-delta">—</div></div>
-    <div class="a-metric"><small>Расходы</small><strong id="month-expense">—</strong><div class="sub" id="month-expense-delta">—</div></div>
-    <div class="a-metric"><small>Баланс</small><strong id="month-net">—</strong><div class="sub" id="month-net-delta">—</div></div>
-    <div class="a-metric"><small>Доля сбережений</small><strong id="month-rate">—</strong><div class="sub">Баланс / поступления</div></div>
+
+<section class="a-card a-month-focus" id="month-detail">
+  <div class="a-month-header">
+    <div><span class="a-month-eyebrow">МЕСЯЧНЫЙ ФИНАНСОВЫЙ СРЕЗ</span><h2 id="month-detail-title">Детализация месяца</h2><p id="month-detail-subtitle">Выбери месяц на графике или в таблице</p></div>
+    <span class="a-pill a-month-compare" id="month-compare-label">Сравнение с предыдущим месяцем</span>
   </div>
-  <div class="a-month-analysis">
-    <div class="a-donut-panel"><div class="a-subsection-head"><h3>Структура расходов</h3><span id="month-category-total">—</span></div><div class="a-donut-layout"><div id="month-category-chart" aria-label="Круговая диаграмма расходов за выбранный месяц"></div><div id="month-category-legend" class="a-donut-legend"></div></div></div>
-    <div class="a-rank-columns"><div><h3 class="a-mini-head">Куда ушли деньги</h3><div id="month-expense-list" class="a-rank-list"></div></div><div><h3 class="a-mini-head">Из чего сложились поступления</h3><div id="month-income-list" class="a-rank-list"></div></div></div>
+  <div class="a-month-focus-grid">
+    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong><span class="a-month-metric-note">Все обычные категории, включая магазин</span></article>
+    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Доходы за вычетом расходов (без магазина)</span><strong id="month-no-shop-net">—</strong><span class="a-month-metric-note">Исключены категории, отмеченные как магазин</span></article>
+    <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong><span class="a-month-metric-note">Сумма строки «Саша Расходы» в Numbers</span></article>
+    <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong><span class="a-month-metric-note">Вводы минус выводы</span></article>
+  </div>
+  <div class="a-month-bridge">
+    <span id="month-shop-contribution">Вклад магазина: —</span>
+    <span id="month-special-breakdown">Вводы: — · Выводы: —</span>
+  </div>
+  <div class="a-month-category-panels">
+    <section class="a-month-category-panel income-panel">
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПРИХОД</span><h3>Поступления без магазина</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
+      <div id="month-income-list" class="a-month-category-list income-list"></div>
+    </section>
+    <section class="a-month-category-panel expense-panel">
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОД</span><h3>Расходы без магазина</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
+      <div id="month-expense-list" class="a-month-category-list expense-list"></div>
+    </section>
   </div>
 </section>
 
@@ -644,23 +709,69 @@ function comparisonText(current,previous){
  const difference=current-previous,percent=previous?difference/Math.abs(previous)*100:null;
  return (difference>0?'+':'')+money(difference)+(percent===null?'':' · '+(percent>0?'+':'')+percent.toFixed(1).replace('.',',')+'%');
 }
+
 function renderMonthDetail(){
  const month=selectedMonthKey;if(!month)return;
  const rows=data.filter(row=>row.month_key===month),previousMonth=shiftMonthKey(month,-1),previous=data.filter(row=>row.month_key===previousMonth);
- const current=totalsFor(rows),prior=previous.length?totalsFor(previous):null;
- const [year,monthNumber]=month.split('-').map(Number);
- $('month-detail-title').textContent=MONTHS[monthNumber-1]+' '+year;
- $('month-detail-subtitle').textContent=rows.length?rows.length+' записей категорий · сравнение с '+MONTHS[Number(previousMonth.slice(5))-1]+' '+previousMonth.slice(0,4):'В базе нет записей за этот месяц';
- $('month-compare-label').textContent=prior?'К предыдущему месяцу':'Предыдущий месяц без данных';
- $('month-income').textContent=money(current.income);$('month-expense').textContent=money(current.expense);$('month-net').textContent=money(current.net);
- $('month-net').className=current.net>=0?'a-positive':'a-negative';
- $('month-rate').textContent=(current.income?current.net/current.income*100:0).toFixed(1).replace('.',',')+'%';
- $('month-income-delta').textContent=comparisonText(current.income,prior?.income??null);
- $('month-expense-delta').textContent=comparisonText(current.expense,prior?.expense??null);
- $('month-net-delta').textContent=comparisonText(current.net,prior?.net??null);
- renderExpenseDonut(rows);
- renderRankList('month-expense-list',rows,'expense');renderRankList('month-income-list',rows,'income');
+ const current=totalsFor(rows),noShop=noShopTotals(rows),shopImpact=current.net-noShop.net,dimaNet=current.specialInput-current.specialOutput;
+ const sashaExpense=exactCategoryExpense(rows,'Саша Расходы'),categories=monthCategoriesWithoutShop(rows);
+ const [year,monthNumber]=month.split('-').map(Number),monthLabel=MONTHS[monthNumber-1]+' '+year;
+ $('month-detail-title').textContent=monthLabel;
+ $('month-detail-subtitle').textContent='Все категории без магазина · '+(categories.income.length+categories.expense.length)+' статей, включая нулевые';
+ $('month-compare-label').textContent=previous.length?'Сравнение с '+MONTHS[Number(previousMonth.slice(5))-1]+' '+previousMonth.slice(0,4):'Предыдущий месяц без данных';
+ $('month-overall-net').textContent=money(current.net);$('month-overall-net').className=current.net>=0?'a-positive':'a-negative';
+ $('month-no-shop-net').textContent=money(noShop.net);$('month-no-shop-net').className=noShop.net>=0?'a-positive':'a-negative';
+ $('month-sasha-expense').textContent=money(sashaExpense);$('month-dima-net').textContent=money(dimaNet);
+ $('month-shop-contribution').textContent='Вклад магазина: '+(shopImpact>0?'+':'')+money(shopImpact);
+ $('month-special-breakdown').textContent='Вводы: '+money(current.specialInput)+' · Выводы: '+money(current.specialOutput);
+ const incomeTotal=sum(categories.income,item=>item.total),expenseTotal=sum(categories.expense,item=>item.total);
+ $('month-income-total').textContent=money(incomeTotal);$('month-expense-total').textContent=money(expenseTotal);
+ $('month-income-count').textContent=categories.income.length+' категорий · включая нулевые значения';
+ $('month-expense-count').textContent=categories.expense.length+' категорий · включая нулевые значения';
+ renderMonthCategoryList('month-income-list',categories.income,'income');
+ renderMonthCategoryList('month-expense-list',categories.expense,'expense');
 }
+
+const MONTH_DETAIL_CATEGORY_ORDER=[
+ 'Приход от работы Дима','Кредит','Возвраты','Наличные взнос','Налиные взнос',
+ 'Дом/ Locker(аренда, ипотека, налоги, страховка)','Кафе','Коммунальные услуги','Рестораны','Медицина / корона','Еда','iTunes','Подарки Саше','Образование','Пени за снятие наличных/ Комиссии','Снятие наличных','Для дома','Одежда','Путешествия','Подарки нг/ семья','Авиабилеты','Развлечения','Долг Саше','Виза','Уход за собой','Бензин Съем машины','Цветы','Такси','Саша Расходы','Налоги','Погашения кредита','Саша Обучение Part Academy','Саша Квартира Дедушки'
+].map(normalized);
+function monthCategoriesWithoutShop(monthRows){
+ const shopNames=new Set((settings?.shop||[]).map(normalized)),catalog=new Map(),amounts=new Map();
+ const keyFor=row=>row.role+'|'+normalized(row.category);
+ for(const row of data){
+  if((row.role!=='income'&&row.role!=='expense')||shopNames.has(normalized(row.category)))continue;
+  const key=keyFor(row);if(!catalog.has(key))catalog.set(key,{category:row.category,role:row.role});
+ }
+ for(const row of monthRows){
+  if((row.role!=='income'&&row.role!=='expense')||shopNames.has(normalized(row.category)))continue;
+  const key=keyFor(row);amounts.set(key,(amounts.get(key)||0)+Number(row.amount||0));
+ }
+ const items=[...catalog.entries()].map(([key,item])=>({...item,total:amounts.get(key)||0}));
+ const orderOf=item=>{const index=MONTH_DETAIL_CATEGORY_ORDER.indexOf(normalized(item.category));return index<0?10000:index;};
+ const sortItems=items=>items.sort((a,b)=>{const ai=orderOf(a),bi=orderOf(b);return ai===bi?a.category.localeCompare(b.category,'ru'):ai-bi;});
+ return {income:sortItems(items.filter(item=>item.role==='income')),expense:sortItems(items.filter(item=>item.role==='expense'))};
+}
+function renderMonthCategoryList(targetId,items,colorRole){
+ const target=$(targetId);if(!target)return;
+ const max=Math.max(0,...items.map(item=>Math.abs(Number(item.total)||0)));
+ if(!items.length){target.innerHTML='<div class="a-month-empty">В истории Numbers пока нет категорий этого типа</div>';return;}
+ target.innerHTML=items.map(item=>{
+  const amount=Number(item.total)||0,zero=Math.abs(amount)<0.005,width=max?Math.max(0,Math.min(100,Math.abs(amount)/max*100)):0;
+  return '<div class="a-month-category-row'+(zero?' is-zero':'')+'" title="'+escapeHtml(item.category)+' · '+escapeHtml(money(amount))+'"><span class="a-month-category-name">'+escapeHtml(item.category)+'</span><span class="a-month-category-track"><i style="width:'+width.toFixed(1)+'%"></i></span><strong class="a-month-category-value">'+money(amount)+'</strong></div>';
+ }).join('');
+}
+function noShopTotals(rows){
+ const shopNames=new Set((settings?.shop||[]).map(normalized));
+ const selected=rows.filter(row=>(row.role==='income'||row.role==='expense')&&!shopNames.has(normalized(row.category)));
+ const income=sum(selected.filter(row=>row.role==='income'),row=>row.amount),expense=sum(selected.filter(row=>row.role==='expense'),row=>row.amount);
+ return {income,expense,net:income-expense};
+}
+function exactCategoryExpense(rows,name){
+ const target=normalized(name);
+ return sum(rows.filter(row=>row.role==='expense'&&normalized(row.category)===target),row=>row.amount);
+}
+
 function renderPeriodInsights(rows,months){
  const length=monthCount(rangeFrom,rangeTo),previousFrom=shiftMonthKey(rangeFrom,-length),previousTo=shiftMonthKey(rangeFrom,-1);
  const previous=data.filter(row=>keyInsideRange(row.month_key,previousFrom,previousTo));
