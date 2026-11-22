@@ -1,41 +1,496 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self';">
-<title>Financial Analytics · Budget Capture</title><link rel="stylesheet" href="styles.css">
+<title>Финансовая аналитика · Budget Capture</title>
+<link rel="stylesheet" href="styles.css">
 <style>
-.analytics-shell{max-width:1400px;margin:24px auto;padding:0 20px}.analytics-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}.analytics-head h1{margin:4px 0}.analytics-actions{display:flex;gap:8px;flex-wrap:wrap}.analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.a-card{background:var(--panel,#1a212a);border:1px solid var(--line,#303b47);border-radius:14px;padding:18px;margin-bottom:14px}.a-metric{background:#121920;border-radius:12px;padding:16px}.a-metric small{color:var(--muted);display:block;margin-bottom:8px}.a-metric strong{font-size:clamp(18px,2vw,28px)}.a-metric .sub{font-size:12px;color:var(--muted);margin-top:5px}.a-two{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}.a-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.a-title h2{margin:0;font-size:18px}.a-controls{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.a-controls label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}.a-controls input,.a-controls select{padding:9px;border:1px solid var(--line,#303b47);border-radius:8px;background:#121920;color:inherit}.a-bars{display:grid;grid-template-columns:repeat(12,minmax(20px,1fr));gap:7px;align-items:end;height:230px;padding-top:12px}.a-bar-col{height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:5px;min-width:0}.a-bar-stack{width:100%;display:flex;flex-direction:column;justify-content:end;height:190px;position:relative;background:rgba(255,255,255,.025);border-radius:6px;overflow:hidden}.a-income,.a-expense{position:absolute;bottom:0;width:100%;border-radius:4px 4px 0 0}.a-income{background:#49b88a;opacity:.85}.a-expense{background:#e28b6a;opacity:.88}.a-bar-col small{font-size:10px;color:var(--muted)}.a-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin:10px 0}.legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.a-list{display:flex;flex-direction:column;gap:9px}.a-row{display:grid;grid-template-columns:minmax(90px,1fr) 2fr auto;gap:9px;align-items:center;font-size:13px}.a-track{height:9px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}.a-fill{height:100%;background:#6d9ee8;border-radius:99px}.a-row strong{font-variant-numeric:tabular-nums}.a-table{width:100%;border-collapse:collapse;font-size:13px}.a-table th,.a-table td{padding:9px;border-bottom:1px solid var(--line,#303b47);text-align:left}.a-table td.num,.a-table th.num{text-align:right}.a-scroll{overflow:auto;max-height:480px}.a-muted{color:var(--muted)}.a-note{padding:12px;background:#302b20;border-radius:9px;color:#dfc48e;margin:12px 0}.hidden{display:none!important}
-@media(max-width:850px){.analytics-grid{grid-template-columns:repeat(2,1fr)}.a-two{grid-template-columns:1fr}.a-bars{gap:3px}.a-row{grid-template-columns:90px 1fr auto}}
-@media(max-width:500px){.analytics-grid{grid-template-columns:1fr 1fr}.a-card{padding:12px}.a-bars{height:190px}.a-bar-stack{height:155px}}
-</style></head><body>
+:root{color-scheme:dark}
+.analytics-shell{max-width:1500px;margin:0 auto;padding:28px 24px 60px}
+.a-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+.a-head h1{font-size:clamp(28px,4vw,40px);margin:4px 0 6px;letter-spacing:-.035em}
+.a-head p{margin:0;color:var(--muted)}
+.a-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.a-card{background:var(--panel,#1a212a);border:1px solid var(--line,#303b47);border-radius:16px;padding:20px;margin-bottom:16px;min-width:0}
+.a-topline{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.a-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.a-controls label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px}
+.a-controls select,.a-controls input{min-height:40px;padding:9px 11px;border-radius:9px;border:1px solid var(--line,#303b47);background:#111820;color:inherit}
+.a-file{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.a-file input{max-width:260px;color:var(--muted);font-size:12px}
+.a-status{color:var(--muted);font-size:13px;margin-top:12px;line-height:1.5}
+.a-status.error{color:#ffaaa4}
+.a-status.ok{color:#91d8b7}
+.a-local{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:99px;padding:6px 10px;font-size:11px;color:var(--muted)}
+.a-dot{width:7px;height:7px;border-radius:50%;background:#6cc59a}
+.a-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.a-metric{background:#111820;border:1px solid rgba(255,255,255,.045);border-radius:13px;padding:16px;min-width:0}
+.a-metric small{display:block;color:var(--muted);font-size:12px;margin-bottom:9px}
+.a-metric strong{display:block;font-size:clamp(20px,2.2vw,30px);font-weight:650;letter-spacing:-.035em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.a-metric .sub{color:var(--muted);font-size:11px;margin-top:7px}
+.a-positive{color:#83d7ae!important}.a-negative{color:#f0a09a!important}
+.a-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.a-section-head h2{font-size:19px;margin:0 0 5px;letter-spacing:-.015em}
+.a-section-head p{font-size:12px;color:var(--muted);margin:0}
+.a-subtitle{font-size:13px;color:var(--muted);margin:0 0 12px}
+.a-two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px}
+.a-chart{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:7px;align-items:end;min-height:220px;padding:12px 2px 0}
+.a-month{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;gap:7px}
+.a-bars{height:175px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px;border-bottom:1px solid var(--line);padding:0 3px}
+.a-bar{width:42%;min-width:3px;border-radius:5px 5px 0 0;min-height:2px}
+.a-bar.income{background:#55bf91}.a-bar.expense{background:#df9276}
+.a-month small{font-size:10px;color:var(--muted);white-space:nowrap}
+.a-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:12px}
+.a-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.a-table-wrap{overflow:auto;max-height:520px}
+.a-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.a-table th,.a-table td{padding:11px 12px;border-bottom:1px solid var(--line,#303b47);white-space:nowrap}
+.a-table th{font-size:11px;font-weight:550;color:var(--muted);text-align:left;position:sticky;top:0;background:var(--panel,#1a212a);z-index:1}
+.a-table td.num,.a-table th.num{text-align:right}
+.a-table td:first-child{white-space:normal;min-width:170px}
+.a-table tr:last-child td{border-bottom:0}
+.a-table tr.total-row td{font-weight:700;border-top:1px solid var(--line);background:rgba(255,255,255,.025)}
+.a-bar-cell{width:150px;min-width:110px}
+.a-inline-track{height:7px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.a-inline-fill{height:100%;background:#6c9de3;border-radius:99px}
+.a-pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 7px;color:var(--muted);font-size:10px}
+.a-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.a-summary{padding:14px;border-radius:12px;background:#111820}
+.a-summary small{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}
+.a-summary strong{font-size:20px;font-variant-numeric:tabular-nums}
+.a-note{margin-top:12px;padding:12px 14px;border-radius:10px;background:rgba(213,170,91,.09);border:1px solid rgba(213,170,91,.22);color:#ddc18b;font-size:12px;line-height:1.55}
+.a-note.good{background:rgba(90,180,130,.08);border-color:rgba(90,180,130,.2);color:#a6dcbf}
+.a-details{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.a-details summary{cursor:pointer;font-size:13px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.a-details summary::-webkit-details-marker{display:none}
+.a-details summary:after{content:'＋';color:var(--muted);font-size:17px}
+.a-details[open] summary:after{content:'−'}
+.a-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.a-group-box{border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.a-group-box h3{font-size:13px;margin:0 0 10px}
+.a-check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;max-height:220px;overflow:auto}
+.a-check{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--muted);line-height:1.35;min-width:0}
+.a-check input{margin:1px 0 0;accent-color:#70a5e8;flex:none}
+.a-check span{overflow-wrap:anywhere}
+.a-settings-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+.a-settings-foot{font-size:11px;color:var(--muted);max-width:720px;line-height:1.5}
+.a-manual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.a-manual-grid h3{font-size:14px;margin:0 0 10px}
+.a-small{font-size:11px;color:var(--muted);line-height:1.5}
+.a-anchor{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.a-anchor a{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:6px 9px;text-decoration:none}
+.hidden{display:none!important}
+@media(max-width:1000px){.a-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a-two{grid-template-columns:1fr}}
+@media(max-width:650px){.analytics-shell{padding:18px 12px 40px}.a-card{padding:14px}.a-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.a-metric{padding:12px}.a-metric strong{font-size:20px}.a-chart{gap:3px;min-height:180px}.a-bars{height:140px}.a-month small{font-size:9px}.a-settings-grid,.a-manual-grid{grid-template-columns:1fr}.a-check-list{grid-template-columns:1fr}.a-summary-grid{grid-template-columns:1fr}.a-table{font-size:12px}.a-table th,.a-table td{padding:9px 8px}}
+</style>
+</head>
+<body>
 <div class="analytics-shell">
-<header class="analytics-head"><div><div class="eyebrow">FINANCIAL OVERVIEW</div><h1>Financial Analytics</h1><p class="muted">История доходов и расходов · импорт из Numbers / Excel · локально</p></div><div class="analytics-actions"><a class="button secondary" href="index.html">← Budget Capture</a><a class="button secondary" href="numbers-import.html">Numbers preview</a></div></header>
-<div class="a-card"><div class="a-controls"><label>Budget database (.budget)<input id="file" type="file" accept=".budget,.sqlite,.db"></label><label>Year<select id="year"><option value="all">All years</option></select></label><span id="status" class="a-muted">Выберите .budget, в который ранее импортирована Numbers history.</span></div><div id="alert" class="a-note hidden"></div></div>
+<header class="a-head">
+  <div><div class="eyebrow">BUDGET CAPTURE · ОТЧЁТЫ</div><h1>Финансовая аналитика</h1><p>Годовой обзор, расходы на жизнь, работа, магазин и кредиты</p></div>
+  <div class="a-actions"><span class="a-local"><i class="a-dot"></i> Только в этом браузере</span><a class="button secondary" href="index.html">← Основное приложение</a><a class="button secondary" href="numbers-import.html">Импорт Numbers</a></div>
+</header>
+
+<section class="a-card">
+  <div class="a-topline">
+    <div class="a-controls">
+      <label>Отчётный год<select id="year"><option value="">Загрузка…</option></select></label>
+      <div class="a-file"><label>Открыть базу вручную<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
+    </div>
+    <span class="a-pill" id="database-name">База не загружена</span>
+  </div>
+  <div class="a-status" id="status">Проверяем локальную базу Budget Capture…</div>
+  <div class="a-status error hidden" id="error"></div>
+</section>
+
 <div id="dashboard" class="hidden">
-<div class="analytics-grid">
-<div class="a-metric"><small>Total income</small><strong id="incomeMetric">—</strong><div class="sub">За выбранный период</div></div>
-<div class="a-metric"><small>Total expenses</small><strong id="expenseMetric">—</strong><div class="sub">За выбранный период</div></div>
-<div class="a-metric"><small>Net savings</small><strong id="netMetric">—</strong><div class="sub" id="netSub">Income − expenses</div></div>
-<div class="a-metric"><small>Saving rate</small><strong id="rateMetric">—</strong><div class="sub">Net / income</div></div><div class="a-metric"><small>Special input / output</small><strong id="specialFlowMetric">—</strong><div class="sub">Excluded from Net</div></div>
+<nav class="a-anchor">
+  <a href="#annual">Итоги года</a><a href="#life">Расходы на жизнь</a><a href="#sasha">Расходы Саши</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты и проекты</a><a href="#report-settings">Настройки отчёта</a>
+</nav>
+
+<section class="a-grid" id="annual">
+  <div class="a-metric"><small>Доходы за год</small><strong id="incomeMetric">—</strong><div class="sub">Обычные поступления</div></div>
+  <div class="a-metric"><small>Расходы за год</small><strong id="expenseMetric">—</strong><div class="sub">Обычные расходы</div></div>
+  <div class="a-metric"><small>Баланс за год</small><strong id="netMetric">—</strong><div class="sub" id="netSub">Доходы минус расходы</div></div>
+  <div class="a-metric"><small>Доля сбережений</small><strong id="rateMetric">—</strong><div class="sub">Баланс / доходы</div></div>
+</section>
+
+<div class="a-two" style="margin-top:16px">
+  <section class="a-card">
+    <div class="a-section-head"><div><h2>Движение денег по месяцам</h2><p id="chart-caption">Поступления и расходы за выбранный год</p></div></div>
+    <div id="cashflow-chart" class="a-chart"></div>
+    <div class="a-legend"><span><i style="background:#55bf91"></i>Доходы</span><span><i style="background:#df9276"></i>Расходы</span></div>
+  </section>
+  <section class="a-card">
+    <div class="a-section-head"><div><h2>Специальные потоки</h2><p>Не включаются в обычный баланс</p></div></div>
+    <div class="a-summary-grid">
+      <div class="a-summary"><small>Вводы</small><strong id="specialInputMetric">—</strong></div>
+      <div class="a-summary"><small>Выводы</small><strong id="specialOutputMetric">—</strong></div>
+      <div class="a-summary"><small>Разница</small><strong id="specialDiffMetric">—</strong></div>
+    </div>
+    <div class="a-note">Специальные вводы и выводы показаны отдельно, чтобы крупные внутренние обороты не искажали доходы, расходы и баланс.</div>
+  </section>
 </div>
-<div class="a-two"><section class="a-card"><div class="a-title"><h2>Monthly cash flow</h2><span class="a-muted" id="periodLabel"></span></div><div class="a-legend"><span><i class="legend-dot" style="background:#49b88a"></i>Income</span><span><i class="legend-dot" style="background:#e28b6a"></i>Expenses</span></div><div id="bars" class="a-bars"></div></section>
-<section class="a-card"><div class="a-title"><h2>Expense categories</h2></div><div id="categoryList" class="a-list"></div></section></div>
-<section class="a-card"><div class="a-title"><h2>Year summary</h2></div><div class="a-scroll"><table class="a-table"><thead><tr><th>Year</th><th class="num">Income</th><th class="num">Expenses</th><th class="num">Net</th><th class="num">Saving rate</th></tr></thead><tbody id="yearRows"></tbody></table></div></section>
-<section class="a-card"><div class="a-title"><h2>Category totals</h2></div><div class="a-controls"><label>Type<select id="catType"><option value="expense">Expenses</option><option value="income">Income</option></select></label><label>Search<input id="catSearch" placeholder="Category"></label></div><div class="a-scroll"><table class="a-table"><thead><tr><th>Category</th><th>Months</th><th class="num">Total</th></tr></thead><tbody id="categoryRows"></tbody></table></div></section>
+
+<section class="a-card">
+  <div class="a-section-head"><div><h2>Баланс по месяцам</h2><p>Доходы, расходы и результат каждого месяца</p></div></div>
+  <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th></tr></thead><tbody id="monthlyRows"></tbody></table></div>
+</section>
+
+<section class="a-card" id="life">
+  <div class="a-section-head"><div><h2>Все расходы только на жизнь</h2><p>Категории, выбранные для личных расходов; магазин и работа исключаются настройками</p></div></div>
+  <div class="a-grid">
+    <div class="a-metric"><small>Расходы на жизнь</small><strong id="lifeTotal">—</strong><div class="sub">Сумма выбранных категорий</div></div>
+    <div class="a-metric"><small>Возвраты</small><strong id="lifeRefunds">—</strong><div class="sub">Показываются отдельно</div></div>
+    <div class="a-metric"><small>Чистые расходы на жизнь</small><strong id="lifeNet">—</strong><div class="sub">Расходы минус возвраты</div></div>
+    <div class="a-metric"><small>В среднем за месяц</small><strong id="lifeAverage">—</strong><div class="sub">Расходы / 12 месяцев</div></div>
+  </div>
+  <div class="a-table-wrap" style="margin-top:16px"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Всего</th><th class="num">Доля</th><th class="num">В среднем за месяц</th></tr></thead><tbody id="lifeRows"></tbody><tfoot id="lifeFoot"></tfoot></table></div>
+</section>
+
+<section class="a-card" id="sasha">
+  <div class="a-section-head"><div><h2>Расходы Саши</h2><p>Отдельные категории плюс согласованная доля общих расходов</p></div></div>
+  <div class="a-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="a-metric"><small>Всего на Сашу</small><strong id="sashaTotal">—</strong><div class="sub">С учётом долей общих расходов</div></div>
+    <div class="a-metric"><small>Среднее за месяц</small><strong id="sashaAverage">—</strong><div class="sub">Сумма / 12 месяцев</div></div>
+    <div class="a-metric"><small>Доля от расходов на жизнь</small><strong id="sashaShare">—</strong><div class="sub">Саша / расходы на жизнь</div></div>
+  </div>
+  <div class="a-table-wrap" style="margin-top:16px"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Учтённая сумма</th><th class="num">Доля расходов Саши</th><th class="num">В среднем за месяц</th></tr></thead><tbody id="sashaRows"></tbody></table></div>
+</section>
+
+<section class="a-card" id="work">
+  <div class="a-section-head"><div><h2>Работа и магазин</h2><p>Состав этих разделов настраивается по категориям Numbers</p></div></div>
+  <div class="a-two">
+    <div>
+      <h3 style="font-size:14px;margin:0 0 12px">Работа</h3>
+      <div class="a-summary-grid">
+        <div class="a-summary"><small>Поступления</small><strong id="workIncome">—</strong></div>
+        <div class="a-summary"><small>Расходы</small><strong id="workExpense">—</strong></div>
+        <div class="a-summary"><small>Результат</small><strong id="workNet">—</strong></div>
+      </div>
+      <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Категория работы</th><th>Тип</th><th class="num">Всего</th></tr></thead><tbody id="workRows"></tbody></table></div>
+    </div>
+    <div>
+      <h3 style="font-size:14px;margin:0 0 12px">Магазин</h3>
+      <div class="a-summary-grid">
+        <div class="a-summary"><small>Вводы / поступления</small><strong id="shopIncome">—</strong></div>
+        <div class="a-summary"><small>Выводы / расходы</small><strong id="shopExpense">—</strong></div>
+        <div class="a-summary"><small>Разница</small><strong id="shopNet">—</strong></div>
+      </div>
+      <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Категория магазина</th><th>Тип</th><th class="num">Всего</th></tr></thead><tbody id="shopRows"></tbody></table></div>
+    </div>
+  </div>
+  <div class="a-table-wrap" style="margin-top:18px"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Вводы магазина</th><th class="num">Выводы магазина</th><th class="num">Баланс магазина</th></tr></thead><tbody id="shopMonthlyRows"></tbody></table></div>
+</section>
+
+<section class="a-card" id="loans">
+  <div class="a-section-head"><div><h2>Кредиты и займы</h2><p>Категории кредитов из Numbers отдельно от обычных расходов на жизнь</p></div></div>
+  <div class="a-summary-grid">
+    <div class="a-summary"><small>Получено / поступило</small><strong id="loanIncome">—</strong></div>
+    <div class="a-summary"><small>Погашено / потрачено</small><strong id="loanExpense">—</strong></div>
+    <div class="a-summary"><small>Разница</small><strong id="loanNet">—</strong></div>
+  </div>
+  <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Категория</th><th>Тип</th><th class="num">Всего</th></tr></thead><tbody id="loanRows"></tbody></table></div>
+</section>
+
+<section class="a-card">
+  <div class="a-section-head"><div><h2>Итоги по годам</h2><p>Сравнение всех лет, доступных в истории Numbers</p></div></div>
+  <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th><th class="num">Доля сбережений</th><th class="num">Спец. вводы</th><th class="num">Спец. выводы</th></tr></thead><tbody id="yearRows"></tbody></table></div>
+</section>
+
+<section class="a-card">
+  <div class="a-section-head"><div><h2>Сводки из старой таблицы Numbers</h2><p>Ручные исторические значения, переданные отдельно от помесячных категорий</p></div></div>
+  <div class="a-note">Эти значения перенесены из твоей сводки как справочные. Они не пересчитываются по категориям автоматически и не входят повторно в общий баланс.</div>
+  <div class="a-manual-grid" style="margin-top:16px">
+    <div><h3>Проекты, кредиты и займы</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Проект / обязательство</th><th class="num">Оплачено</th><th class="num">Потрачено</th><th class="num">Прибыль</th></tr></thead><tbody>
+      <tr><td>Fresh Grill</td><td class="num">727 000 ₽</td><td class="num">552 365 ₽</td><td class="num a-positive">174 635 ₽</td></tr>
+      <tr><td>Дроны</td><td class="num">2 000 000 ₽</td><td class="num">1 578 093 ₽</td><td class="num a-positive">421 907 ₽</td></tr>
+      <tr><td>Alita</td><td class="num">7 535 040 ₽</td><td class="num">5 584 733 ₽</td><td class="num a-positive">1 950 307 ₽</td></tr>
+      <tr><td>Суд</td><td class="num">855 500 ₽</td><td class="num">1 465 000 ₽</td><td class="num a-negative">−609 500 ₽</td></tr>
+      <tr><td>Кредит Сбер</td><td class="num">1 787 700 ₽</td><td class="num">2 206 201 ₽</td><td class="num a-negative">−418 501 ₽</td></tr>
+      <tr><td>Кредит Лены</td><td class="num">800 000 ₽</td><td class="num">800 000 ₽</td><td class="num">0 ₽</td></tr>
+      <tr class="total-row"><td>Итого · 36 месяцев</td><td class="num">13 705 240 ₽</td><td class="num">12 186 392 ₽</td><td class="num a-positive">1 518 848 ₽</td></tr>
+    </tbody></table></div><p class="a-small">По кредиту Лены в исходной таблице указано: «Ещё не вернул, но здесь пишу как вернул». По Alita срок: декабрь 2020 — 2024.</p></div>
+    <div><h3>Возвраты по кредитам</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Возвраты</th></tr></thead><tbody>
+      <tr><td>2023</td><td class="num">681 000 ₽</td></tr><tr><td>2024</td><td class="num">637 424 ₽</td></tr><tr><td>2025</td><td class="num">721 213 ₽</td></tr><tr><td>2026</td><td class="num">166 564 ₽</td></tr>
+      <tr class="total-row"><td>Всего</td><td class="num">2 206 201 ₽</td></tr>
+    </tbody></table></div>
+    <p class="a-small">Возвраты за январь–март 2026: 56 141 ₽, 55 520 ₽ и 54 903 ₽. Всего за эти три месяца — 166 564 ₽. Кредит Сбер для работы: взято 1 787 700 ₽; дополнительно указан кредит Лены 800 000 ₽.</p></div>
+  </div>
+  <details class="a-details"><summary>Дополнительные годовые значения из старого отчёта</summary>
+    <div class="a-manual-grid" style="margin-top:14px">
+      <div><h3>Годовой ряд 1</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Значение</th></tr></thead><tbody>
+        <tr><td>2021</td><td class="num">−5 657 347 ₽</td></tr><tr><td>2022</td><td class="num">4 680 068 ₽</td></tr><tr><td>2023</td><td class="num">920 879 ₽</td></tr><tr><td>2024</td><td class="num">44 662 ₽</td></tr><tr><td>2025</td><td class="num">6 775 ₽</td></tr><tr><td>2026</td><td class="num">31 479 ₽</td></tr><tr class="total-row"><td>Итого указано в Numbers</td><td class="num">−49 625 ₽</td></tr>
+      </tbody></table></div><p class="a-small">В сообщении заголовок этого ряда был неполным, поэтому здесь сохранены значения без самостоятельной трактовки.</p></div>
+      <div><h3>Баланс по работе — годовые значения</h3><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Баланс</th></tr></thead><tbody>
+        <tr><td>2021</td><td class="num">2 387 056 ₽</td></tr><tr><td>2022</td><td class="num">3 347 728 ₽</td></tr><tr><td>2023</td><td class="num">−2 177 212 ₽</td></tr><tr><td>2024</td><td class="num">−452 360 ₽</td></tr><tr><td>2025</td><td class="num">973 295 ₽</td></tr><tr><td>2026</td><td class="num">1 028 092 ₽</td></tr><tr class="total-row"><td>Итого указано в Numbers</td><td class="num">4 133 304 ₽</td></tr>
+      </tbody></table></div><p class="a-note">Проверка арифметики: сумма всех шести перечисленных лет составляет 5 106 599 ₽. Указанный итог 4 133 304 ₽ равен сумме без строки 2025 (+973 295 ₽). Возможно, 2025 в исходной формуле не включён.</p></div>
+    </div>
+  </details>
+</section>
+
+<section class="a-card" id="report-settings">
+  <div class="a-section-head"><div><h2>Настройка состава отчётов</h2><p>Выбери, какие категории относятся к жизни, расходам Саши, работе, магазину и кредитам</p></div></div>
+  <details id="settings-details" class="a-details">
+    <summary>Показать категории и правила распределения</summary>
+    <div class="a-controls" style="margin:14px 0"><label>Доля общих расходов для Саши, кафе и такси (%)<input id="sasha-shared-percent" type="number" min="0" max="100" step="1" value="75"></label></div>
+    <div id="settings-content" class="a-settings-grid"></div>
+    <div class="a-settings-actions"><button id="save-settings" class="button primary" type="button">Сохранить настройки отчёта</button><span class="a-settings-foot">Настройки сохраняются локально в этом браузере. Они не меняют транзакции и категории в файле .budget.</span></div>
+  </details>
+</section>
 </div>
 </div>
-<script src="./vendor/xlsx/xlsx.full.min.js"></script>
+
+<script src="./shared-database.js"></script>
 <script>
-const $=id=>document.getElementById(id);let data=[];
-const months={'январь':1,'февраль':2,'март':3,'апрель':4,'май':5,'июнь':6,'июль':7,'август':8,'сентябрь':9,'октябрь':10,'ноябрь':11,'декабрь':12};
-function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,character=>{switch(character){case '&':return '&amp;';case '<':return '&lt;';case '>':return '&gt;';case '"':return '&quot;';default:return '&#39;';}});}
-const money=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:0})+' ₽';
-const parse=(file)=>{const wb=XLSX.read(file,{type:'array'}),rows=[];for(const sheetName of wb.SheetNames){const m=sheetName.match(/^(.+?)\s+(\d{4})\s+-\s+(Income|Расходы)$/i);if(!m||!months[m[1].toLowerCase()])continue;const month=months[m[1].toLowerCase()],year=Number(m[2]),kind=m[3].toLowerCase()==='income'?'income':'expense',key=year+'-'+String(month).padStart(2,'0');for(const row of XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,raw:true,defval:null})){const category=String(row?.[0]??'').trim(),amount=row?.[1];if(!category||/^(общ|итог|доходы|расходы|выводы из|вводы в)/i.test(category)||typeof amount!=='number'||!Number.isFinite(amount))continue;rows.push({year,month,key,kind,category,amount});}}return rows;};
-function aggregate(){const monthly=new Map(),cats=new Map(),years=new Map();for(const r of data){const m=monthly.get(r.key)||{key:r.key,year:r.year,month:r.month,income:0,expense:0,special_input:0,special_output:0};if(Object.prototype.hasOwnProperty.call(m,r.kind))m[r.kind]+=r.amount;monthly.set(r.key,m);const ckey=r.kind+'|'+r.category,c=cats.get(ckey)||{kind:r.kind,category:r.category,total:0,months:new Set()};c.total+=r.amount;c.months.add(r.key);cats.set(ckey,c);const y=years.get(r.year)||{year:r.year,income:0,expense:0};if(r.kind==='income'||r.kind==='expense')y[r.kind]+=r.amount;years.set(r.year,y);}return{monthly:[...monthly.values()].sort((a,b)=>a.key.localeCompare(b.key)),categories:[...cats.values()],years:[...years.values()].sort((a,b)=>a.year-b.year)};}
-function render(){const a=aggregate(),sel=$('year').value,filtered=a.monthly.filter(x=>sel==='all'||String(x.year)===sel),inc=filtered.reduce((s,x)=>s+x.income,0),exp=filtered.reduce((s,x)=>s+x.expense,0),specialIn=filtered.reduce((s,x)=>s+x.special_input,0),specialOut=filtered.reduce((s,x)=>s+x.special_output,0),net=inc-exp,rate=inc?net/inc*100:0;$('incomeMetric').textContent=money(inc);$('expenseMetric').textContent=money(exp);$('netMetric').textContent=money(net);$('netMetric').className=net>=0?'positive':'negative';$('rateMetric').textContent=rate.toFixed(1)+'%';$('netSub').textContent=(sel==='all'?'All available years':sel)+' · special flows excluded';$('specialFlowMetric').textContent=money(specialIn)+' / '+money(specialOut);
-const max=Math.max(1,...filtered.flatMap(x=>[x.income,x.expense]));$('bars').innerHTML=filtered.map(x=>{const label=x.key.slice(5)+' / '+x.key.slice(0,4);return '<div class="a-bar-col" title="'+label+' · income '+money(x.income)+' · expenses '+money(x.expense)+'"><div class="a-bar-stack"><div class="a-income" style="height:'+Math.min(100,x.income/max*100)+'%"></div><div class="a-expense" style="height:'+Math.min(100,x.expense/max*100)+'%"></div></div><small>'+x.key.slice(5)+'</small></div>';}).join('');$('periodLabel').textContent=sel==='all'?'All months':sel;
-const expenseCats=a.categories.filter(c=>c.kind==='expense').sort((x,y)=>y.total-x.total).slice(0,10),catMax=Math.max(1,...expenseCats.map(c=>c.total));$('categoryList').innerHTML=expenseCats.map(c=>'<div class="a-row"><span>'+escapeHtml(c.category)+'</span><div class="a-track"><div class="a-fill" style="width:'+c.total/catMax*100+'%"></div></div><strong>'+money(c.total)+'</strong></div>').join('');
-$('yearRows').innerHTML=a.years.map(y=>{const n=y.income-y.expense,r=y.income?n/y.income*100:0;return '<tr><td>'+y.year+'</td><td class="num">'+money(y.income)+'</td><td class="num">'+money(y.expense)+'</td><td class="num">'+money(n)+'</td><td class="num">'+r.toFixed(1)+'%</td></tr>';}).join('');
-renderCats(a.categories);$('dashboard').classList.remove('hidden');}
-function renderCats(cats){const type=$('catType').value,search=$('catSearch').value.toLowerCase();const list=cats.filter(c=>c.kind===type&&c.category.toLowerCase().includes(search)).sort((a,b)=>b.total-a.total);$('categoryRows').innerHTML=list.map(c=>'<tr><td>'+escapeHtml(c.category)+'</td><td>'+c.months.size+'</td><td class="num">'+money(c.total)+'</td></tr>').join('');}
-$('year').onchange=render;$('catType').onchange=()=>renderCats(aggregate().categories);$('catSearch').oninput=()=>renderCats(aggregate().categories);
-$('file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{$('status').textContent='Opening database…';if(!window.initSqlJs){const script=document.createElement('script');script.src='./vendor/sql.js/sql-wasm.js';await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=()=>reject(new Error('SQLite runtime unavailable'));document.head.appendChild(script);});}const SQL=await window.initSqlJs({locateFile:n=>'./vendor/sql.js/'+n,useOldExtensionFunctions:true});const db=new SQL.Database(new Uint8Array(await f.arrayBuffer()));const table=db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='numbers_history'")[0]?.values||[];if(!table.length){db.close();throw new Error('Numbers history not found. Import Excel into your .budget first on Numbers history page.');}const historyCols=db.exec('PRAGMA table_info(numbers_history)')[0]?.values.map(row=>String(row[1]))||[];const hasRole=historyCols.includes('role');const result=db.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");if(!result.length||!result[0].values.length){db.close();throw new Error('Numbers history table is empty. Import Excel history first.');}data=result[0].values.map(row=>({key:String(row[0]),year:Number(row[1]),month:Number(row[2]),kind:String(row[6]||row[3]),category:String(row[4]),amount:Number(row[5])}));db.close();const years=[...new Set(data.map(x=>x.year))].sort();$('year').innerHTML='<option value="all">All years</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');$('status').textContent='Loaded '+data.length.toLocaleString('ru-RU')+' historical records from '+f.name;$('alert').classList.remove('hidden');$('alert').textContent='История прочитана из numbers_history в выбранной базе. Transactions не затрагиваются.';render();}catch(err){$('status').textContent='Could not read history';$('alert').classList.remove('hidden');$('alert').textContent=err.message;}}</script></body></html>
+const $ = id => document.getElementById(id);
+const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const money=n=>Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' ₽';
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let SQL=null,db=null,dbName='',data=[],years=[],settings=null,loading=false,lastCacheStamp='',unsubscribe=null;
+const GROUPS=[
+ {id:'life',title:'Расходы на жизнь',types:['expense'],hint:'Личные расходы без работы, магазина и кредитных операций'},
+ {id:'sasha',title:'Расходы Саши',types:['expense'],hint:'Категории Саши плюс согласованная часть кафе и такси'},
+ {id:'work',title:'Работа',types:['income','expense'],hint:'Поступления и расходы по рабочим категориям'},
+ {id:'shop',title:'Магазин',types:['income','expense'],hint:'Поступления и расходы магазина'},
+ {id:'loans',title:'Кредиты',types:['income','expense'],hint:'Полученные кредиты, погашения и кредитные расходы'}
+];
+function normalized(v){return String(v||'').trim().toLocaleLowerCase('ru-RU').replace(/ё/g,'е').replace(/\s+/g,' ');}
+function roleLabel(role){return ({income:'Доход',expense:'Расход',special_input:'Спец. ввод',special_output:'Спец. вывод'})[role]||'Другое';}
+function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.className='a-status'+(kind?' '+kind:'');}
+function showError(message){$('error').textContent=message;$('error').classList.remove('hidden');}
+function hideError(){$('error').classList.add('hidden');}
+function sum(rows,fn){return rows.reduce((total,row)=>total+fn(row),0);}
+function latestYear(){return years.length?String(years[years.length-1]):'';}
+function selectedYear(){return $('year').value||latestYear();}
+function filterYear(rows,y=selectedYear()){return y==='all'?rows:rows.filter(row=>row.year===Number(y));}
+function categoryList(){return [...new Set(data.map(row=>row.category))].sort((a,b)=>a.localeCompare(b,'ru'));}
+function categoryKinds(){const map=new Map();for(const row of data){if(!map.has(row.category))map.set(row.category,row.role||row.kind);}return map;}
+function defaultSettings(){
+ const cats=categoryList(),kinds=categoryKinds();
+ const result={sharedPercent:75,life:[],sasha:[],work:[],shop:[],loans:[]};
+ for(const name of cats){
+  const n=normalized(name),role=kinds.get(name);
+  if(role==='expense'&&!/(работ|магаз|кредит|kgr|суд|спец|внутренн)/i.test(n))result.life.push(name);
+  if(role==='expense'&&(/саша/.test(n)||n==='кафе'||n==='такси'))result.sasha.push(name);
+  if(/работ|kgr/i.test(n))result.work.push(name);
+  if(/магаз/i.test(n))result.shop.push(name);
+  if(/кредит|погашени/i.test(n))result.loans.push(name);
+ }
+ return result;
+}
+function normalizeSettings(input){
+ const defaults=defaultSettings(),valid=new Set(categoryList()),output={sharedPercent:75};
+ for(const group of GROUPS)output[group.id]=Array.isArray(input?.[group.id])?input[group.id].filter(name=>valid.has(name)):defaults[group.id];
+ const percent=Number(input?.sharedPercent);
+ if(Number.isFinite(percent))output.sharedPercent=Math.max(0,Math.min(100,percent));
+ return output;
+}
+function settingKey(){return 'analytics-profile:'+dbName;}
+async function loadSettings(){
+ let saved=null;
+ try{saved=await window.BudgetSharedDb?.loadSetting(settingKey());}catch{}
+ settings=normalizeSettings(saved||defaultSettings());
+ $('sasha-shared-percent').value=String(settings.sharedPercent);
+ renderSettings();
+}
+function renderSettings(){
+ const kinds=categoryKinds(),allCats=categoryList();
+ $('settings-content').innerHTML=GROUPS.map(group=>{
+  const choices=allCats.filter(name=>group.types.includes(kinds.get(name)));
+  const selected=new Set(settings[group.id]||[]);
+  return '<div class="a-group-box"><h3>'+escapeHtml(group.title)+'</h3><p class="a-small">'+escapeHtml(group.hint)+'</p><div class="a-check-list">'+choices.map(name=>'<label class="a-check"><input type="checkbox" data-report-group="'+group.id+'" value="'+escapeHtml(name)+'" '+(selected.has(name)?'checked':'')+'><span>'+escapeHtml(name)+'</span></label>').join('')+'</div></div>';
+ }).join('');
+}
+function readSettingsFromUi(){
+ const next={sharedPercent:Math.max(0,Math.min(100,Number($('sasha-shared-percent').value)||0))};
+ for(const group of GROUPS)next[group.id]=[...document.querySelectorAll('[data-report-group="'+group.id+'"]:checked')].map(el=>el.value);
+ return normalizeSettings(next);
+}
+async function saveSettings(){
+ settings=readSettingsFromUi();
+ try{
+  await window.BudgetSharedDb?.saveSetting(settingKey(),settings);
+  renderAll();
+  setStatus('Настройки отчёта сохранены в локальном хранилище браузера. База .budget и транзакции не изменены.','ok');
+ }catch(error){setStatus('Не удалось сохранить настройки: '+error.message,'error');}
+}
+function totalsFor(rows){
+ const ordinary=rows.filter(row=>row.role==='income'||row.role==='expense');
+ const income=sum(ordinary.filter(row=>row.role==='income'),row=>row.amount);
+ const expense=sum(ordinary.filter(row=>row.role==='expense'),row=>row.amount);
+ const specialInput=sum(rows.filter(row=>row.role==='special_input'),row=>row.amount);
+ const specialOutput=sum(rows.filter(row=>row.role==='special_output'),row=>row.amount);
+ return {income,expense,net:income-expense,specialInput,specialOutput};
+}
+function rowsForGroup(group,rows=filterYear(data)){
+ const chosen=new Set(settings[group]||[]);
+ return rows.filter(row=>chosen.has(row.category)&&(row.role==='income'||row.role==='expense'));
+}
+function groupTotals(group,rows=filterYear(data)){
+ const selected=rowsForGroup(group,rows);
+ const income=sum(selected.filter(row=>row.role==='income'),row=>row.amount);
+ const expense=sum(selected.filter(row=>row.role==='expense'),row=>row.amount);
+ return {rows:selected,income,expense,net:income-expense};
+}
+function totalsByCategory(rows,weightFn=()=>1){
+ const result=new Map();
+ for(const row of rows){
+  const weight=weightFn(row),amount=row.amount*weight;
+  const item=result.get(row.category)||{category:row.category,total:0,kind:row.role};
+  item.total+=amount;result.set(row.category,item);
+ }
+ return [...result.values()].sort((a,b)=>b.total-a.total);
+}
+function rowMonthTotals(rows){
+ const map=new Map();
+ for(const row of rows){
+  const item=map.get(row.month_key)||{key:row.month_key,year:row.year,month:row.month,income:0,expense:0,special_input:0,special_output:0};
+  if(Object.prototype.hasOwnProperty.call(item,row.role))item[row.role]+=row.amount;
+  map.set(row.month_key,item);
+ }
+ return [...map.values()].sort((a,b)=>a.key.localeCompare(b.key));
+}
+function renderChart(months){
+ const list=selectedYear()==='all'?months.slice(-12):months;
+ const max=Math.max(1,...list.flatMap(row=>[row.income,row.expense]));
+ $('cashflow-chart').innerHTML=list.map(row=>{
+  const label=MONTHS[row.month-1]||row.month;
+  const inc=Math.max(2,row.income/max*100),exp=Math.max(2,row.expense/max*100);
+  return '<div class="a-month" title="'+escapeHtml(label+' '+row.year+' · Доходы '+money(row.income)+' · Расходы '+money(row.expense))+'"><div class="a-bars"><span class="a-bar income" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></div><small>'+escapeHtml(label.slice(0,3))+'</small></div>';
+ }).join('');
+ $('chart-caption').textContent=selectedYear()==='all'?'Последние 12 месяцев истории':'Поступления и расходы за '+selectedYear()+' год';
+}
+function renderMonthly(rows){
+ const months=rowMonthTotals(rows);
+ $('monthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(row.income-row.expense>=0?'a-positive':'a-negative')+'">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет данных за этот период</td></tr>';
+ renderChart(months);
+}
+function renderLife(rows,monthsCount){
+ const selected=rowsForGroup('life',rows).filter(row=>row.role==='expense');
+ const cats=totalsByCategory(selected),total=sum(selected,row=>row.amount);
+ const refunds=sum(rows.filter(row=>row.role==='income'&&/возврат/i.test(row.category)),row=>row.amount);
+ $('lifeTotal').textContent=money(total);$('lifeRefunds').textContent=money(refunds);$('lifeNet').textContent=money(total-refunds);$('lifeAverage').textContent=money(total/Math.max(1,monthsCount));
+ $('lifeRows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+(total?((item.total/total)*100).toFixed(2).replace('.',','):'0,00')+'%</td><td class="num">'+money(item.total/Math.max(1,monthsCount))+'</td></tr>').join('')||'<tr><td colspan="4">Выбери категории в настройках отчёта</td></tr>';
+ $('lifeFoot').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(total)+'</td><td class="num">'+(total?'100,00':'0,00')+'%</td><td class="num">'+money(total/Math.max(1,monthsCount))+'</td></tr>';
+}
+function sashaWeight(row){
+ const name=normalized(row.category);
+ if(/кафе|такси/.test(name))return settings.sharedPercent/100;
+ return 1;
+}
+function renderSasha(rows,monthsCount,lifeTotal){
+ const chosen=rowsForGroup('sasha',rows).filter(row=>row.role==='expense');
+ const cats=totalsByCategory(chosen,sashaWeight),total=sum(chosen,row=>row.amount*sashaWeight(row));
+ $('sashaTotal').textContent=money(total);$('sashaAverage').textContent=money(total/Math.max(1,monthsCount));$('sashaShare').textContent=(lifeTotal?total/lifeTotal*100:0).toFixed(1).replace('.',',')+'%';
+ $('sashaRows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+( /кафе|такси/i.test(item.category)?' <span class="a-pill">'+settings.sharedPercent+'% Саши</span>':'')+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+(total?item.total/total*100:0).toFixed(2).replace('.',',')+'%</td><td class="num">'+money(item.total/Math.max(1,monthsCount))+'</td></tr>').join('')||'<tr><td colspan="4">Выбери категории в настройках отчёта</td></tr>';
+}
+function renderBusinessArea(group,prefix,rows){
+ const result=groupTotals(group,rows),cats=totalsByCategory(result.rows);
+ $(prefix+'Income').textContent=money(result.income);$(prefix+'Expense').textContent=money(result.expense);$(prefix+'Net').textContent=money(result.net);
+ $(prefix+'Rows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
+ return result;
+}
+function renderShop(rows){
+ const result=groupTotals('shop',rows),months=rowMonthTotals(result.rows);
+ $('shopIncome').textContent=money(result.income);$('shopExpense').textContent=money(result.expense);$('shopNet').textContent=money(result.net);
+ $('shopRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
+ $('shopMonthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий магазина</td></tr>';
+}
+function renderLoans(rows){
+ const result=groupTotals('loans',rows);
+ $('loanIncome').textContent=money(result.income);$('loanExpense').textContent=money(result.expense);$('loanNet').textContent=money(result.net);
+ $('loanRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
+}
+function renderYearRows(){
+ const allMonths=rowMonthTotals(data),yearMap=new Map();
+ for(const month of allMonths){
+  const item=yearMap.get(month.year)||{year:month.year,income:0,expense:0,special_input:0,special_output:0};
+  item.income+=month.income;item.expense+=month.expense;item.special_input+=month.special_input;item.special_output+=month.special_output;yearMap.set(month.year,item);
+ }
+ $('yearRows').innerHTML=[...yearMap.values()].sort((a,b)=>a.year-b.year).map(row=>{
+  const net=row.income-row.expense,rate=row.income?net/row.income*100:0;
+  return '<tr><td>'+row.year+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(net>=0?'a-positive':'a-negative')+'">'+money(net)+'</td><td class="num">'+rate.toFixed(1).replace('.',',')+'%</td><td class="num">'+money(row.special_input)+'</td><td class="num">'+money(row.special_output)+'</td></tr>';
+ }).join('');
+}
+function renderAll(){
+ const year=selectedYear(),rows=filterYear(data,year);
+ const stats=totalsFor(rows),months=new Set(rows.map(row=>row.month_key)).size,monthsCount=year==='all'?months:12;
+ $('incomeMetric').textContent=money(stats.income);$('expenseMetric').textContent=money(stats.expense);$('netMetric').textContent=money(stats.net);$('netMetric').className=stats.net>=0?'a-positive':'a-negative';
+ $('rateMetric').textContent=(stats.income?stats.net/stats.income*100:0).toFixed(1).replace('.',',')+'%';$('netSub').textContent=year==='all'?'Весь доступный период':year+' год';
+ $('specialInputMetric').textContent=money(stats.specialInput);$('specialOutputMetric').textContent=money(stats.specialOutput);$('specialDiffMetric').textContent=money(stats.specialInput-stats.specialOutput);
+ renderMonthly(rows);renderLife(rows,monthsCount);
+ const lifeTotal=sum(rowsForGroup('life',rows).filter(r=>r.role==='expense'),r=>r.amount);
+ renderSasha(rows,monthsCount,lifeTotal);
+ renderBusinessArea('work','work',rows);renderShop(rows);renderLoans(rows);renderYearRows();
+}
+async function loadSql(){
+ if(SQL)return SQL;
+ if(!window.initSqlJs){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='./vendor/sql.js/sql-wasm.js';script.onload=resolve;script.onerror=()=>reject(new Error('Не удалось загрузить SQLite runtime с сайта.'));document.head.appendChild(script);});}
+ SQL=await window.initSqlJs({locateFile:file=>'./vendor/sql.js/'+file,useOldExtensionFunctions:true});
+ return SQL;
+}
+async function loadDatabaseBytes(bytes,name,updatedAt=''){
+ if(loading)return;
+ loading=true;hideError();
+ let opened=null;
+ try{
+  const engine=await loadSql(),source=bytes instanceof ArrayBuffer?bytes:new Uint8Array(bytes).buffer;
+  opened=new engine.Database(new Uint8Array(source));
+  const check=opened.exec("PRAGMA quick_check")[0]?.values?.[0]?.[0];
+  if(String(check)!=='ok')throw new Error('Проверка целостности SQLite не пройдена.');
+  const tables=new Set(opened.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values.map(r=>String(r[0]))||[]);
+  if(!tables.has('numbers_history'))throw new Error('В этой базе пока нет истории Numbers. Сначала импортируй Excel на странице «Импорт Numbers».');
+  const columns=opened.exec('PRAGMA table_info(numbers_history)')[0]?.values.map(r=>String(r[1]))||[];
+  const hasRole=columns.includes('role');
+  const result=opened.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");
+  if(!result.length||!result[0].values.length)throw new Error('Таблица истории Numbers пуста. Импортируй Excel в выбранную базу.');
+  const roleMap=new Map();
+  const profileRow=opened.exec("SELECT value FROM web_metadata WHERE key='budget_profile_v1'")[0]?.values?.[0]?.[0];
+  if(profileRow){try{const profile=JSON.parse(String(profileRow));for(const item of profile.categories||[])if(item?.name&&['special_input','special_output'].includes(item.kind))roleMap.set(normalized(item.name),item.kind);const a=profile.numbers?.specialInput?.category,b=profile.numbers?.specialOutput?.category;if(a)roleMap.set(normalized(a),'special_input');if(b)roleMap.set(normalized(b),'special_output');}catch{}}
+  data=result[0].values.map(row=>{
+   const category=String(row[4]),rawRole=hasRole?String(row[6]||''):'';
+   const role=rawRole||roleMap.get(normalized(category))||String(row[3]);
+   return {month_key:String(row[0]),year:Number(row[1]),month:Number(row[2]),kind:String(row[3]),category,amount:Number(row[5])||0,role};
+  });
+  years=[...new Set(data.map(row=>row.year))].sort((a,b)=>a-b);
+  if(!years.length)throw new Error('В истории Numbers не найдены годы.');
+  db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');lastCacheStamp=updatedAt||new Date().toISOString();
+  $('year').innerHTML='<option value="all">Весь период</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').reverse().join('');
+  $('year').value=latestYear();
+  $('database-name').textContent=dbName;
+  $('dashboard').classList.remove('hidden');
+  await loadSettings();renderAll();
+  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей · '+years[0]+'–'+years[years.length-1]+'. База синхронизируется с основным приложением в этом браузере.','ok');
+ }catch(error){try{opened?.close();}catch{}data=[];years=[];$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');}
+ finally{loading=false;}
+}
+async function loadFromLocalCache(){
+ try{
+  const saved=await window.BudgetSharedDb?.loadDatabase();
+  if(saved?.bytes){await loadDatabaseBytes(saved.bytes,saved.name,saved.updatedAt);return true;}
+  setStatus('Локальная база ещё не сохранена. Открой .budget в основном приложении — Analytics подхватит её автоматически.');
+  return false;
+ }catch(error){setStatus('Автозагрузка недоступна: '+error.message+'. Можно выбрать .budget вручную.','error');return false;}
+}
+async function reloadFromLocalCache(){
+ try{
+  const saved=await window.BudgetSharedDb?.loadDatabase();
+  if(saved?.bytes&&saved.updatedAt!==lastCacheStamp)await loadDatabaseBytes(saved.bytes,saved.name,saved.updatedAt);
+ }catch(error){console.warn('Could not refresh Analytics from local database:',error);}
+}
+$('manual-file').addEventListener('change',async event=>{
+ const file=event.target.files?.[0];if(!file)return;
+ try{await loadDatabaseBytes(await file.arrayBuffer(),file.name);await window.BudgetSharedDb?.saveDatabase(file.name,new Uint8Array(await file.arrayBuffer()));setStatus('База загружена вручную и сохранена для автосинхронизации Analytics в этом браузере.','ok');}
+ catch(error){showError(error.message);}
+ event.target.value='';
+});
+$('year').addEventListener('change',renderAll);
+$('save-settings').addEventListener('click',saveSettings);
+if(window.BudgetSharedDb?.subscribe)unsubscribe=window.BudgetSharedDb.subscribe(()=>{void reloadFromLocalCache();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void reloadFromLocalCache();});
+window.addEventListener('focus',()=>{void reloadFromLocalCache();});
+(async()=>{try{await loadSql();await loadFromLocalCache();}catch(error){showError(error.message);setStatus('Не удалось запустить финансовую аналитику.','error');}})();
+</script>
+</body></html>
