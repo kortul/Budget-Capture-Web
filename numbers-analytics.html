@@ -463,7 +463,8 @@ async function loadDatabaseBytes(bytes,name,updatedAt=''){
   $('dashboard').classList.remove('hidden');
   await loadSettings();renderAll();
   setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей · '+years[0]+'–'+years[years.length-1]+'. База синхронизируется с основным приложением в этом браузере.','ok');
- }catch(error){try{opened?.close();}catch{}data=[];years=[];$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');}
+  return true;
+ }catch(error){try{opened?.close();}catch{}data=[];years=[];$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
  finally{loading=false;}
 }
 async function loadFromLocalCache(){
@@ -482,7 +483,7 @@ async function reloadFromLocalCache(){
 }
 $('manual-file').addEventListener('change',async event=>{
  const file=event.target.files?.[0];if(!file)return;
- try{await loadDatabaseBytes(await file.arrayBuffer(),file.name);await window.BudgetSharedDb?.saveDatabase(file.name,new Uint8Array(await file.arrayBuffer()));setStatus('База загружена вручную и сохранена для автосинхронизации Analytics в этом браузере.','ok');}
+ try{const bytes=await file.arrayBuffer();const loaded=await loadDatabaseBytes(bytes,file.name);if(!loaded)return;await window.BudgetSharedDb?.saveDatabase(file.name,bytes);setStatus('База загружена вручную и сохранена для автосинхронизации Analytics в этом браузере.','ok');}
  catch(error){showError(error.message);}
  event.target.value='';
 });
