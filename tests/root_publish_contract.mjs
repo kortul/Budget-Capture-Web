@@ -21,7 +21,7 @@ assert.match(analyticsPage, /BUDGET_CAPTURE_DATABASE/, 'Analytics must accept a 
 assert.match(publisher, /asset-manifest\.json/, 'root publisher must require the generated asset manifest');
 assert.match(publisher, /SHA-256 mismatch/, 'root publisher must recheck every asset hash before copying');
 assert.match(publisher, /allowedOutputFiles/, 'root publisher must treat the manifest as an exact output allow-list');
-assert.match(builder, /vendor\\/runtime-manifest\\.json/, 'static build must include its vendor integrity manifest');
+assert.match(builder, /vendor\/runtime-manifest\.json/, 'static build must include its vendor integrity manifest');
 assert.match(publisher, /Unmanifested file in build output/, 'root publisher must reject extra files not covered by the manifest');
 assert.match(publisher, /Manifested output file is missing/, 'root publisher must reject missing manifest files');
 assert.match(publisher, /requiredPages/, 'root publisher must require all three app pages');
