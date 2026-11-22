@@ -206,8 +206,13 @@ try {
   analytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   const analyticsResponse = await analytics.goto(origin + basePath + 'numbers-analytics.html', { waitUntil: 'networkidle', timeout: 30000 });
   assert.equal(analyticsResponse.status(), 200, 'Financial Analytics page must be served from the Pages subpath');
-  await analytics.locator('#file').setInputFiles(secondExportPath);
   await analytics.waitForFunction(() => !document.querySelector('#dashboard').classList.contains('hidden'), null, { timeout: 20000 });
+  const cachedDatabase = await analytics.evaluate(async () => {
+    const record = await window.BudgetSharedDb.loadDatabase();
+    return { name: record?.name || '', hasBytes: record?.bytes instanceof ArrayBuffer && record.bytes.byteLength > 10000 };
+  });
+  assert.equal(cachedDatabase.hasBytes, true, 'Numbers Import must publish the updated database to the shared local browser cache');
+  assert.match(cachedDatabase.name, /MyBudget_with_numbers\.budget$/);
   assert.match(await analytics.locator('#incomeMetric').textContent(), /260\s?000/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
   assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
