@@ -39,7 +39,7 @@
 .a-month{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;gap:7px}
 .a-bars{height:175px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px;border-bottom:1px solid var(--line);padding:0 3px}
 .a-bar{width:42%;min-width:3px;border-radius:5px 5px 0 0;min-height:2px}
-.a-bar.income{background:#55bf91}.a-bar.expense{background:#df9276}
+.a-bar.income{background:#55bf91}.a-bar.income.negative{background:#bf7773}.a-bar.expense{background:#df9276}
 .a-month small{font-size:10px;color:var(--muted);white-space:nowrap}
 .a-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:12px}
 .a-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
@@ -147,6 +147,8 @@
     <div class="a-metric"><small>В среднем за месяц</small><strong id="lifeAverage">—</strong><div class="sub">Расходы / 12 месяцев</div></div>
   </div>
   <div class="a-table-wrap" style="margin-top:16px"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Всего</th><th class="num">Доля</th><th class="num">В среднем за месяц</th></tr></thead><tbody id="lifeRows"></tbody><tfoot id="lifeFoot"></tfoot></table></div>
+  <div class="a-section-head" style="margin-top:22px"><div><h2>Расходы на жизнь по месяцам</h2><p>Помесячная сумма выбранных категорий за отчётный период</p></div></div>
+  <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Расходы</th><th class="num">Возвраты</th><th class="num">Чистые расходы</th></tr></thead><tbody id="lifeMonthlyRows"></tbody></table></div>
 </section>
 
 <section class="a-card" id="sasha">
@@ -170,6 +172,7 @@
         <div class="a-summary"><small>Результат</small><strong id="workNet">—</strong></div>
       </div>
       <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Категория работы</th><th>Тип</th><th class="num">Всего</th></tr></thead><tbody id="workRows"></tbody></table></div>
+      <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Поступления</th><th class="num">Расходы</th><th class="num">Результат</th></tr></thead><tbody id="workYearRows"></tbody></table></div>
     </div>
     <div>
       <h3 style="font-size:14px;margin:0 0 12px">Магазин</h3>
@@ -182,6 +185,7 @@
     </div>
   </div>
   <div class="a-table-wrap" style="margin-top:18px"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Вводы магазина</th><th class="num">Выводы магазина</th><th class="num">Баланс магазина</th></tr></thead><tbody id="shopMonthlyRows"></tbody></table></div>
+  <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Вводы</th><th class="num">Выводы</th><th class="num">Разница</th></tr></thead><tbody id="shopYearRows"></tbody></table></div>
 </section>
 
 <section class="a-card" id="loans">
@@ -192,6 +196,7 @@
     <div class="a-summary"><small>Разница</small><strong id="loanNet">—</strong></div>
   </div>
   <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Категория</th><th>Тип</th><th class="num">Всего</th></tr></thead><tbody id="loanRows"></tbody></table></div>
+  <div class="a-table-wrap" style="margin-top:12px"><table class="a-table"><thead><tr><th>Год</th><th class="num">Получено</th><th class="num">Погашено</th><th class="num">Разница</th></tr></thead><tbody id="loanYearRows"></tbody></table></div>
 </section>
 
 <section class="a-card">
@@ -357,7 +362,7 @@ function renderChart(months){
  const max=Math.max(1,...list.flatMap(row=>[row.income,row.expense]));
  $('cashflow-chart').innerHTML=list.map(row=>{
   const label=MONTHS[row.month-1]||row.month;
-  const inc=Math.max(2,row.income/max*100),exp=Math.max(2,row.expense/max*100);
+  const inc=Math.max(2,Math.abs(row.income)/max*100),exp=Math.max(2,row.expense/max*100);
   return '<div class="a-month" title="'+escapeHtml(label+' '+row.year+' · Доходы '+money(row.income)+' · Расходы '+money(row.expense))+'"><div class="a-bars"><span class="a-bar income" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></div><small>'+escapeHtml(label.slice(0,3))+'</small></div>';
  }).join('');
  $('chart-caption').textContent=selectedYear()==='all'?'Последние 12 месяцев истории':'Поступления и расходы за '+selectedYear()+' год';
@@ -374,6 +379,11 @@ function renderLife(rows,monthsCount){
  $('lifeTotal').textContent=money(total);$('lifeRefunds').textContent=money(refunds);$('lifeNet').textContent=money(total-refunds);$('lifeAverage').textContent=money(total/Math.max(1,monthsCount));
  $('lifeRows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+(total?((item.total/total)*100).toFixed(2).replace('.',','):'0,00')+'%</td><td class="num">'+money(item.total/Math.max(1,monthsCount))+'</td></tr>').join('')||'<tr><td colspan="4">Выбери категории в настройках отчёта</td></tr>';
  $('lifeFoot').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(total)+'</td><td class="num">'+(total?'100,00':'0,00')+'%</td><td class="num">'+money(total/Math.max(1,monthsCount))+'</td></tr>';
+ const monthMap=new Map();
+ for(const row of selected){const item=monthMap.get(row.month_key)||{year:row.year,month:row.month,expense:0,refund:0};item.expense+=row.amount;monthMap.set(row.month_key,item);}
+ for(const row of rows.filter(r=>r.role==='income'&&/возврат/i.test(r.category))){const item=monthMap.get(row.month_key)||{year:row.year,month:row.month,expense:0,refund:0};item.refund+=row.amount;monthMap.set(row.month_key,item);}
+ const monthly=[...monthMap.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+ $('lifeMonthlyRows').innerHTML=monthly.map(([,item])=>'<tr><td>'+escapeHtml(MONTHS[item.month-1]+' '+item.year)+'</td><td class="num">'+money(item.expense)+'</td><td class="num">'+money(item.refund)+'</td><td class="num">'+money(item.expense-item.refund)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий за этот период</td></tr>';
 }
 function sashaWeight(row){
  const name=normalized(row.category);
@@ -390,6 +400,7 @@ function renderBusinessArea(group,prefix,rows){
  const result=groupTotals(group,rows),cats=totalsByCategory(result.rows);
  $(prefix+'Income').textContent=money(result.income);$(prefix+'Expense').textContent=money(result.expense);$(prefix+'Net').textContent=money(result.net);
  $(prefix+'Rows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
+ if(group==='work')renderGroupYears('work','work');
  return result;
 }
 function renderShop(rows){
@@ -397,13 +408,22 @@ function renderShop(rows){
  $('shopIncome').textContent=money(result.income);$('shopExpense').textContent=money(result.expense);$('shopNet').textContent=money(result.net);
  $('shopRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
  $('shopMonthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий магазина</td></tr>';
+ renderGroupYears('shop','shop');
 }
 function renderLoans(rows){
  const result=groupTotals('loans',rows);
  $('loanIncome').textContent=money(result.income);$('loanExpense').textContent=money(result.expense);$('loanNet').textContent=money(result.net);
  $('loanRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
+ renderGroupYears('loans','loans');
 }
-function renderYearRows(){
+function renderYearRows(){function renderGroupYears(group,prefix){
+ const tbody=$(prefix+'YearRows');
+ tbody.innerHTML=years.slice().sort((a,b)=>a-b).map(year=>{
+  const result=groupTotals(group,data.filter(row=>row.year===year));
+  return '<tr><td>'+year+'</td><td class="num">'+money(result.income)+'</td><td class="num">'+money(result.expense)+'</td><td class="num '+(result.net>=0?'a-positive':'a-negative')+'">'+money(result.net)+'</td></tr>';
+ }).join('');
+}
+
  const allMonths=rowMonthTotals(data),yearMap=new Map();
  for(const month of allMonths){
   const item=yearMap.get(month.year)||{year:month.year,income:0,expense:0,special_input:0,special_output:0};
