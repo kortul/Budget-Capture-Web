@@ -448,14 +448,15 @@ function renderLoans(rows){
  $('loanRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
  renderGroupYears('loans','loan');
 }
-function renderYearRows(){function renderGroupYears(group,prefix){
+function renderGroupYears(group,prefix){
  const tbody=$(prefix+'YearRows');
+ if(!tbody)return;
  tbody.innerHTML=years.slice().sort((a,b)=>a-b).map(year=>{
   const result=groupTotals(group,data.filter(row=>row.year===year));
   return '<tr><td>'+year+'</td><td class="num">'+money(result.income)+'</td><td class="num">'+money(result.expense)+'</td><td class="num '+(result.net>=0?'a-positive':'a-negative')+'">'+money(result.net)+'</td></tr>';
  }).join('');
 }
-
+function renderYearRows(){
  const allMonths=rowMonthTotals(data),yearMap=new Map();
  for(const month of allMonths){
   const item=yearMap.get(month.year)||{year:month.year,income:0,expense:0,special_input:0,special_output:0};
