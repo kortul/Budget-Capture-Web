@@ -290,9 +290,37 @@ function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.cla
 function showError(message){$('error').textContent=message;$('error').classList.remove('hidden');}
 function hideError(){$('error').classList.add('hidden');}
 function sum(rows,fn){return rows.reduce((total,row)=>total+fn(row),0);}
-function latestYear(){return years.length?String(years[years.length-1]):'';}
-function selectedYear(){return $('year').value||latestYear();}
-function filterYear(rows,y=selectedYear()){return y==='all'?rows:rows.filter(row=>row.year===Number(y));}
+let rangeFrom='',rangeTo='',selectedMonthKey='';
+function shiftMonthKey(key,delta){
+ const [year,month]=String(key).split('-').map(Number);
+ const date=new Date(Date.UTC(year,month-1+delta,1));
+ return date.getUTCFullYear()+'-'+String(date.getUTCMonth()+1).padStart(2,'0');
+}
+function monthCount(from,to){
+ const [fy,fm]=from.split('-').map(Number),[ty,tm]=to.split('-').map(Number);
+ return Math.max(1,(ty-fy)*12+tm-fm+1);
+}
+function keyInsideRange(key,from=rangeFrom,to=rangeTo){return key>=from&&key<=to;}
+function filterYear(rows){return rows.filter(row=>keyInsideRange(row.month_key));}
+function setRange(from,to,render=true){
+ const min=data[0]?.month_key||from,max=data[data.length-1]?.month_key||to;
+ from=from<min?min:from>max?max:from;
+ to=to>max?max:to<min?min:to;
+ if(from>to){const swap=from;from=to;to=swap;}
+ rangeFrom=from;rangeTo=to;
+ $('range-from').value=from;$('range-to').value=to;
+ $('range-from').min=min;$('range-from').max=max;$('range-to').min=min;$('range-to').max=max;
+ if(!selectedMonthKey||!keyInsideRange(selectedMonthKey))selectedMonthKey=to;
+ if(render)renderAll();
+}
+function applyRangePreset(preset){
+ if(!data.length)return;
+ const min=data[0].month_key,max=data[data.length-1].month_key,year=max.slice(0,4);
+ if(preset==='6')setRange(shiftMonthKey(max,-5),max);
+ else if(preset==='12')setRange(shiftMonthKey(max,-11),max);
+ else if(preset==='year')setRange(year+'-01',max);
+ else if(preset==='all')setRange(min,max);
+}
 function categoryList(){return [...new Set(data.map(row=>row.category))].sort((a,b)=>a.localeCompare(b,'ru'));}
 function categoryKinds(){const map=new Map();for(const row of data){if(!map.has(row.category))map.set(row.category,row.role||row.kind);}return map;}
 function defaultSettings(){
@@ -381,41 +409,100 @@ function rowMonthTotals(rows){
  }
  return [...map.values()].sort((a,b)=>a.key.localeCompare(b.key));
 }
+function rangeMonthRows(rows){
+ const totals=new Map(rowMonthTotals(rows).map(row=>[row.key,row]));
+ const result=[];
+ for(let key=rangeFrom;key<=rangeTo;key=shiftMonthKey(key,1)){
+  const [year,month]=key.split('-').map(Number);
+  result.push(totals.get(key)||{key,year,month,income:0,expense:0,special_input:0,special_output:0});
+ }
+ return result;
+}
 function renderChart(months){
- const list=selectedYear()==='all'?months.slice(-12):months;
- const max=Math.max(1,...list.flatMap(row=>[row.income,row.expense]));
+ const list=months.length>24?months.slice(-24):months;
+ const max=Math.max(1,...list.flatMap(row=>[Math.abs(row.income),Math.abs(row.expense)]));
+ $('cashflow-chart').style.setProperty('--month-count',String(list.length));
  $('cashflow-chart').innerHTML=list.map(row=>{
   const label=MONTHS[row.month-1]||row.month;
-  const inc=Math.max(2,Math.abs(row.income)/max*100),exp=Math.max(2,row.expense/max*100);
-  return '<div class="a-month" title="'+escapeHtml(label+' '+row.year+' · Доходы '+money(row.income)+' · Расходы '+money(row.expense))+'"><div class="a-bars"><span class="a-bar income'+(row.income<0?' negative':'')+'" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></div><small>'+escapeHtml(label.slice(0,3))+'</small></div>';
+  const inc=Math.max(row.income?2:0,Math.abs(row.income)/max*100),exp=Math.max(row.expense?2:0,Math.abs(row.expense)/max*100);
+  return '<button type="button" class="a-month'+(row.key===selectedMonthKey?' selected':'')+'" data-month-key="'+row.key+'" title="'+escapeHtml(label+' '+row.year+' · Поступления '+money(row.income)+' · Расходы '+money(row.expense)+' · Баланс '+money(row.income-row.expense))+'"><span class="a-bars"><span class="a-bar income'+(row.income<0?' negative':'')+'" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></span><small>'+escapeHtml(label.slice(0,3))+'</small><small>'+row.year+'</small></button>';
  }).join('');
- $('chart-caption').textContent=selectedYear()==='all'?'Последние 12 месяцев истории':'Поступления и расходы за '+selectedYear()+' год';
+ $('chart-caption').textContent='Показано '+list.length+' из '+months.length+' месяцев · '+rangeFrom+' — '+rangeTo+(months.length>24?' · последние 24 месяца':'');
 }
-function fillYearMonths(months){
- if(selectedYear()==='all')return months;
- const year=Number(selectedYear()),map=new Map(months.map(row=>[row.key,row]));
- return Array.from({length:12},(_,index)=>{
-  const month=index+1,key=year+'-'+String(month).padStart(2,'0');
-  return map.get(key)||{key,year,month,income:0,expense:0,special_input:0,special_output:0};
- });
+function deltaCell(value){
+ if(value===null||!Number.isFinite(value))return '<span class="a-small">—</span>';
+ const cls=value>0?'a-change-up':value<0?'a-change-down':'';
+ return '<span class="'+cls+'">'+(value>0?'+':'')+money(value)+'</span>';
 }
 function renderMonthly(rows){
- const months=fillYearMonths(rowMonthTotals(rows));
- $('monthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(row.income-row.expense>=0?'a-positive':'a-negative')+'">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет данных за этот период</td></tr>';
+ const months=rangeMonthRows(rows);
+ $('monthlyRows').innerHTML=months.map(row=>{
+  const previous=rows.filter(item=>item.month_key===shiftMonthKey(row.key,-1));
+  const prevNet=previous.length?totalsFor(previous).net:null;
+  const delta=prevNet===null?null:(row.income-row.expense)-prevNet;
+  return '<tr data-month-key="'+row.key+'" class="'+(row.key===selectedMonthKey?'selected-month':'')+'"><td><button class="a-month-link" type="button" data-month-key="'+row.key+'">'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</button></td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num '+(row.income-row.expense>=0?'a-positive':'a-negative')+'">'+money(row.income-row.expense)+'</td><td class="num">'+deltaCell(delta)+'</td></tr>';
+ }).join('')||'<tr><td colspan="5">Нет данных за выбранный период</td></tr>';
  renderChart(months);
+ renderMonthDetail();
 }
-function renderLife(rows,monthsCount){
+function renderRankList(targetId,rows,role){
+ const list=totalsByCategory(rows.filter(row=>row.role===role)).slice(0,8);
+ const max=Math.max(1,...list.map(item=>item.total));
+ $(targetId).innerHTML=list.map(item=>'<div class="a-rank-row"><span class="a-rank-name">'+escapeHtml(item.category)+'</span><span class="a-rank-track"><span class="a-rank-fill" style="display:block;width:'+Math.max(1,item.total/max*100)+'%"></span></span><strong class="a-rank-value">'+money(item.total)+'</strong></div>').join('')||'<p class="a-small">Нет данных за этот месяц</p>';
+}
+function comparisonText(current,previous){
+ if(previous===null)return 'Нет данных за предыдущий месяц';
+ const difference=current-previous,percent=previous?difference/Math.abs(previous)*100:null;
+ return (difference>0?'+':'')+money(difference)+(percent===null?'':' · '+(percent>0?'+':'')+percent.toFixed(1).replace('.',',')+'%');
+}
+function renderMonthDetail(){
+ const month=selectedMonthKey;if(!month)return;
+ const rows=data.filter(row=>row.month_key===month),previousMonth=shiftMonthKey(month,-1),previous=data.filter(row=>row.month_key===previousMonth);
+ const current=totalsFor(rows),prior=previous.length?totalsFor(previous):null;
+ const [year,monthNumber]=month.split('-').map(Number);
+ $('month-detail-title').textContent=MONTHS[monthNumber-1]+' '+year;
+ $('month-detail-subtitle').textContent=rows.length?rows.length+' записей категорий · сравнение с '+MONTHS[Number(previousMonth.slice(5))-1]+' '+previousMonth.slice(0,4):'В базе нет записей за этот месяц';
+ $('month-compare-label').textContent=prior?'К предыдущему месяцу':'Предыдущий месяц без данных';
+ $('month-income').textContent=money(current.income);$('month-expense').textContent=money(current.expense);$('month-net').textContent=money(current.net);
+ $('month-net').className=current.net>=0?'a-positive':'a-negative';
+ $('month-rate').textContent=(current.income?current.net/current.income*100:0).toFixed(1).replace('.',',')+'%';
+ $('month-income-delta').textContent=comparisonText(current.income,prior?.income??null);
+ $('month-expense-delta').textContent=comparisonText(current.expense,prior?.expense??null);
+ $('month-net-delta').textContent=comparisonText(current.net,prior?.net??null);
+ renderRankList('month-expense-list',rows,'expense');renderRankList('month-income-list',rows,'income');
+}
+function renderPeriodInsights(rows,months){
+ const length=monthCount(rangeFrom,rangeTo),previousFrom=shiftMonthKey(rangeFrom,-length),previousTo=shiftMonthKey(rangeFrom,-1);
+ const previous=data.filter(row=>keyInsideRange(row.month_key,previousFrom,previousTo));
+ const currentExpense=sum(rows.filter(row=>row.role==='expense'),row=>row.amount),previousExpense=sum(previous.filter(row=>row.role==='expense'),row=>row.amount);
+ const change=previous.length?currentExpense-previousExpense:null,percent=previousExpense?change/previousExpense*100:null;
+ $('period-expense-change').textContent=change===null?'Нет базы сравнения':(change>0?'+':'')+money(change)+(percent===null?'':' · '+(percent>0?'+':'')+percent.toFixed(1).replace('.',',')+'%');
+ $('period-expense-change').className=change===null?'':change>0?'a-change-up':'a-change-down';
+ $('period-expense-note').textContent=previous.length?'Сравнение с '+previousFrom+' — '+previousTo+(change>0?' · расходы выросли':change<0?' · расходы снизились':' · без изменений'):'Недостаточно данных за предыдущий равный период';
+ const topMonth=months.slice().sort((a,b)=>b.expense-a.expense)[0];
+ $('period-top-month').textContent=topMonth&&topMonth.expense?MONTHS[topMonth.month-1]+' '+topMonth.year:'—';
+ $('period-top-month-note').textContent=topMonth&&topMonth.expense?money(topMonth.expense)+' расходов':'Нет расходов в периоде';
+ const topCategory=totalsByCategory(rows.filter(row=>row.role==='expense'))[0];
+ $('period-top-category').textContent=topCategory?.category||'—';
+ $('period-top-category-note').textContent=topCategory?money(topCategory.total)+' · '+(currentExpense?((topCategory.total/currentExpense)*100).toFixed(1).replace('.',',')+'% всех расходов':'0%'):'Нет данных';
+}
+function selectMonth(key){
+ if(!keyInsideRange(key))return;
+ selectedMonthKey=key;
+ $('cashflow-chart').querySelectorAll('[data-month-key]').forEach(el=>el.classList.toggle('selected',el.dataset.monthKey===key));
+ $('monthlyRows').querySelectorAll('tr[data-month-key]').forEach(el=>el.classList.toggle('selected-month',el.dataset.monthKey===key));
+ renderMonthDetail();
+}function renderLife(rows,monthsCount){
  const selected=rowsForGroup('life',rows).filter(row=>row.role==='expense');
  const cats=totalsByCategory(selected),total=sum(selected,row=>row.amount);
  const refunds=sum(rows.filter(row=>row.role==='income'&&/возврат/i.test(row.category)),row=>row.amount);
  $('lifeTotal').textContent=money(total);$('lifeRefunds').textContent=money(refunds);$('lifeNet').textContent=money(total-refunds);$('lifeAverage').textContent=money(total/Math.max(1,monthsCount));
  $('lifeRows').innerHTML=cats.map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+(total?((item.total/total)*100).toFixed(2).replace('.',','):'0,00')+'%</td><td class="num">'+money(item.total/Math.max(1,monthsCount))+'</td></tr>').join('')||'<tr><td colspan="4">Выбери категории в настройках отчёта</td></tr>';
  $('lifeFoot').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(total)+'</td><td class="num">'+(total?'100,00':'0,00')+'%</td><td class="num">'+money(total/Math.max(1,monthsCount))+'</td></tr>';
- const monthMap=new Map();
- for(const row of selected){const item=monthMap.get(row.month_key)||{year:row.year,month:row.month,expense:0,refund:0};item.expense+=row.amount;monthMap.set(row.month_key,item);}
- for(const row of rows.filter(r=>r.role==='income'&&/возврат/i.test(r.category))){const item=monthMap.get(row.month_key)||{year:row.year,month:row.month,expense:0,refund:0};item.refund+=row.amount;monthMap.set(row.month_key,item);}
- if(selectedYear()!=='all'){const year=Number(selectedYear());for(let month=1;month<=12;month++){const key=year+'-'+String(month).padStart(2,'0');if(!monthMap.has(key))monthMap.set(key,{year,month,expense:0,refund:0});}}
- const monthly=[...monthMap.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+ const monthly=rangeMonthRows(selected).map(item=>{
+  const refundRows=rows.filter(r=>r.month_key===item.key&&r.role==='income'&&/возврат/i.test(r.category));
+  return [item.key,{year:item.year,month:item.month,expense:item.expense,refund:sum(refundRows,r=>r.amount)}];
+ });
  $('lifeMonthlyRows').innerHTML=monthly.map(([,item])=>'<tr><td>'+escapeHtml(MONTHS[item.month-1]+' '+item.year)+'</td><td class="num">'+money(item.expense)+'</td><td class="num">'+money(item.refund)+'</td><td class="num">'+money(item.expense-item.refund)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий за этот период</td></tr>';
 }
 function sashaWeight(row){
@@ -437,7 +524,7 @@ function renderBusinessArea(group,prefix,rows){
  return result;
 }
 function renderShop(rows){
- const result=groupTotals('shop',rows),months=fillYearMonths(rowMonthTotals(result.rows));
+ const result=groupTotals('shop',rows),months=rangeMonthRows(result.rows);
  $('shopIncome').textContent=money(result.income);$('shopExpense').textContent=money(result.expense);$('shopNet').textContent=money(result.net);
  $('shopRows').innerHTML=totalsByCategory(result.rows).map(item=>'<tr><td>'+escapeHtml(item.category)+'</td><td>'+roleLabel(item.kind)+'</td><td class="num">'+money(item.total)+'</td></tr>').join('')||'<tr><td colspan="3">Выбери категории в настройках отчёта</td></tr>';
  $('shopMonthlyRows').innerHTML=months.map(row=>'<tr><td>'+escapeHtml(MONTHS[row.month-1]+' '+row.year)+'</td><td class="num">'+money(row.income)+'</td><td class="num">'+money(row.expense)+'</td><td class="num">'+money(row.income-row.expense)+'</td></tr>').join('')||'<tr><td colspan="4">Нет выбранных категорий магазина</td></tr>';
@@ -469,75 +556,14 @@ function renderYearRows(){
  }).join('');
 }
 
-function renderManualReference(reference){
- const content=$('manual-reference-content');
- if(!reference){content.classList.add('hidden');return;}
- const yearLabel=year=>year?String(year)+' год':'Год в исходной сводке не указан';
- const months=MONTHS;
- const monthTable=(values)=>values.map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num">'+money(value)+'</td></tr>').join('');
- const totalRow=(label,value,cols=2)=>'<tr class="total-row"><td>'+escapeHtml(label)+'</td><td class="num">'+money(value)+'</td></tr>';
- const life=reference.lifeAnnualSummary||{};
- const cats=reference.lifeCategories||{};
- $('manual-life-year').textContent=yearLabel(life.year);
- $('manual-life-months').innerHTML=monthTable(life.months||[]);
- $('manual-life-total').innerHTML=totalRow('Итого по исходной таблице',life.statedTotal||0);
- const lifeGross=sum(life.months||[],value=>Number(value||0)),lifeAfterRefunds=lifeGross-Number(life.refunds||0),lifeCategoryDifference=Number(cats.statedTotal||0)-lifeGross;$('manual-life-refunds').textContent='Сумма помесячных расходов: '+money(lifeGross)+'. Возвраты: '+money(life.refunds||0)+'. После возвратов: '+money(lifeAfterRefunds)+' (в Numbers указано '+money(life.statedTotal||0)+'). Итого по категориям отличается от помесячной суммы на '+money(lifeCategoryDifference)+'.';
- const balance=reference.annualBalance||{};
- $('manual-balance-year').textContent=yearLabel(balance.year);
- $('manual-balance-months').innerHTML=(balance.months||[]).map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num '+(value<0?'a-negative':'a-positive')+'">'+money(value)+'</td></tr>').join('');
- $('manual-balance-total').innerHTML=totalRow('Итого по исходной таблице',balance.statedTotal||0);
- $('manual-life-categories-year').textContent=yearLabel(cats.year);
- $('manual-life-categories').innerHTML=(cats.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+Number(item.sharePercent||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+'%</td><td class="num">'+money(item.averageMonthly)+'</td></tr>').join('');
- $('manual-life-categories-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(cats.statedTotal||0)+'</td><td class="num">—</td><td class="num">'+money(cats.statedAverageMonthly||0)+'</td></tr>';
- const sasha=reference.sashaExpenses||{};
- $('manual-sasha-categories').innerHTML=(sasha.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+(item.note?' <span class="a-pill">'+escapeHtml(item.note)+'</span>':'')+'</td><td class="num">'+money(item.total)+'</td><td class="num">'+Number(item.sharePercent||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+'%</td><td class="num">'+money(item.averageMonthly)+'</td></tr>').join('');
- $('manual-sasha-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(sasha.statedTotal||0)+'</td><td class="num">100%</td><td class="num">'+money(sasha.statedAverageMonthly||0)+'</td></tr>';
- $('manual-sasha-note').textContent='Для кафе и такси применялась доля '+Math.round((sasha.sharedCafeTaxiShare||0)*100)+'% от общих расходов.';
- const shop=reference.shop||{};
- $('manual-shop-year').textContent=yearLabel(shop.year);
- $('manual-shop-months').innerHTML=(shop.withdrawalsByMonth||[]).map((withdrawal,index)=>{const deposit=Number(shop.depositsByMonth?.[index]||0);return '<tr><td>'+months[index]+'</td><td class="num">'+money(deposit)+'</td><td class="num">'+money(withdrawal)+'</td><td class="num">'+money(withdrawal-deposit)+'</td></tr>';}).join('');
- $('manual-shop-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(shop.statedDepositsTotal||0)+'</td><td class="num">'+money(shop.statedWithdrawalsTotal||0)+'</td><td class="num">'+money(shop.statedNet||0)+'</td></tr>';
- const credit=reference.credit||{};
- $('manual-credit-summary').innerHTML=[
-  ['Кредит Сбер для работы · получено',money(credit.sberForWorkBorrowed||0)],
-  ['Кредит Лены · отдельно указано',money(credit.lenaBorrowedSeparately||0)],
-  ['Итоговая переплата за кредит',money(credit.finalOverpaymentBalance||0)]
- ].map(([label,value])=>'<div class="a-summary"><small>'+label+'</small><strong>'+value+'</strong></div>').join('');
- $('manual-credit-years').innerHTML=(credit.repaymentsByYear||[]).map(row=>'<tr><td>'+row.year+'</td><td class="num">'+money(row.amount)+'</td></tr>').join('');
- $('manual-credit-years-total').innerHTML=totalRow('Всего возвратов',credit.statedRepaymentsTotal||0);
- $('manual-credit-month-note').textContent=credit.note||'';
- const projects=reference.projects||{};
- $('manual-projects').innerHTML=(projects.items||[]).map(item=>'<tr><td>'+escapeHtml(item.name)+'</td><td class="num">'+money(item.paid)+'</td><td class="num">'+money(item.spent)+'</td><td class="num '+(item.profit<0?'a-negative':'a-positive')+'">'+money(item.profit)+'</td><td>'+escapeHtml([item.term,item.note].filter(Boolean).join(' · '))+'</td></tr>').join('');
- $('manual-projects-total').innerHTML='<tr class="total-row"><td>Итого</td><td class="num">'+money(projects.statedPaidTotal||0)+'</td><td class="num">'+money(projects.statedSpentTotal||0)+'</td><td class="num">'+money(projects.statedProfitTotal||0)+'</td><td>'+escapeHtml(projects.duration||'')+'</td></tr>';
- $('manual-project-duration').textContent='Продолжительность в исходной сводке: '+(projects.duration||'не указана')+'.';
- const extra=reference.additionalAnnualSeries||{};
- $('manual-extra-months').innerHTML=(extra.monthly2026||[]).map((value,index)=>'<tr><td>'+months[index]+'</td><td class="num">'+money(value)+'</td></tr>').join('');
- $('manual-extra-months-total').innerHTML=totalRow('Итого за 2026 год',extra.stated2026Total||0);
- $('manual-extra-years').innerHTML=(extra.byYear||[]).map(row=>'<tr><td>'+row.year+'</td><td class="num">'+money(row.amount)+'</td></tr>').join('');
- $('manual-extra-years-total').innerHTML=totalRow('Итого указано в Numbers',extra.statedTotal||0);
- const extraCalculated=sum(extra.byYear||[],row=>Number(row.amount||0)),extraDiff=Number(extra.statedTotal||0)-extraCalculated;
- $('manual-extra-note').textContent='Сумма перечисленных годовых значений: '+money(extraCalculated)+'. Отличие от указанного итога: '+money(extraDiff)+'. Заголовок показателя в исходном тексте отсутствует.';
- const work=reference.workBalance||{};
- $('manual-work-years').innerHTML=(work.byYear||[]).map(row=>'<tr><td>'+row.year+'</td><td class="num '+(row.amount<0?'a-negative':'a-positive')+'">'+money(row.amount)+'</td></tr>').join('');
- $('manual-work-years-total').innerHTML=totalRow('Итого указано в Numbers',work.statedTotal||0);
- const workCalculated=sum(work.byYear||[],row=>Number(row.amount||0)),workDiff=Number(work.statedTotal||0)-workCalculated;
- $('manual-work-note').textContent='Сумма перечисленных годовых значений: '+money(workCalculated)+'. Отличие от указанного итога: '+money(workDiff)+'.';
- content.classList.remove('hidden');
-}
-function loadManualReferenceFromDatabase(database){
- const raw=readMetadata(database,'numbers_manual_reference_v1');
- if(!raw){$('manual-reference-content').classList.add('hidden');$('manual-reference-status').textContent='В этой базе пока нет ручных сводок Numbers. Их нужно один раз внести в сам файл .budget.';return false;}
- try{const payload=JSON.parse(String(raw));renderManualReference(payload);$('manual-reference-status').textContent='Ручные сводки загружены из выбранного .budget';return true;}
- catch(error){$('manual-reference-content').classList.add('hidden');$('manual-reference-status').textContent='Не удалось прочитать ручные сводки из .budget: '+error.message;return false;}
-}
-
 function renderAll(){
- const year=selectedYear(),rows=filterYear(data,year);
- const stats=totalsFor(rows),months=new Set(rows.map(row=>row.month_key)).size,monthsCount=year==='all'?months:12;
+ const rows=filterYear(data),monthsCount=monthCount(rangeFrom,rangeTo),stats=totalsFor(rows);
  $('incomeMetric').textContent=money(stats.income);$('expenseMetric').textContent=money(stats.expense);$('netMetric').textContent=money(stats.net);$('netMetric').className=stats.net>=0?'a-positive':'a-negative';
- $('rateMetric').textContent=(stats.income?stats.net/stats.income*100:0).toFixed(1).replace('.',',')+'%';$('netSub').textContent=year==='all'?'Весь доступный период':year+' год';
+ $('rateMetric').textContent=(stats.income?stats.net/stats.income*100:0).toFixed(1).replace('.',',')+'%';
+ $('netSub').textContent=rangeFrom+' — '+rangeTo+' · '+monthsCount+' мес.';
  $('specialInputMetric').textContent=money(stats.specialInput);$('specialOutputMetric').textContent=money(stats.specialOutput);$('specialDiffMetric').textContent=money(stats.specialInput-stats.specialOutput);
- renderMonthly(rows);renderLife(rows,monthsCount);
+ const months=rangeMonthRows(rows);
+ renderPeriodInsights(rows,months);renderMonthly(rows);renderLife(rows,monthsCount);
  const lifeTotal=sum(rowsForGroup('life',rows).filter(r=>r.role==='expense'),r=>r.amount);
  renderSasha(rows,monthsCount,lifeTotal);
  renderBusinessArea('work','work',rows);renderShop(rows);renderLoans(rows);renderYearRows();
@@ -575,11 +601,15 @@ async function loadDatabaseBytes(bytes,name){
   years=[...new Set(data.map(row=>row.year))].sort((a,b)=>a-b);
   if(!years.length)throw new Error('В истории Numbers не найдены годы.');
   db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');dbChanged=false;
-  $('year').innerHTML='<option value="all">Весь период</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').reverse().join('');
-  $('year').value=latestYear();
-  $('database-name').textContent=dbName;const fileLabel=$('manual-file')?.parentElement;if(fileLabel?.firstChild?.nodeType===3)fileLabel.firstChild.textContent='Открыть другую базу (.budget)';
+  const minKey=data[0].month_key,maxKey=data[data.length-1].month_key;
+  const latest=years[years.length-1];
+  selectedMonthKey=maxKey;
+  $('database-name').textContent=dbName;
   $('dashboard').classList.remove('hidden');
-  loadSettings();loadManualReferenceFromDatabase(db);renderAll();$('download-db').disabled=true;
+  setRange(String(latest)+'-01',maxKey,false);
+  const oldExamples=readMetadata(opened,'numbers_manual_reference_v1');
+  if(oldExamples){opened.run("DELETE FROM web_metadata WHERE key='numbers_manual_reference_v1'");dbChanged=true;}
+  loadSettings();renderAll();$('download-db').disabled=!dbChanged;
   setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+'.','ok');
   return true;
  }catch(error){try{opened?.close();}catch{}data=[];years=[];$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
@@ -588,6 +618,7 @@ async function loadDatabaseBytes(bytes,name){
 function downloadDatabase(){
  if(!db){setStatus('Сначала выбери базу данных.','error');return;}
  try{
+  if(readMetadata(db,'numbers_manual_reference_v1'))db.run("DELETE FROM web_metadata WHERE key='numbers_manual_reference_v1'");
   const bytes=db.export(),blob=new Blob([bytes],{type:'application/vnd.sqlite3'});
   const base=(dbName||'Budget-Capture').replace(/\.(budget|sqlite3?|db)$/i,'').replace(/_analytics$/i,'');
   const filename=base+'_analytics.budget';
@@ -602,7 +633,14 @@ $('manual-file').addEventListener('change',async event=>{
  catch(error){showError(error.message);}
  event.target.value='';
 });
-$('year').addEventListener('change',renderAll);
+$('range-from').addEventListener('change',()=>setRange($('range-from').value,$('range-to').value));
+$('range-to').addEventListener('change',()=>setRange($('range-from').value,$('range-to').value));
+$('range-6').addEventListener('click',()=>applyRangePreset('6'));
+$('range-12').addEventListener('click',()=>applyRangePreset('12'));
+$('range-year').addEventListener('click',()=>applyRangePreset('year'));
+$('range-all').addEventListener('click',()=>applyRangePreset('all'));
+$('cashflow-chart').addEventListener('click',event=>{const item=event.target.closest('[data-month-key]');if(item)selectMonth(item.dataset.monthKey);});
+$('monthlyRows').addEventListener('click',event=>{const item=event.target.closest('[data-month-key]');if(item)selectMonth(item.dataset.monthKey);});
 $('save-settings').addEventListener('click',saveSettings);
 $('download-db').addEventListener('click',downloadDatabase);
 function listenForDatabaseFromBudgetCapture(){
