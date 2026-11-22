@@ -219,6 +219,9 @@ try {
   assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
   assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'monthly drilldown must show category totals');
+  assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
+  assert.equal(await analytics.locator('#month-category-chart svg.a-donut-svg').count(), 1, 'monthly category composition must render as a donut chart');
+  assert.match(await analytics.locator('#overview-period-caption').textContent(), /2026-01 — 2026-10/, 'the overview must display the selected reporting range');
   assert.equal(await analytics.locator('#download-db').isDisabled(), true, 'opening Analytics must not silently modify or mark the selected .budget as changed');
 
   await analytics.locator('#sasha-shared-percent').fill('60');

@@ -29,6 +29,10 @@ assert.match(analytics,/function writeMetadata\(database,key,value\)\{database\.
 assert.doesNotMatch(analytics,/manual-references|renderManualReference|manual-reference-status/,'the illustrative old Numbers block must not appear in Financial Analytics');
 assert.match(analytics,/id="range-from"[\s\S]*id="range-to"/,'analytics must expose a month-to-month range');
 assert.match(analytics,/function renderMonthDetail\(\)/,'monthly drilldown must show detail and prior-month comparisons');
+assert.match(analytics,/function renderChart\(months\)[\s\S]*?income-line[\s\S]*?expense-line/,'Financial Analytics must render an interactive income/expense SVG line chart');
+assert.match(analytics,/function renderExpenseDonut\(rows\)/,'monthly detail must render a category composition donut chart');
+assert.match(analytics,/id="month-category-chart"[\s\S]*id="month-category-legend"/,'monthly expense composition chart and legend must be present');
+assert.match(analytics,/id="overview-period-caption"[\s\S]*id="overview-range"/,'overview heading must reflect the selected reporting period');
 assert.match(analytics,/function renderPeriodInsights\(rows,months\)/,'analytics must compare the selected range to the previous equal-length period');
 assert.match(analytics,/function rangeMonthRows\(rows\)/,'monthly reports must use the selected range rather than a hard-coded year');
 assert.match(analytics,/analytics_report_settings_v1/, 'report-category settings must be stored inside the selected .budget metadata');

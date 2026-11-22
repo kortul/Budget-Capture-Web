@@ -112,12 +112,126 @@
 
 @media(max-width:1000px){.a-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a-two{grid-template-columns:1fr}}
 @media(max-width:650px){.analytics-shell{padding:18px 12px 40px}.a-card{padding:14px}.a-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.a-metric{padding:12px}.a-metric strong{font-size:20px}.a-chart{gap:3px;min-height:180px}.a-bars{height:140px}.a-month small{font-size:9px}.a-settings-grid,.a-manual-grid{grid-template-columns:1fr}.a-check-list{grid-template-columns:1fr}.a-summary-grid{grid-template-columns:1fr}.a-table{font-size:12px}.a-table th,.a-table td{padding:9px 8px}}
+
+/* Financial Analytics · premium dashboard */
+body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transparent 34rem),radial-gradient(ellipse at 92% 12%,rgba(89,105,164,.16),transparent 30rem),#0e131a}
+.analytics-shell{max-width:1580px;padding:32px clamp(16px,3vw,44px) 72px}
+.a-head{align-items:center;margin-bottom:25px}
+.a-head h1{font-size:clamp(30px,3.6vw,42px);font-weight:760;letter-spacing:-.055em;line-height:1.08}
+.a-head p{max-width:620px;line-height:1.55;font-size:12px;color:#94a3b1}
+.a-head .eyebrow{color:#7dbba9;letter-spacing:.2em}
+.a-actions{gap:9px}.a-actions .button{border-radius:11px;padding:10px 14px}
+.a-card{background:linear-gradient(145deg,rgba(27,37,48,.96),rgba(20,28,37,.98));border:1px solid rgba(148,169,188,.13);border-radius:21px;padding:22px;margin-bottom:17px;box-shadow:0 18px 44px rgba(0,0,0,.13);backdrop-filter:blur(14px)}
+.a-topline{align-items:center}.a-controls{gap:10px}
+.a-controls label{font-size:11px;font-weight:650;color:#9eacb9;gap:7px}
+.a-controls input{min-width:145px;min-height:42px;border:1px solid #354352;border-radius:11px;background:#111a23;padding:9px 12px;color:#e5edf3;font:inherit;font-size:12px;color-scheme:dark}
+.a-controls input:focus{outline:none;border-color:#65c6a2;box-shadow:0 0 0 3px rgba(101,198,162,.12)}
+.a-range-presets{gap:6px}.a-range-presets .button{border:1px solid transparent;border-radius:9px;background:#202c38;color:#9eacb9;padding:8px 11px;font-weight:650}
+.a-range-presets .button:hover{background:#2b3a48;color:#eff6f8}
+.a-range-presets .button.active{background:rgba(78,176,143,.17);border-color:rgba(93,203,162,.38);color:#a3edce}
+.a-file label{font-size:11px}.a-file input{max-width:220px;font-size:10px}
+#download-db{border-radius:10px}
+#database-name{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 11px;background:#111a23;border-color:#344251}
+.a-status{font-size:11px;line-height:1.5;color:#8796a5}.a-status.ok{color:#8eddb8}.a-status.error{color:#ff9d97}
+.a-overview-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:23px 2px 14px}
+.a-overview-head h2{font-size:24px;letter-spacing:-.04em;margin:0 0 6px}.a-overview-head p{font-size:12px;color:#8f9eac;margin:0}
+.a-overview-kicker{display:block;color:#75c9a7;font-size:9px;font-weight:800;letter-spacing:.19em;margin-bottom:8px}
+.a-overview-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.a-overview-meta span{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(138,162,181,.15);background:rgba(18,27,36,.7);border-radius:99px;padding:7px 10px;color:#98a7b4;font-size:10px}
+.a-live-dot{width:6px;height:6px;border-radius:50%;background:#62d8a8;box-shadow:0 0 0 4px rgba(98,216,168,.1)}
+#overview-range{font-variant-numeric:tabular-nums}
+#annual.a-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#annual .a-metric{position:relative;overflow:hidden;min-height:128px;padding:18px 19px;background:linear-gradient(145deg,#1c2933,#17212b);border:1px solid rgba(148,169,188,.12);border-radius:17px}
+#annual .a-metric:after{content:"";position:absolute;right:-24px;top:-32px;width:104px;height:104px;border-radius:50%;background:var(--metric-glow,rgba(93,203,162,.11));filter:blur(3px);pointer-events:none}
+#annual .a-metric:nth-child(1){--metric-glow:rgba(69,203,155,.17)}
+#annual .a-metric:nth-child(2){--metric-glow:rgba(255,130,120,.15)}
+#annual .a-metric:nth-child(3){--metric-glow:rgba(112,158,242,.17)}
+#annual .a-metric:nth-child(4){--metric-glow:rgba(180,143,239,.17)}
+#annual .a-metric small{font-size:11px;color:#9aaab7;margin-bottom:13px}
+#annual .a-metric strong{position:relative;z-index:1;font-size:clamp(21px,2.3vw,29px);letter-spacing:-.045em;font-weight:760}
+#incomeMetric{color:#83e1b9!important}#expenseMetric{color:#ff9b91!important}#netMetric.a-positive{color:#94d7ff!important}#rateMetric{color:#c5a6ff}
+#annual .a-metric .sub{font-size:10px;color:#758695;margin-top:8px}
+.a-period-insights{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:13px 0 17px}
+.a-insight{position:relative;overflow:hidden;padding:15px 17px;border:1px solid rgba(148,169,188,.11);border-radius:15px;background:linear-gradient(140deg,rgba(31,43,55,.88),rgba(22,31,41,.9))}
+.a-insight:before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:4px;background:#7897c3;opacity:.75}
+.a-insight:nth-child(1):before{background:#ef927f}.a-insight:nth-child(2):before{background:#e8bf74}.a-insight:nth-child(3):before{background:#8aa8ed}
+.a-insight small{font-size:10px;color:#8698a8;letter-spacing:.025em}.a-insight strong{font-size:17px;font-weight:740;letter-spacing:-.02em}.a-insight p{font-size:10px;color:#748594}
+.a-two{gap:15px}.a-two>.a-card,.a-two>section.a-card{margin-bottom:0}
+.a-section-head{align-items:center;margin-bottom:14px}.a-section-head h2{font-size:17px;font-weight:730;letter-spacing:-.035em}.a-section-head p{font-size:10px;color:#8293a2}
+.a-chart-card{min-width:0}.a-chart{display:block;min-height:0;overflow-x:auto;padding:4px 0 0;scrollbar-width:thin;scrollbar-color:#405365 transparent}
+.a-chart-svg{display:block;width:100%;min-width:690px;height:auto;overflow:visible}
+.a-chart-svg text{font-family:inherit;fill:#7f91a0;font-size:11px}.a-chart-svg .grid-line{stroke:rgba(149,168,185,.13);stroke-width:1;stroke-dasharray:3 7}
+.a-chart-svg .income-area{fill:url(#income-area-gradient)}.a-chart-svg .expense-area{fill:url(#expense-area-gradient)}
+.a-chart-svg .income-line{fill:none;stroke:#6cddb1;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 3px 8px rgba(73,210,162,.22))}
+.a-chart-svg .expense-line{fill:none;stroke:#ff9588;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 3px 8px rgba(255,141,130,.18))}
+.a-chart-svg .chart-hit{fill:transparent;cursor:pointer}.a-chart-svg .chart-guide{stroke:rgba(172,194,207,.3);stroke-width:1;stroke-dasharray:4 5}
+.a-chart-svg .point-halo{fill:#111923;stroke-width:2.5}.a-chart-svg .point-income{fill:#72e0b7;stroke:#17251f;stroke-width:2}.a-chart-svg .point-expense{fill:#ff978b;stroke:#2d2022;stroke-width:2}
+.a-chart-svg .chart-point{cursor:pointer}.a-chart-svg .chart-point.selected .point-halo{stroke:#fff;stroke-width:2;fill:rgba(125,191,255,.12)}
+.a-chart-svg .chart-point:focus-visible{outline:none}.a-chart-svg .chart-point:focus-visible .point-halo{stroke:#fff;stroke-width:3}
+.a-legend{gap:17px;margin-top:11px;font-size:10px;color:#92a1ae}.a-legend i{width:9px;height:9px;border-radius:50%;margin-right:7px}.a-legend .legend-hint{margin-left:auto;color:#6f8292}
+.a-summary-grid{gap:8px}.a-summary{background:#111a23;border:1px solid rgba(144,166,184,.09);border-radius:12px;padding:12px}
+.a-summary small{font-size:9px;color:#8394a2}.a-summary strong{font-size:17px;letter-spacing:-.025em}
+.a-note{border-radius:11px;background:rgba(225,179,96,.08);border-color:rgba(225,179,96,.16);color:#cbb78e;font-size:10px}
+.a-month-metrics .a-metric{border-radius:13px;background:#111a23;border:1px solid rgba(148,169,188,.09);padding:14px}
+.a-month-metrics .a-metric small{font-size:10px;color:#8ea0af}.a-month-metrics .a-metric strong{font-size:22px;letter-spacing:-.04em}
+.a-month-analysis{display:grid;grid-template-columns:minmax(245px,.8fr) minmax(0,1.6fr);gap:24px;margin-top:23px;padding-top:20px;border-top:1px solid rgba(148,169,188,.11)}
+.a-subsection-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.a-subsection-head h3,.a-mini-head{font-size:12px;font-weight:720;color:#dce5ec;margin:0 0 4px}.a-subsection-head span{font-size:10px;color:#8597a6}
+.a-donut-layout{display:grid;grid-template-columns:180px minmax(0,1fr);align-items:center;gap:14px}
+.a-donut-svg{width:100%;max-width:180px;height:auto;overflow:visible}.a-donut-svg .donut-track{fill:none;stroke:#263543;stroke-width:18}
+.a-donut-svg .donut-segment{fill:none;stroke-width:18;stroke-linecap:butt}
+.a-donut-svg text{font-family:inherit;text-anchor:middle;fill:#8495a4}.a-donut-svg .donut-value{fill:#edf4f7;font-size:15px;font-weight:760;letter-spacing:-.03em}.a-donut-svg .donut-label{font-size:8px;font-weight:800;letter-spacing:.16em}
+.a-donut-legend{display:flex;flex-direction:column;gap:8px;min-width:0}
+.a-donut-item{display:grid;grid-template-columns:9px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:10px}
+.a-donut-swatch{width:8px;height:8px;border-radius:3px}.a-donut-name{color:#a9b6c1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a-donut-value{color:#e3eaf0;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.a-rank-columns{display:grid;grid-template-columns:1fr 1fr;gap:22px;min-width:0}
+.a-rank-list{gap:12px}.a-rank-row{grid-template-columns:minmax(85px,1.1fr) minmax(60px,1fr) auto;gap:9px;font-size:10px}
+.a-rank-name{font-size:10px;color:#aab8c4}.a-rank-track{height:6px;background:#263440}
+.a-rank-fill{background:linear-gradient(90deg,#6e9fe4,#9a8de8)}.a-rank-value{font-size:10px;color:#e1e8ed}
+.a-table-wrap{overflow:auto;border:1px solid rgba(148,169,188,.09);border-radius:12px;max-height:540px}
+.a-table{font-size:11px}.a-table th,.a-table td{padding:11px 13px;border-bottom:1px solid rgba(148,169,188,.08)}
+.a-table th{background:#18232e;color:#8496a5;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.a-table tbody tr{transition:background .15s}.a-table tbody tr:hover{background:rgba(111,155,202,.08)}.a-table tbody tr.selected-month{background:rgba(92,160,207,.13)}
+.a-table td{color:#b8c5cf}.a-table td.num{font-variant-numeric:tabular-nums;color:#d8e1e8}.a-table td:first-child{min-width:145px}
+.a-month-link{font-weight:650;color:#dce6ee;text-decoration-color:rgba(130,171,205,.35)}.a-month-link:hover{color:#9bd8c0}
+.a-table tfoot td{background:rgba(255,255,255,.025);font-weight:750}
+.a-pill{background:rgba(127,153,174,.08);border-color:rgba(148,169,188,.14);color:#91a1af;padding:5px 8px}
+.a-anchor{position:sticky;top:0;z-index:5;padding:8px 0 10px;background:linear-gradient(180deg,rgba(14,19,26,.97),rgba(14,19,26,.82));backdrop-filter:blur(12px);gap:6px}
+.a-anchor a{border-color:rgba(148,169,188,.1);background:#151f29;color:#8fa1af;padding:8px 12px;font-size:10px;transition:.15s}
+.a-anchor a:hover{background:#23352f;border-color:#3e7661;color:#b7f2d6}
+.a-details summary{color:#dce6ec;padding:5px 0}.a-group-box{background:#121b24;border-color:rgba(148,169,188,.12);border-radius:13px}
+.a-group-box h3{color:#e2ebf0}.a-check{color:#9baab6}.a-settings-actions{align-items:center}.a-settings-foot{color:#8394a2}
+#save-settings{border-radius:10px;padding:10px 14px}
+#download-db:not(:disabled){border-color:#3b795f;background:#1b3a30;color:#b4f0d4}
+.a-donut-empty{display:grid;place-items:center;min-height:150px;text-align:center;color:#7e909f;font-size:10px}
+@media(max-width:1100px){.a-month-analysis{grid-template-columns:1fr}.a-donut-layout{grid-template-columns:170px minmax(0,1fr)}}
+@media(max-width:850px){.analytics-shell{padding:22px 16px 54px}.a-head{align-items:flex-start}.a-overview-head{align-items:flex-start;flex-direction:column;gap:10px}#annual.a-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a-month-analysis{gap:18px}.a-rank-columns{gap:14px}}
+@media(max-width:620px){
+ .analytics-shell{padding:16px 11px 42px}.a-head h1{font-size:29px}.a-head p{font-size:11px}
+ .a-actions{width:100%}.a-actions .button{flex:1;text-align:center}.a-card{padding:15px;border-radius:16px}.a-topline{align-items:stretch}
+ .a-controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}.a-controls>label{min-width:0}.a-controls input{width:100%;min-width:0}
+ .a-range-presets{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.a-range-presets .button{padding:8px 3px;font-size:9px}
+ .a-file{grid-column:1/-1}.a-file label{width:100%}.a-file input{max-width:100%;width:100%}#download-db{grid-column:1/-1}#database-name{max-width:100%;align-self:flex-start}
+ #annual.a-grid{gap:8px}#annual .a-metric{min-height:112px;padding:13px}#annual .a-metric small{font-size:9px;margin-bottom:10px}#annual .a-metric strong{font-size:19px}
+ .a-overview-head h2{font-size:21px}.a-period-insights{grid-template-columns:1fr;gap:8px}.a-insight{padding:12px 14px}
+ .a-chart-svg{min-width:620px}.a-legend{gap:12px}.a-legend .legend-hint{width:100%;margin-left:0}
+ .a-month-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.a-month-metrics .a-metric{padding:11px}.a-month-metrics .a-metric strong{font-size:18px}
+ .a-donut-layout{grid-template-columns:125px minmax(0,1fr);gap:9px}.a-donut-svg{max-width:125px}
+ .a-rank-columns{grid-template-columns:1fr;gap:18px}.a-rank-row{grid-template-columns:minmax(95px,1fr) minmax(65px,1fr) auto}
+ .a-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.a-summary{padding:10px 8px}.a-summary strong{font-size:13px}
+ .a-table{font-size:10px}.a-table th,.a-table td{padding:9px}
+ .a-anchor{margin:0 -3px 13px;overflow-x:auto;flex-wrap:nowrap}.a-anchor a{white-space:nowrap}
+ .a-settings-grid{grid-template-columns:1fr}.a-check-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.a-table tbody tr,.a-anchor a,.a-range-presets .button{transition:none}}
+
 </style>
 </head>
 <body>
 <div class="analytics-shell">
 <header class="a-head">
-  <div><div class="eyebrow">BUDGET CAPTURE · ОТЧЁТЫ</div><h1>Финансовая аналитика</h1><p>Все отчёты рассчитываются на сайте по истории Numbers. Исходные финансовые записи не изменяются; настройки сохраняются только по явной команде.</p></div>
+  <div><div class="eyebrow">BUDGET CAPTURE · ОТЧЁТЫ</div><h1>Финансовая аналитика</h1><p>Понятные отчёты, динамика и структура расходов — всё строится прямо из истории Numbers.</p></div>
   <div class="a-actions"><a class="button secondary" href="index.html">← Основное приложение</a><a class="button secondary" href="numbers-import.html">Импорт Numbers</a></div>
 </header>
 
@@ -127,10 +241,10 @@
       <label>С<input id="range-from" type="month" aria-label="Начало периода"></label>
       <label>По<input id="range-to" type="month" aria-label="Конец периода"></label>
       <div class="a-range-presets">
-        <button class="button secondary button-small" id="range-6" type="button">6 месяцев</button>
-        <button class="button secondary button-small" id="range-12" type="button">12 месяцев</button>
-        <button class="button secondary button-small" id="range-year" type="button">Этот год</button>
-        <button class="button secondary button-small" id="range-all" type="button">Вся история</button>
+        <button class="button secondary button-small" id="range-6" type="button" aria-pressed="false">6 мес.</button>
+        <button class="button secondary button-small active" id="range-12" type="button" aria-pressed="true">12 мес.</button>
+        <button class="button secondary button-small" id="range-year" type="button" aria-pressed="false">Этот год</button>
+        <button class="button secondary button-small" id="range-all" type="button" aria-pressed="false">Вся история</button>
       </div>
       <div class="a-file"><label>Открыть другую базу (.budget)<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
       <button id="download-db" class="button secondary" type="button" disabled>Скачать обновлённую базу</button>
@@ -143,9 +257,10 @@
 
 <div id="dashboard" class="hidden">
 <nav class="a-anchor">
-  <a href="#annual">Итоги года</a><a href="#life">Расходы на жизнь</a><a href="#sasha">Расходы Саши</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#year-comparison">Сравнение лет</a><a href="#report-settings">Настройки отчёта</a>
+  <a href="#annual">Обзор</a><a href="#month-detail">Месяц</a><a href="#life">Жизнь</a><a href="#sasha">Саша</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#year-comparison">Годы</a><a href="#report-settings">Настройки</a>
 </nav>
 
+<section class="a-overview-head"><div><span class="a-overview-kicker">ВАШ ФИНАНСОВЫЙ ОБЗОР</span><h2>Финансовая картина</h2><p id="overview-period-caption">Выбранный период</p></div><div class="a-overview-meta"><span><i class="a-live-dot"></i>Аналитика по истории Numbers</span><span id="overview-range">—</span></div></section>
 <section class="a-grid" id="annual">
   <div class="a-metric"><small>Поступления за период</small><strong id="incomeMetric">—</strong><div class="sub">Обычные поступления</div></div>
   <div class="a-metric"><small>Расходы за период</small><strong id="expenseMetric">—</strong><div class="sub">Обычные расходы</div></div>
@@ -159,10 +274,10 @@
 </div>
 
 <div class="a-two" style="margin-top:16px">
-  <section class="a-card">
-    <div class="a-section-head"><div><h2>Движение денег по месяцам</h2><p id="chart-caption">Поступления и расходы за выбранный год</p></div></div>
-    <div id="cashflow-chart" class="a-chart"></div>
-    <div class="a-legend"><span><i style="background:#55bf91"></i>Доходы</span><span><i style="background:#df9276"></i>Расходы</span><span class="a-small">Нажми на месяц, чтобы открыть подробности</span></div>
+  <section class="a-card a-chart-card">
+    <div class="a-section-head"><div><h2>Движение денег</h2><p id="chart-caption">Поступления и расходы за выбранный период</p></div><span class="a-pill">По месяцам</span></div>
+    <div id="cashflow-chart" class="a-chart" aria-label="Интерактивный график поступлений и расходов"></div>
+    <div class="a-legend"><span><i style="background:#6cddb1"></i>Поступления</span><span><i style="background:#ff9588"></i>Расходы</span><span class="legend-hint">Нажмите на точку месяца для детализации</span></div>
   </section>
   <section class="a-card">
     <div class="a-section-head"><div><h2>Специальные потоки</h2><p>Не включаются в обычный баланс</p></div></div>
@@ -183,9 +298,9 @@
     <div class="a-metric"><small>Баланс</small><strong id="month-net">—</strong><div class="sub" id="month-net-delta">—</div></div>
     <div class="a-metric"><small>Доля сбережений</small><strong id="month-rate">—</strong><div class="sub">Баланс / поступления</div></div>
   </div>
-  <div class="a-two" style="margin-top:16px">
-    <div><h3 class="a-mini-head">Куда ушли деньги</h3><div id="month-expense-list" class="a-rank-list"></div></div>
-    <div><h3 class="a-mini-head">Из чего сложились поступления</h3><div id="month-income-list" class="a-rank-list"></div></div>
+  <div class="a-month-analysis">
+    <div class="a-donut-panel"><div class="a-subsection-head"><h3>Структура расходов</h3><span id="month-category-total">—</span></div><div class="a-donut-layout"><div id="month-category-chart" aria-label="Круговая диаграмма расходов за выбранный месяц"></div><div id="month-category-legend" class="a-donut-legend"></div></div></div>
+    <div class="a-rank-columns"><div><h3 class="a-mini-head">Куда ушли деньги</h3><div id="month-expense-list" class="a-rank-list"></div></div><div><h3 class="a-mini-head">Из чего сложились поступления</h3><div id="month-income-list" class="a-rank-list"></div></div></div>
   </div>
 </section>
 
@@ -200,7 +315,7 @@
     <div class="a-metric"><small>Расходы на жизнь</small><strong id="lifeTotal">—</strong><div class="sub">Сумма выбранных категорий</div></div>
     <div class="a-metric"><small>Возвраты</small><strong id="lifeRefunds">—</strong><div class="sub">Показываются отдельно</div></div>
     <div class="a-metric"><small>Чистые расходы на жизнь</small><strong id="lifeNet">—</strong><div class="sub">Расходы минус возвраты</div></div>
-    <div class="a-metric"><small>В среднем за месяц</small><strong id="lifeAverage">—</strong><div class="sub">Расходы / 12 месяцев</div></div>
+    <div class="a-metric"><small>В среднем за месяц</small><strong id="lifeAverage">—</strong><div class="sub">Расходы / число месяцев периода</div></div>
   </div>
   <div class="a-table-wrap" style="margin-top:16px"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Всего</th><th class="num">Доля</th><th class="num">В среднем за месяц</th></tr></thead><tbody id="lifeRows"></tbody><tfoot id="lifeFoot"></tfoot></table></div>
   <div class="a-section-head" style="margin-top:22px"><div><h2>Расходы на жизнь по месяцам</h2><p>Помесячная сумма выбранных категорий за отчётный период</p></div></div>
@@ -211,7 +326,7 @@
   <div class="a-section-head"><div><h2>Расходы Саши</h2><p>Отдельные категории плюс согласованная доля общих расходов</p></div></div>
   <div class="a-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
     <div class="a-metric"><small>Всего на Сашу</small><strong id="sashaTotal">—</strong><div class="sub">С учётом долей общих расходов</div></div>
-    <div class="a-metric"><small>Среднее за месяц</small><strong id="sashaAverage">—</strong><div class="sub">Сумма / 12 месяцев</div></div>
+    <div class="a-metric"><small>Среднее за месяц</small><strong id="sashaAverage">—</strong><div class="sub">Сумма / число месяцев периода</div></div>
     <div class="a-metric"><small>Доля от расходов на жизнь</small><strong id="sashaShare">—</strong><div class="sub">Саша / расходы на жизнь</div></div>
   </div>
   <div class="a-table-wrap" style="margin-top:16px"><table class="a-table"><thead><tr><th>Категория</th><th class="num">Учтённая сумма</th><th class="num">Доля расходов Саши</th><th class="num">В среднем за месяц</th></tr></thead><tbody id="sashaRows"></tbody></table></div>
@@ -323,6 +438,7 @@ function applyRangePreset(preset){
  else if(preset==='12')setRange(shiftMonthKey(max,-11),max);
  else if(preset==='year')setRange(year+'-01',max);
  else if(preset==='all')setRange(min,max);
+ for(const id of ['6','12','year','all']){const button=$('range-'+id),active=id===preset;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));}
 }
 function categoryList(){return [...new Set(data.map(row=>row.category))].sort((a,b)=>a.localeCompare(b,'ru'));}
 function categoryKinds(){const map=new Map();for(const row of data){if(!map.has(row.category))map.set(row.category,row.role||row.kind);}return map;}
@@ -421,16 +537,39 @@ function rangeMonthRows(rows){
  }
  return result;
 }
+function compactMoney(value){return new Intl.NumberFormat('ru-RU',{notation:'compact',maximumFractionDigits:1}).format(Number(value)||0)+' ₽';}
 function renderChart(months){
  const list=months.length>24?months.slice(-24):months;
- const max=Math.max(1,...list.flatMap(row=>[Math.abs(row.income),Math.abs(row.expense)]));
- $('cashflow-chart').style.setProperty('--month-count',String(list.length));
- $('cashflow-chart').innerHTML=list.map(row=>{
-  const label=MONTHS[row.month-1]||row.month;
-  const inc=Math.max(row.income?2:0,Math.abs(row.income)/max*100),exp=Math.max(row.expense?2:0,Math.abs(row.expense)/max*100);
-  return '<button type="button" class="a-month'+(row.key===selectedMonthKey?' selected':'')+'" data-month-key="'+row.key+'" title="'+escapeHtml(label+' '+row.year+' · Поступления '+money(row.income)+' · Расходы '+money(row.expense)+' · Баланс '+money(row.income-row.expense))+'"><span class="a-bars"><span class="a-bar income'+(row.income<0?' negative':'')+'" style="height:'+Math.min(100,inc)+'%"></span><span class="a-bar expense" style="height:'+Math.min(100,exp)+'%"></span></span><small>'+escapeHtml(label.slice(0,3))+'</small><small>'+row.year+'</small></button>';
- }).join('');
- $('chart-caption').textContent='Показано '+list.length+' из '+months.length+' месяцев · '+rangeFrom+' — '+rangeTo+(months.length>24?' · последние 24 месяца':'');
+ const width=1000,height=310,left=62,right=24,top=22,bottom=52,plotWidth=width-left-right,plotHeight=height-top-bottom,baseY=top+plotHeight;
+ const max=Math.max(1,...list.flatMap(row=>[Math.abs(row.income),Math.abs(row.expense)]))*1.12;
+ const xAt=i=>list.length===1?left+plotWidth/2:left+i*plotWidth/(list.length-1);
+ const yAt=value=>top+plotHeight-(Math.max(0,Number(value)||0)/max)*plotHeight;
+ const incomePoints=list.map((row,i)=>({x:xAt(i),y:yAt(row.income)}));
+ const expensePoints=list.map((row,i)=>({x:xAt(i),y:yAt(row.expense)}));
+ const linePath=points=>points.map((point,i)=>(i?'L':'M')+point.x.toFixed(1)+' '+point.y.toFixed(1)).join(' ');
+ const areaPath=points=>points.length?linePath(points)+' L '+points[points.length-1].x.toFixed(1)+' '+baseY+' L '+points[0].x.toFixed(1)+' '+baseY+' Z':'';
+ const grid=Array.from({length:5},(_,i)=>{const value=max*(1-i/4),y=top+plotHeight*i/4;return '<line class="grid-line" x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(width-right)+'" y2="'+y.toFixed(1)+'"></line><text x="'+(left-12)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+escapeHtml(compactMoney(value).replace(' ₽',''))+'</text>';}).join('');
+ const tickEvery=Math.max(1,Math.ceil(list.length/8));
+ const ticks=list.map((row,i)=>{if(i%tickEvery!==0&&i!==list.length-1)return '';const x=xAt(i),month=MONTHS[row.month-1].slice(0,3),label=(i===0||row.month===1)?month+' '+String(row.year).slice(-2):month;return '<text x="'+x.toFixed(1)+'" y="'+(height-15)+'" text-anchor="middle">'+escapeHtml(label)+'</text>';}).join('');
+ const selectedIndex=list.findIndex(row=>row.key===selectedMonthKey),selectedX=selectedIndex>=0?xAt(selectedIndex):null;
+ const hitWidth=Math.max(26,list.length>1?plotWidth/(list.length-1):plotWidth);
+ const points=list.map((row,i)=>{const x=xAt(i),yi=yAt(row.income),ye=yAt(row.expense),selected=row.key===selectedMonthKey;const title=escapeHtml(MONTHS[row.month-1]+' '+row.year+' · Поступления '+money(row.income)+' · Расходы '+money(row.expense)+' · Баланс '+money(row.income-row.expense));return '<g class="chart-point'+(selected?' selected':'')+'" data-month-key="'+escapeHtml(row.key)+'" tabindex="0" role="button" aria-label="'+title+'" aria-pressed="'+selected+'"><title>'+title+'</title><rect class="chart-hit" x="'+(x-hitWidth/2).toFixed(1)+'" y="'+top+'" width="'+hitWidth.toFixed(1)+'" height="'+(plotHeight+34)+'"></rect><circle class="point-halo" cx="'+x.toFixed(1)+'" cy="'+yi.toFixed(1)+'" r="'+(selected?9:6)+'" stroke="#6cddb1"></circle><circle class="point-income" cx="'+x.toFixed(1)+'" cy="'+yi.toFixed(1)+'" r="3.1"></circle><circle class="point-halo" cx="'+x.toFixed(1)+'" cy="'+ye.toFixed(1)+'" r="'+(selected?9:6)+'" stroke="#ff9588"></circle><circle class="point-expense" cx="'+x.toFixed(1)+'" cy="'+ye.toFixed(1)+'" r="3.1"></circle></g>';}).join('');
+ $('cashflow-chart').innerHTML='<svg class="a-chart-svg" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Динамика поступлений и расходов за выбранный период"><defs><linearGradient id="income-area-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#6cddb1" stop-opacity=".23"></stop><stop offset="100%" stop-color="#6cddb1" stop-opacity="0"></stop></linearGradient><linearGradient id="expense-area-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#ff9588" stop-opacity=".16"></stop><stop offset="100%" stop-color="#ff9588" stop-opacity="0"></stop></linearGradient></defs>'+grid+(selectedX===null?'':'<line class="chart-guide" x1="'+selectedX+'" y1="'+top+'" x2="'+selectedX+'" y2="'+baseY+'"></line>')+'<path class="income-area" d="'+areaPath(incomePoints)+'"></path><path class="expense-area" d="'+areaPath(expensePoints)+'"></path><path class="income-line" d="'+linePath(incomePoints)+'"></path><path class="expense-line" d="'+linePath(expensePoints)+'"></path>'+points+ticks+'</svg>';
+ $('chart-caption').textContent='Показано '+list.length+' из '+months.length+' месяцев · '+rangeFrom+' — '+rangeTo+(months.length>24?' · график показывает последние 24 месяца':'');
+}
+function renderExpenseDonut(rows){
+ const categories=totalsByCategory(rows.filter(row=>row.role==='expense'));
+ const total=sum(categories,row=>row.total);
+ $('month-category-total').textContent=total?money(total):'Нет расходов';
+ if(!total){$('month-category-chart').innerHTML='<div class="a-donut-empty">Нет расходов за выбранный месяц</div>';$('month-category-legend').innerHTML='';return;}
+ const visible=categories.slice(0,5),rest=sum(categories.slice(5),row=>row.total);
+ if(rest>0)visible.push({category:'Прочее',total:rest});
+ const colors=['#70d6ae','#83aaf4','#c49aef','#f2bd78','#f28d86','#6db6c9'],circumference=2*Math.PI*72;
+ let offset=0;
+ const segments=visible.map((item,i)=>{const length=item.total/total*circumference;const segment='<circle class="donut-segment" cx="110" cy="110" r="72" stroke="'+colors[i%colors.length]+'" stroke-dasharray="'+length.toFixed(2)+' '+(circumference-length).toFixed(2)+'" stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 110 110)"><title>'+escapeHtml(item.category)+' · '+money(item.total)+'</title></circle>';offset+=length;return segment;}).join('');
+ const legend=visible.map((item,i)=>'<div class="a-donut-item"><i class="a-donut-swatch" style="background:'+colors[i%colors.length]+'"></i><span class="a-donut-name" title="'+escapeHtml(item.category)+'">'+escapeHtml(item.category)+'</span><strong class="a-donut-value">'+(item.total/total*100).toFixed(1).replace('.',',')+'%</strong></div>').join('');
+ $('month-category-chart').innerHTML='<svg class="a-donut-svg" viewBox="0 0 220 220" role="img" aria-label="Структура расходов: '+escapeHtml(money(total))+'"><circle class="donut-track" cx="110" cy="110" r="72"></circle>'+segments+'<text class="donut-label" x="110" y="100">РАСХОДЫ</text><text class="donut-value" x="110" y="124">'+escapeHtml(compactMoney(total))+'</text></svg>';
+ $('month-category-legend').innerHTML=legend;
 }
 function deltaCell(value){
  if(value===null||!Number.isFinite(value))return '<span class="a-small">—</span>';
@@ -472,6 +611,7 @@ function renderMonthDetail(){
  $('month-income-delta').textContent=comparisonText(current.income,prior?.income??null);
  $('month-expense-delta').textContent=comparisonText(current.expense,prior?.expense??null);
  $('month-net-delta').textContent=comparisonText(current.net,prior?.net??null);
+ renderExpenseDonut(rows);
  renderRankList('month-expense-list',rows,'expense');renderRankList('month-income-list',rows,'income');
 }
 function renderPeriodInsights(rows,months){
@@ -568,6 +708,8 @@ function renderAll(){
  $('incomeMetric').textContent=money(stats.income);$('expenseMetric').textContent=money(stats.expense);$('netMetric').textContent=money(stats.net);$('netMetric').className=stats.net>=0?'a-positive':'a-negative';
  $('rateMetric').textContent=(stats.income?stats.net/stats.income*100:0).toFixed(1).replace('.',',')+'%';
  $('netSub').textContent=rangeFrom+' — '+rangeTo+' · '+monthsCount+' мес.';
+ $('overview-period-caption').textContent='Отчётный период: '+rangeFrom+' — '+rangeTo+' · '+monthsCount+' месяцев';
+ $('overview-range').textContent=rangeFrom+' — '+rangeTo;
  $('specialInputMetric').textContent=money(stats.specialInput);$('specialOutputMetric').textContent=money(stats.specialOutput);$('specialDiffMetric').textContent=money(stats.specialInput-stats.specialOutput);
  const months=rangeMonthRows(rows);
  renderPeriodInsights(rows,months);renderMonthly(rows);renderLife(rows,monthsCount);
@@ -636,13 +778,14 @@ $('manual-file').addEventListener('change',async event=>{
  catch(error){showError(error.message);}
  event.target.value='';
 });
-$('range-from').addEventListener('change',()=>setRange($('range-from').value,$('range-to').value));
-$('range-to').addEventListener('change',()=>setRange($('range-from').value,$('range-to').value));
+$('range-from').addEventListener('change',()=>{setRange($('range-from').value,$('range-to').value);for(const id of ['6','12','year','all']){$('range-'+id).classList.remove('active');$('range-'+id).setAttribute('aria-pressed','false');}});
+$('range-to').addEventListener('change',()=>{setRange($('range-from').value,$('range-to').value);for(const id of ['6','12','year','all']){$('range-'+id).classList.remove('active');$('range-'+id).setAttribute('aria-pressed','false');}});
 $('range-6').addEventListener('click',()=>applyRangePreset('6'));
 $('range-12').addEventListener('click',()=>applyRangePreset('12'));
 $('range-year').addEventListener('click',()=>applyRangePreset('year'));
 $('range-all').addEventListener('click',()=>applyRangePreset('all'));
 $('cashflow-chart').addEventListener('click',event=>{const item=event.target.closest('[data-month-key]');if(item)selectMonth(item.dataset.monthKey);});
+$('cashflow-chart').addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-month-key]')){event.preventDefault();selectMonth(event.target.dataset.monthKey);}});
 $('monthlyRows').addEventListener('click',event=>{const item=event.target.closest('[data-month-key]');if(item)selectMonth(item.dataset.monthKey);});
 $('save-settings').addEventListener('click',saveSettings);
 $('download-db').addEventListener('click',downloadDatabase);
