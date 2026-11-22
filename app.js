@@ -82,16 +82,16 @@ async function saveDatabase(){
         const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'Budget Capture database',accept:{'application/vnd.sqlite3':['.budget','.sqlite3']}}]});
         const writable=await handle.createWritable();
         await writable.write(blob);await writable.close();
-        await window.BudgetSharedDb?.saveDatabase(handle.name||filename,bytes);
-        state.fileHandle=handle;setDbName(handle.name||filename);setDirty(false);updateStats();toast('Database saved and verified · Analytics synced');return;
+        try{await window.BudgetSharedDb?.saveDatabase(handle.name||filename,bytes);}catch(cacheError){console.warn('Analytics local cache could not be updated:',cacheError);}
+        state.fileHandle=handle;setDbName(handle.name||filename);setDirty(false);updateStats();toast('Database saved and verified');return;
       } catch(error) {
         if(error.name==='AbortError')return;
         console.warn('Save picker unavailable; falling back to download',error);
       }
     }
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-    await window.BudgetSharedDb?.saveDatabase(filename,bytes);
-    setDbName(filename);setDirty(false);updateStats();toast('Database downloaded and verified · Analytics synced in this browser.');
+    try{await window.BudgetSharedDb?.saveDatabase(filename,bytes);}catch(cacheError){console.warn('Analytics local cache could not be updated:',cacheError);}
+    setDbName(filename);setDirty(false);updateStats();toast('Database downloaded and verified.');
   } catch(error) {
     showError(`Save failed: ${error.message}`);
   } finally {
