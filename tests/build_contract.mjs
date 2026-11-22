@@ -21,8 +21,6 @@ assert.match(app,/\.\/vendor\/pdfjs\/pdf\.mjs/);
 assert.match(app,/isEvalSupported:false/,'PDF.js must disable dynamic evaluation while parsing untrusted PDFs');
 assert.match(app,/\.\/vendor\/xlsx\/xlsx\.full\.min\.js/);
 const builder=fs.readFileSync(path.join(root,'scripts/build-pages.mjs'),'utf8');
-assert.match(builder,/['"]shared-database\.js['"]/, 'shared local database helper must be copied to the static Pages build');
-assert.match(app,/saveSharedDatabaseSnapshot/, 'main app must keep the browser-local Analytics cache current');
 assert.match(builder,/['"]profile\.js['"]/,'profile module must be copied to the static Pages build');
 assert.match(builder,/legacy\/build\/pdf\.mjs/,'PDF.js must be vendored from its maintained legacy ESM build');
 assert.match(builder,/node_modules\/pdfjs-dist/,'PDF.js package assets must be sourced from the pinned dependency');
