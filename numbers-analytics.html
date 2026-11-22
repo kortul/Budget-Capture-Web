@@ -1089,11 +1089,6 @@ async function loadDatabaseBytes(bytes,name){
   const check=opened.exec("PRAGMA quick_check")[0]?.values?.[0]?.[0];
   if(String(check)!=='ok')throw new Error('Проверка целостности SQLite не пройдена.');
   const tables=new Set(opened.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values.map(r=>String(r[0]))||[]);
-  if(!tables.has('numbers_history'))throw new Error('В этой базе пока нет истории Numbers. Сначала импортируй Excel на странице «Импорт Numbers».');
-  const columns=opened.exec('PRAGMA table_info(numbers_history)')[0]?.values.map(r=>String(r[1]))||[];
-  const hasRole=columns.includes('role');
-  const result=opened.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");
-  if(!result.length||!result[0].values.length)throw new Error('Таблица истории Numbers пуста. Импортируй Excel в выбранную базу.');
   const roleMap=new Map(),categoryKinds=new Map();
   const profileRow=tables.has('web_metadata')?opened.exec("SELECT value FROM web_metadata WHERE key='budget_profile_v1'")[0]?.values?.[0]?.[0]:null;
   if(profileRow){try{
@@ -1106,12 +1101,12 @@ async function loadDatabaseBytes(bytes,name){
    if(a){roleMap.set(normalized(a),'special_input');categoryKinds.set(normalized(a),'special_input');}
    if(b){roleMap.set(normalized(b),'special_output');categoryKinds.set(normalized(b),'special_output');}
   }catch{}}
-  let dataRows=[];
+  let historyRows=[];
   if(tables.has('numbers_history')){
    const columns=opened.exec('PRAGMA table_info(numbers_history)')[0]?.values.map(r=>String(r[1]))||[];
    const hasRole=columns.includes('role');
    const result=opened.exec("SELECT month_key,year,month,kind,category,amount"+(hasRole?",role":"")+" FROM numbers_history WHERE source='numbers' ORDER BY month_key,kind,category");
-   dataRows=result[0]?.values.map(row=>{
+   historyRows=result[0]?.values.map(row=>{
     const category=String(row[4]),rawRole=hasRole?String(row[6]||''):'';
     const role=rawRole||roleMap.get(normalized(category))||String(row[3]);
     return {month_key:String(row[0]),year:Number(row[1]),month:Number(row[2]),kind:String(row[3]),category,amount:Number(row[5])||0,role};
@@ -1137,13 +1132,12 @@ async function loadDatabaseBytes(bytes,name){
     }))||[];
    }
   }
-  const monthlySources=resolveMonthlySources(dataRows,transactionRows,categoryKinds);
+  const monthlySources=resolveMonthlySources(historyRows,transactionRows,categoryKinds);
   data=monthlySources.rows;
   years=[...new Set(data.map(row=>row.year))].sort((a,b)=>a-b);
   if(!years.length)throw new Error('В этой базе нет подходящих данных для финансовой аналитики: отсутствуют исторические данные Numbers и пригодные RUB-транзакции.');
   db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');dbChanged=false;
-  const minKey=data[0].month_key,maxKey=data[data.length-1].month_key;
-  const latest=years[years.length-1];
+  const maxKey=data[data.length-1].month_key,latest=years[years.length-1];
   selectedMonthKey=maxKey;
   $('database-name').textContent=dbName;
   $('dashboard').classList.remove('hidden');
@@ -1151,8 +1145,12 @@ async function loadDatabaseBytes(bytes,name){
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
   setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+' · источники: '+monthlySources.historyMonths+' мес. Numbers / '+monthlySources.ledgerMonths+' мес. транзакции · пропущено валютных операций не в RUB: '+monthlySources.excludedCurrencyTransactions+' · операций на проверку: '+monthlySources.excludedReviewTransactions+'.','ok');
   return true;
- }catch(error){try{opened?.close();}catch{}data=[];years=[];rangeFrom='';rangeTo='';selectedMonthKey='';$('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');return false;}
- finally{loading=false;}
+ }catch(error){
+  try{opened?.close();}catch{}
+  data=[];years=[];rangeFrom='';rangeTo='';selectedMonthKey='';
+  $('dashboard').classList.add('hidden');showError(error.message);setStatus('Не удалось открыть финансовую историю.','error');
+  return false;
+ }finally{loading=false;}
 }
 function downloadDatabase(){
  if(!db){setStatus('Сначала выбери базу данных.','error');return;}
