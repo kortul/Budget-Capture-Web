@@ -27,7 +27,7 @@ const $=id=>document.getElementById(id);let dataset=[],dbCategories=[],excludedT
 const monthMap={'январь':1,'февраль':2,'март':3,'апрель':4,'май':5,'июнь':6,'июль':7,'август':8,'сентябрь':9,'октябрь':10,'ноябрь':11,'декабрь':12};
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,character=>{switch(character){case '&':return '&amp;';case '<':return '&lt;';case '>':return '&gt;';case '"':return '&quot;';default:return '&#39;';}});}
 function money(n){return Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';}
-function categoryKey(value){return String(value??'').trim().toLocaleLowerCase('ru-RU').replace(/\\s+/g,' ');}
+function categoryKey(value){return String(value??'').trim().toLocaleLowerCase('ru-RU').replace(/\s+/g,' ');}
 function applyCategoryRoles(){dataset=dataset.map(row=>({...row,role:categoryRoles.get(categoryKey(row.category))||row.kind}));}
 function roleTitle(role){return ({income:'Income',expense:'Expense',special_input:'Special input',special_output:'Special output'})[role]||role;}
 function monthName(name){const m=name.match(/^(.+?)\s+(\d{4})\s+-\s+(Income|Расходы)$/i);if(!m)return null;const month=monthMap[m[1].toLowerCase()];return month?{year:Number(m[2]),month,kind:m[3].toLowerCase()==='income'?'income':'expense',key:m[2]+'-'+String(month).padStart(2,'0')}:null;}
@@ -60,7 +60,7 @@ function render(){
  const filter=()=>{const type=$('type').value,year=$('year').value,search=$('search').value.toLowerCase();const list=[...cats.values()].filter(c=>(type==='all'||c.kind===type)&&(year==='all'||[...c.months].some(k=>k.startsWith(year)))&&c.category.toLowerCase().includes(search)).sort((a,b)=>b.total-a.total);$('category-body').innerHTML=list.map(c=>'<tr><td>'+escapeHtml(c.category)+'</td><td>'+roleTitle(c.kind)+'</td><td>'+c.months.size+'</td><td class="num">'+money(c.total)+'</td></tr>').join('');};
  filter();$('type').onchange=filter;$('year').onchange=filter;$('search').oninput=filter;
  if(dbCategories.length){
-  const norm=x=>String(x||'').trim().toLocaleLowerCase('ru-RU').replace(/\\s+/g,' ');
+  const norm=x=>String(x||'').trim().toLocaleLowerCase('ru-RU').replace(/\s+/g,' ');
   const mapped=new Map(dbCategories.map(c=>[norm(c),c]));
   const matchRows=[...cats.values()].sort((a,b)=>a.category.localeCompare(b.category,'ru')).map(c=>{const match=mapped.get(norm(c.category))||'';return '<tr><td>'+escapeHtml(c.category)+'</td><td>'+roleTitle(c.kind)+'</td><td>'+(match?escapeHtml(match):'<span class="negative">New category</span>')+'</td><td>'+c.months.size+'</td><td class="num">'+money(c.total)+'</td></tr>';});
   $('matching-body').innerHTML=matchRows.join('');$('matching').classList.remove('hidden');
