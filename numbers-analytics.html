@@ -819,7 +819,7 @@ function resolveMonthlySources(historyRows,transactionRows,categoryKinds){
  const ledger=buildTransactionMonthlyRows(transactionRows,resolvedKinds),ledgerMonthSet=new Set(ledger.months);
  const historicalRows=(historyRows||[]).filter(row=>!ledgerMonthSet.has(row.month_key));
  const rows=[...historicalRows,...ledger.rows].sort((a,b)=>a.month_key.localeCompare(b.month_key)||String(a.role).localeCompare(String(b.role))||String(a.category).localeCompare(String(b.category),'ru'));
- return {rows,historyMonths:new Set(historicalRows.map(row=>row.month_key)).size,ledgerMonths:ledger.months.length,excludedCurrencyTransactions:ledger.excludedCurrencyTransactions};
+ return {rows,historyMonths:new Set(historicalRows.map(row=>row.month_key)).size,ledgerMonths:ledger.months.length,excludedCurrencyTransactions:ledger.excludedCurrencyTransactions,excludedReviewTransactions:ledger.excludedReviewTransactions};
 }
 function renderMonthCategoryList(targetId,items,total,role){
  const target=$(targetId);if(!target)return;
