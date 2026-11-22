@@ -24,8 +24,15 @@ export function applyOwnSbpNameMarkers(rows, markers=[]) {
   return rows.map(row=>{
     if(row.transaction_type==='internal_transfer')return row;
     const description=fold(row.description||'');
-    const isSbp=/^(?:исходящий|входящий) перевод сбп(?: |$)/.test(description);
-    if(!isSbp||!names.some(name=>description.includes(name)))return row;
+    const identity=fold([row.description,row.merchant].filter(Boolean).join(' '));
+    const sbpContext=fold([row.description,row.bank_comment,row.message,row.notes].filter(Boolean).join(' '));
+    // Bank statements may split the recipient name and the "Transfer via SBP"
+    // label into separate fields. Accept the structured bank comment as proof
+    // of SBP while still requiring an exact configured own-name marker.
+    const isSbp=/^(?:исходящий|входящий) перевод сбп(?: |$)/.test(description)
+      ||sbpContext.includes('перевод по сбп')
+      ||sbpContext.includes('перевод сбп');
+    if(!isSbp||!names.some(name=>identity.includes(name)))return row;
     return {...row,transaction_type:'internal_transfer',category:(!row.category||row.category==='Не распределено')?'Внутренний перевод (не расход)':row.category};
   });
 }
@@ -451,7 +458,11 @@ export function parseTbankRows(rows, fileDigest, sourceFile='Tbank.xlsx', existi
     const raw={parser:'tbank-xlsx-transaction-history-web-v1',source_row:i+1,account_name:accountName,card_number:card,operation_amount:opAmount,operation_currency:opCurrency,account_amount:accAmount,account_currency:currency,bank_status:status,default_category:defaultBankCategory,personal_category:personalCategory,mcc:get(row,'MCC'),description,message,rounding:parseMoney(get(row,'Округление')),rounded_amount:parseMoney(get(row,'Сумма операции с округлением')),bonuses_cashback:parseMoney(get(row,'Бонусы (включая кэшбэк)')),included_in_analytics:get(row,'Учёт в аналитике')};
     const noteParts=[]; if(message)noteParts.push(`Комментарий банка: ${message}`); const accountDetail=[accountName,card?`карта ${card}`:''].filter(Boolean).join(' · '); if(accountDetail)noteParts.push(`Счёт/карта: ${accountDetail}`); if(status)noteParts.push(`Статус банка: ${status}`); const analytics=get(row,'Учёт в аналитике','Учет в аналитике'); if(analytics)noteParts.push(`Учёт в аналитике банка: ${analytics}`); if(defaultBankCategory)noteParts.push(`Категория банка: ${defaultBankCategory}`); if(personalCategory)noteParts.push(`Ваша категория в банке: ${personalCategory}`);
     const merchant=existingLabels.get(key)||description; const category=existingRules.get(key)||defaultCategory(description,type);
-    result.push({tx_date:date,description,merchant,merchant_key:key,transaction_type:type,source_ref:`tbank-xlsx:${sourceDigest}:r${i+1}`,amount,currency,category,status:'Needs review',source_file:sourceFile,raw_text:JSON.stringify(raw),notes:noteParts.join(' · ')||'T-Bank Excel export. Verify the transaction.'});
+    // A remembered category explicitly labelled as a non-expense transfer
+    // must also set the transaction type, so it is excluded consistently
+    // from Analytics and the main app's Numbers totals.
+    const classifiedType=fold(category).includes('внутренний перевод')?'internal_transfer':type;
+    result.push({tx_date:date,description,merchant,merchant_key:key,transaction_type:classifiedType,source_ref:`tbank-xlsx:${sourceDigest}:r${i+1}`,amount,currency,category,status:'Needs review',source_file:sourceFile,raw_text:JSON.stringify(raw),notes:noteParts.join(' · ')||'T-Bank Excel export. Verify the transaction.'});
   }
   if(!result.length)throw new Error('No T-Bank transaction rows were found.');
   return {rows:result,cards:[...cards.entries()].map(([identifier,label])=>({identifier,label})),audit:{parser:'T-Bank Excel transaction-history parser',transaction_count:result.length,incoming_total:result.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0),outgoing_total:result.filter(r=>r.amount<0).reduce((s,r)=>s-r.amount,0),statement_totals_available:false,currency:result[0].currency}};
