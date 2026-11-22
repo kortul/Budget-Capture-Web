@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseSberLinePages, parseTbankRows, parseRaiffeisenCSV, decodeStatementBytes, defaultCategory,
-  monthNowPrevious, categoryKind, isInternalTransfer, amountCents, numbersValue, numbersCategoryTotals, categoryLedgerContribution, categoryReclassificationDeltas, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
+  monthNowPrevious, categoryKind, isInternalTransfer, applyOwnSbpNameMarkers, amountCents, numbersValue, numbersCategoryTotals, categoryLedgerContribution, categoryReclassificationDeltas, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
 } from '../core.js';
 
 const sberLines=[{x:20,top:10,text:'25 октября,'}];
@@ -48,6 +48,12 @@ const tbank=[
 const tb=parseTbankRows(tbank,'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789','Tbank.xlsx');
 assert.equal(tb.rows.length,1);assert.equal(tb.rows[0].amount,14046.9);assert.equal(tb.rows[0].merchant,'Sample Payee');
 assert.equal(tb.rows[0].source_ref,'tbank-xlsx:abcdef0123456789abcdef01:r2','T-Bank source refs must match the Windows 24-character digest convention.');
+const rememberedTransfer=parseTbankRows([
+  tbank[0],
+  ['Black','31.10.2026','-1500,00','RUB','-1500,00','RUB','Ок','Example recipient','','Да','*9001','Переводы','','','','','']
+],'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789','Tbank.xlsx',new Map(),new Map([['tbank-xlsx:example recipient','Внутренний перевод (не расход)']]));
+assert.equal(rememberedTransfer.rows[0].category,'Внутренний перевод (не расход)');
+assert.equal(rememberedTransfer.rows[0].transaction_type,'internal_transfer','A remembered non-expense transfer category must also mark the imported transaction as internal transfer.');
 
 const raif='Дата операции;Номер документа;Детали операции (назначение платежа);Сумма в валюте счета (поступления);Сумма в валюте счета (расходы);Валюта счета\n31.10.2026;123;Salary;1000;;RUB';
 const rf=await parseRaiffeisenCSV(raif,'fixture','raif.csv');
@@ -67,6 +73,13 @@ assert.equal(monthNowPrevious(new Date('2026-11-18T12:00:00Z')),'2026-10');
 assert.equal(categoryKind('Sample expense',{categories:[{name:'Sample expense',kind:'expense'}]}),'expense');
 assert.equal(categoryKind('Возвраты',{categories:[{name:'Возвраты',kind:'income'}]}),'income');
 assert.equal(isInternalTransfer('Между своими счетами'),true);
+const markedOwnSbp=applyOwnSbpNameMarkers([
+  {description:'Example Account Holder',merchant:'Example Account Holder',bank_comment:'Перевод по СБП',transaction_type:'income',category:'Не распределено'},
+  {description:'Example Account Holder',merchant:'Example Account Holder',bank_comment:'Покупка по карте',transaction_type:'income',category:'Не распределено'}
+],['Example Account Holder']);
+assert.equal(markedOwnSbp[0].transaction_type,'internal_transfer','Configured own-name markers must recognize Sber SBP rows whose recipient and SBP label are separate fields.');
+assert.equal(markedOwnSbp[0].category,'Внутренний перевод (не расход)');
+assert.equal(markedOwnSbp[1].transaction_type,'income','A matching name without an SBP transfer indicator must not be excluded as an internal transfer.');
 assert.equal(defaultCategory('Перевод со счёта', 'internal_transfer'),'Внутренний перевод (не расход)','An internal-transfer transaction type must never default to an expense category.');
 assert.equal(defaultCategory('Перевод со счёта', 'transfer'),'Внутренний перевод (не расход)');
 assert.equal(defaultCategory('ATM cash deposit', 'income'),'Внесение наличных','ATM deposit suggestions use a generic category label, not a user-specific one.');
