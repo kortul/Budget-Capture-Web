@@ -192,7 +192,7 @@ function filteredTransactions(){if(!state.db)return[];const month=$('filter-mont
 function transactionRow(r,numbersAdjustment=false){
  const kind=categoryDropdownGroup(state.profile?.categories?.find(item=>item.name===r.category)||{name:r.category,kind:'other'});
  const opts=categoryOptionGroups(r.category),internal=isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text);
- const signed=Number(r.amount)||0,ledgerKind=categoryKind(r.category,state.profile),eligible=!internal&&['income','expense'].includes(ledgerKind);
+ const signed=Number(r.amount)||0,ledgerKind=numbersHistoryCategoryKind(r.category),eligible=!internal&&['income','expense'].includes(ledgerKind);
  const title=numbersAdjustment?'Учтено в Financial Analytics':'Добавить транзакцию как корректировку истории Numbers';
  return `<tr data-id="${esc(r.id)}"><td><input class="row-check" type="checkbox" data-action="select" ${state.selected.has(r.id)?'checked':''}></td><td>${esc(r.tx_date)}</td><td><span class="bank-pill">${esc(r.account)}</span>${internal?'<small class="internal-tag">Own transfer</small>':''}</td><td><input class="merchant-input" data-action="merchant" value="${esc(r.merchant||r.description)}" aria-label="Merchant"><small class="description-text">${esc(r.description)}${r.notes?` · ${esc(r.notes)}`:''}</small></td><td class="amount-cell ${signed>0?'positive':signed<0?'negative':''}">${esc(displayMoney(amountCents(r.amount),r.currency))}</td><td><select class="category-select ${kind}" data-action="category">${opts}</select><label class="remember-line"><input type="checkbox" data-action="remember" checked> Remember category</label></td><td><input type="checkbox" data-action="done" ${r.status==='Confirmed'?'checked':''} aria-label="Completed"></td><td class="transaction-action-cell">${eligible?`<button class="numbers-adjust-button ${numbersAdjustment?'active':''}" data-action="numbers-adjustment" title="${title}" aria-label="${title}">Σ</button>`:''}<button class="heart-button ${r.highlighted_flag?'active':''}" data-action="heart" title="Add to custom Numbers list">${r.highlighted_flag?'♥':'♡'}</button></td><td><button class="delete-button" data-action="delete" title="Delete transaction">×</button></td></tr>`;
 }
@@ -208,16 +208,24 @@ function renderTransactions(){
  $('visible-count').textContent=`${rows.length} rows`;$('selected-count').textContent=`${state.selected.size} selected`;
  $('bulk-delete').disabled=!state.selected.size;$('select-all-visible').checked=rows.length>0&&rows.every(row=>state.selected.has(row.id));
 }
+function numbersHistoryCategoryKind(category){
+ const configured=categoryKind(category,state.profile);
+ if(['income','expense','special_input','special_output'].includes(configured))return configured;
+ if(!state.db)return configured;
+ const historical=one(state.db,"SELECT COALESCE(NULLIF(role,''),kind) AS category_kind FROM numbers_history WHERE source='numbers' AND lower(trim(category))=lower(trim(?)) ORDER BY month_key DESC LIMIT 1",[String(category||'')]);
+ const historyKind=String(historical?.category_kind||'');
+ return ['income','expense','special_input','special_output'].includes(historyKind)?historyKind:configured;
+}
 function saveNumbersCategoryAdjustment(row,nextCategory){
  const existing=one(state.db,'SELECT * FROM numbers_category_adjustments WHERE transaction_id=?',[row.id]);
- const baseCategory=existing?.base_category??row.category,baseKind=existing?.base_kind??categoryKind(row.category,state.profile);
+ const baseCategory=existing?.base_category??row.category,baseKind=existing?.base_kind??numbersHistoryCategoryKind(row.category);
  const nextKind=categoryKind(nextCategory,state.profile);
  if(baseCategory===nextCategory&&baseKind===nextKind){state.db.run('DELETE FROM numbers_category_adjustments WHERE transaction_id=?',[row.id]);return;}
  state.db.run('INSERT OR REPLACE INTO numbers_category_adjustments(transaction_id,base_category,base_kind,created_at) VALUES(?,?,?,?)',
   [row.id,baseCategory,baseKind,existing?.created_at||nowIso()]);
 }
 function markNumbersCategoryAsNewCorrection(row){
- const kind=categoryKind(row.category,state.profile);if(!['income','expense'].includes(kind))return;
+ const kind=numbersHistoryCategoryKind(row.category);if(!['income','expense'].includes(kind))return;
  state.db.run('INSERT OR REPLACE INTO numbers_category_adjustments(transaction_id,base_category,base_kind,created_at) VALUES(?,?,?,?)',
   [row.id,'Не распределено','other',nowIso()]);
  setDirty(true);renderTransactions();updateStats();toast('Операция будет учтена как корректировка Financial Analytics. Сохрани базу.');
