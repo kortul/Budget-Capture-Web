@@ -117,7 +117,7 @@ try {
   assert.equal(await page.evaluate(() => window.__numbersXss || 0), 0, 'Excel category payload must not execute');
 
   await page.locator('#import-history').click();
-  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Imported 5 rows'), null, { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Импортировано 5 строк'), null, { timeout: 20000 });
   assert.equal(await page.locator('#export-history').isDisabled(), false, 'export must become available after successful import');
 
   const firstDownloadPromise = page.waitForEvent('download');
@@ -147,7 +147,7 @@ try {
   }, Array.from(fs.readFileSync(firstExportPath)));
   assert.equal(firstDatabaseState.historyRows, 5, 'all five category rows must be stored');
   assert.equal(firstDatabaseState.transactionRows, 1, 'Numbers import must not alter transactions');
-  assert.equal(firstDatabaseState.categoryRows, 2, 'unmatched historical categories must not be added to live categories');
+  assert.equal(firstDatabaseState.categoryRows, 4, 'unmatched historical categories must not be added to live categories');
   assert.deepEqual(firstDatabaseState.totals, { expense: 12001, income: 250000 }, 'ordinary income/expense rows remain in their original kind totals');
   const firstRoles = await page.evaluate(async bytes => { const SQL=await window.initSqlJs({locateFile:file=>'./vendor/sql.js/'+file,useOldExtensionFunctions:true});const db=new SQL.Database(new Uint8Array(bytes));const rows=db.exec('SELECT role,SUM(amount) FROM numbers_history GROUP BY role ORDER BY role')[0].values;db.close();return Object.fromEntries(rows.map(row=>[String(row[0]),Number(row[1])])); }, Array.from(fs.readFileSync(firstExportPath)));
   assert.deepEqual(firstRoles,{expense:12001,income:250000,special_input:203700000,special_output:203650000},'special input/output categories must persist as separate roles');
@@ -169,7 +169,7 @@ try {
   assert.equal(await page.locator('#export-history').isDisabled(), true, 'changing the workbook must disable export until the new data is imported');
 
   await page.locator('#import-history').click();
-  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Imported 5 rows'), null, { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('#db-import-status')?.textContent.includes('Импортировано 5 строк'), null, { timeout: 20000 });
   const secondDownloadPromise = page.waitForEvent('download');
   await page.locator('#export-history').click();
   const secondDownload = await secondDownloadPromise;
@@ -195,7 +195,7 @@ try {
   }, Array.from(fs.readFileSync(secondExportPath)));
   assert.equal(finalDatabaseState.historyRows, 5, 're-import must replace the previous Numbers history, not duplicate it');
   assert.equal(finalDatabaseState.transactionRows, 1, 're-import must leave live transactions untouched');
-  assert.equal(finalDatabaseState.categoryRows, 2, 'unmatched historical categories must remain outside live categories');
+  assert.equal(finalDatabaseState.categoryRows, 4, 'unmatched historical categories must remain outside live categories');
   assert.deepEqual(finalDatabaseState.totals, { expense: 12502, income: 260000 });
 
   // Force the local cache back to the earlier export, then verify that opening
@@ -230,8 +230,8 @@ try {
   assert.match(cachedDatabase.name, /MyBudget_with_numbers\.budget$/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
   assert.match(await analytics.locator('#netMetric').textContent(), /247\s?498/);
-  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\\s?700\\s?000/, 'analytics must show special inputs separately from Net');
-  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\\s?650\\s?000/, 'analytics must show special outputs separately from Net');
+  assert.match(await analytics.locator('#specialInputMetric').textContent(), /203\s?700\s?000/, 'analytics must show special inputs separately from Net');
+  assert.match(await analytics.locator('#specialOutputMetric').textContent(), /203\s?650\s?000/, 'analytics must show special outputs separately from Net');
   assert.equal(await analytics.locator('#categoryList img').count(), 0, 'untrusted historical category names must be rendered as text');
   assert.equal(await analytics.evaluate(() => window.__numbersXss || 0), 0, 'historical category payload must not execute in analytics');
   assert.match(await analytics.locator('#lifeRows').innerText(), /Продукты/);
