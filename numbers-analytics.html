@@ -101,7 +101,7 @@
     </div>
     <span class="a-pill" id="database-name">База не загружена</span>
   </div>
-  <div class="a-status" id="status">Выбери файл .budget. В нём должны находиться история Numbers и ручные сводки.</div>
+  <div class="a-status" id="status">Открой финансовую аналитику из Budget Capture после загрузки базы — файл передастся автоматически. Либо выбери .budget здесь.</div>
   <div class="a-status error hidden" id="error"></div>
 </section>
 
@@ -575,7 +575,7 @@ async function loadDatabaseBytes(bytes,name){
   db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');dbChanged=false;
   $('year').innerHTML='<option value="all">Весь период</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').reverse().join('');
   $('year').value=latestYear();
-  $('database-name').textContent=dbName;
+  $('database-name').textContent=dbName;const fileLabel=$('manual-file')?.parentElement;if(fileLabel?.firstChild?.nodeType===3)fileLabel.firstChild.textContent='Открыть другую базу (.budget)';
   $('dashboard').classList.remove('hidden');
   loadSettings();loadManualReferenceFromDatabase(db);renderAll();$('download-db').disabled=true;
   setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+'.','ok');
