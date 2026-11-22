@@ -207,7 +207,11 @@ try {
   analytics.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   const analyticsResponse = await analytics.goto(origin + basePath + 'numbers-analytics.html', { waitUntil: 'networkidle', timeout: 30000 });
   assert.equal(analyticsResponse.status(), 200, 'Financial Analytics page must be served from the Pages subpath');
-  await analytics.locator('#manual-file').setInputFiles(secondExportPath);
+  await analytics.locator('#manual-file').setInputFiles({
+    name: secondDownload.suggestedFilename(),
+    mimeType: 'application/octet-stream',
+    buffer: fs.readFileSync(secondExportPath),
+  });
   await analytics.waitForFunction(() => !document.querySelector('#dashboard').classList.contains('hidden'), null, { timeout: 20000 });
   assert.match(await analytics.locator('#incomeMetric').textContent(), /260\s?000/);
   assert.match(await analytics.locator('#expenseMetric').textContent(), /12\s?502/);
@@ -484,7 +488,11 @@ try {
   });
   mainApp.on('requestfailed', request => failedRequests.push(`${request.url()} · ${request.failure()?.errorText || 'failed'}`));
   await mainApp.goto(origin + basePath + 'index.html', { waitUntil: 'networkidle', timeout: 30000 });
-  await mainApp.locator('#open-file').setInputFiles(analyticsExportPath);
+  await mainApp.locator('#open-file').setInputFiles({
+    name: analyticsDownload.suggestedFilename(),
+    mimeType: 'application/octet-stream',
+    buffer: fs.readFileSync(analyticsExportPath),
+  });
   await mainApp.waitForFunction(() => document.querySelector('#db-name')?.textContent !== 'No database open', null, { timeout: 20000 });
   const popupPromise = context.waitForEvent('page');
   await mainApp.locator('#open-analytics').click();
