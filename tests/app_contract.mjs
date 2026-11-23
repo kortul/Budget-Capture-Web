@@ -129,8 +129,8 @@ assert(app.includes('categoryOptionGroups(r.category)'),'transaction editor must
 assert(app.includes('function profileLines(kind){return (state.profile?.categories||[]).filter(item=>item.kind===kind)'),'profile editor keeps stored category order; alphabetical sorting is limited to dropdowns');
 console.log(`App contract checks: PASS · ${ids.length} unique DOM IDs · ${used.size} selectors · required handlers present`);
 
-assert.match(css,/@media\\(max-width:700px\\)[\\s\\S]*?position:fixed;z-index:40;left:0;right:0;bottom:0/,'mobile navigation must be fixed at the bottom for thumb access');
-assert.match(css,/env\\(safe-area-inset-bottom\\)/,'mobile layout must respect device safe areas');
+assert.match(css,/@media\(max-width:700px\)[\s\S]*?position:fixed;z-index:40;left:0;right:0;bottom:0/,'mobile navigation must be fixed at the bottom for thumb access');
+assert.match(css,/env\(safe-area-inset-bottom\)/,'mobile layout must respect device safe areas');
 for(const label of ['Обзор','Импорт','Проверка','Итоги','Счета','Данные'])assert.ok(css.includes('content:"'+label+'"'),'mobile navigation label '+label+' must be present');
-assert.match(css,/@media\\(max-width:380px\\)/,'very narrow phones must have a dedicated layout adjustment');
+assert.match(css,/@media\(max-width:380px\)/,'very narrow phones must have a dedicated layout adjustment');
 assert.match(css,/overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch/,'transaction tables must scroll smoothly on touch devices');
