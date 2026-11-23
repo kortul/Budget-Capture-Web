@@ -175,6 +175,15 @@ try {
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
+  const searchInput=page.locator('#filter-search');
+  await searchInput.fill('E2E MARKET');
+  await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
+  assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/,'Review search must retain matching rows');
+  await searchInput.fill('NO SUCH MERCHANT');
+  await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='0');
+  assert.match(await page.locator('#transactions-body').innerText(),/No transactions match/,'Review search must hide non-matching rows');
+  await searchInput.fill('');
+  await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
 
   // Category dropdowns mirror the desktop workflow: grouped by category type,
   // with Russian/Latin names naturally alphabetized inside each group.

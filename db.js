@@ -137,9 +137,9 @@ export function initializeDatabase(db) {
   db.run("UPDATE transactions SET status='Needs review' WHERE status='Ignored'");
 
   // Reapply the exact known own-transfer markers used in the Windows application.
-  const oldTransferRows=all(db,"SELECT id,description,merchant,notes,raw_text FROM transactions WHERE transaction_type<>'internal_transfer' OR transaction_type IS NULL");
+  const oldTransferRows=all(db,"SELECT id,category,description,merchant,notes,raw_text FROM transactions WHERE transaction_type<>'internal_transfer' OR transaction_type IS NULL");
   const markTransfer=db.prepare("UPDATE transactions SET transaction_type='internal_transfer' WHERE id=?");
-  for(const row of oldTransferRows) if(isInternalTransfer(row.description,row.merchant,row.notes,row.raw_text)) markTransfer.run([row.id]);
+  for(const row of oldTransferRows) if(isInternalTransfer(row.category,row.description,row.merchant,row.notes,row.raw_text)) markTransfer.run([row.id]);
   markTransfer.free();
 
   const now=new Date().toISOString();

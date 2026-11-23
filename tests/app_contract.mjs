@@ -23,6 +23,8 @@ assert.ok(core.includes('export function sortTransactions('),'transaction sort h
 for(const key of ['date','bank','merchant','amount','category','done','heart']) assert.ok(html.includes('data-sort-key="'+key+'"'),`Review table must expose sorting for ${key}`);
 assert.ok(app.includes('sortTransactions(rows,state.transactionSort)'),'visible transactions must use the selected table sort');
 assert.ok(!app.includes('filter-sort')&&!html.includes('id="filter-sort"'),'obsolete standalone sort selector must be removed');
+assert.match(app,/if\(search&&!\[r\.description,r\.merchant,r\.account,r\.notes,r\.raw_text\][\s\S]*?\.includes\(search\)\)return false;/,'Review search must keep matches and discard non-matches');
+assert.equal((app.match(/isInternalTransfer\(r\.transaction_type,r\.category,r\.description/g)||[]).length,4,'Review, row badge, Numbers and integrity count must share internal-category classification');
 assert.ok(analytics.includes('Баланс без магазина и KGR'),'non-shop balance label must disclose KGR exclusion');
 assert.ok(analytics.includes('Поступления вне магазина:'),'non-shop balance must explain income and expense bases');
 assert.ok(analytics.includes('const MONTH_DETAIL_MANUAL_RULES={'),'the no-shop ledger must use the agreed, explicit category list');

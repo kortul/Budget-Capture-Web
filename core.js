@@ -5,7 +5,7 @@ export function categoryKind(category, profile) {
   return item?.kind || 'other';
 }
 export const INTERNAL_MARKERS = [
-  'себе в другой банк','между своими счетами','между своими','себе из другого банка',
+  'внутренний перевод (не расход)','себе в другой банк','между своими счетами','между своими','себе из другого банка',
   'перевод между счетами одного клиента','перевод средств из кубышки','пополнение кубышки','internal transfer'
 ];
 const MONTHS = {января:1,февраля:2,марта:3,апреля:4,мая:5,июня:6,июля:7,августа:8,сентября:9,октября:10,ноября:11,декабря:12};
@@ -167,22 +167,30 @@ export function parseMoney(value) {
   else if(text.includes(',')) text=text.replace(',','.');
   const n=Number(text); return Number.isFinite(n)?Math.round(n*100)/100:null;
 }
+function calendarDate(year,month,day,source) {
+  const date=new Date(Date.UTC(year,month-1,day));
+  if(date.getUTCFullYear()!==year||date.getUTCMonth()+1!==month||date.getUTCDate()!==day) throw new Error(`Cannot read transaction date: ${source||'(invalid date)'}`);
+  return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
 export function parseDate(value) {
-  if(value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0,10);
-  // Excel's 1900 date system stores dates as day serials (with fractional time).
-  // T-Bank exports can reach this parser either as Date objects (SheetJS cellDates)
-  // or as numeric serials when the workbook has no useful date display style.
+  if(value instanceof Date && !Number.isNaN(value.getTime())) {
+    // Excel cells are calendar dates, not timestamps. SheetJS creates local
+    // Date objects; UTC conversion can silently move them to the prior day.
+    return calendarDate(value.getFullYear(),value.getMonth()+1,value.getDate(),value.toString());
+  }
   const numeric = typeof value === 'number' ? value : /^\d{5}(?:[.,]\d+)?$/.test(String(value ?? '').trim())
     ? Number(String(value).replace(',', '.')) : NaN;
   if(Number.isFinite(numeric) && numeric >= 20000 && numeric <= 80000) {
-    const wholeDays = Math.floor(numeric);
-    const dt = new Date(Date.UTC(1899, 11, 30) + wholeDays * 86400000);
-    if(!Number.isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
+    const wholeDays = Math.floor(numeric),dt=new Date(Date.UTC(1899,11,30)+wholeDays*86400000);
+    if(!Number.isNaN(dt.getTime()))return calendarDate(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate(),String(value));
   }
   const raw=String(value??'').trim();
-  let m=raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-  m=raw.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return m[0];
-  const dt=new Date(raw); if(!Number.isNaN(dt.getTime()))return dt.toISOString().slice(0,10);
+  let m=raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if(m)return calendarDate(Number(m[3]),Number(m[2]),Number(m[1]),raw);
+  m=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m)return calendarDate(Number(m[1]),Number(m[2]),Number(m[3]),raw);
+  const dt=new Date(raw);
+  if(!Number.isNaN(dt.getTime()))return dt.toISOString().slice(0,10);
   throw new Error(`Cannot read transaction date: ${raw||'(blank)'}`);
 }
 export function categoryRuleKey(bankFormat, description) { return `${bankFormat}:`+normText(description); }
@@ -464,7 +472,9 @@ export function parseTbankRows(rows, fileDigest, sourceFile='Tbank.xlsx', existi
     const date=parseDate(get(row,'Дата операции'));
     const opAmount=parseMoney(get(row,'Сумма операции')); const accAmount=parseMoney(get(row,'Сумма в валюте счёта'));
     const amount=accAmount!==null?accAmount:opAmount; if(amount===null)throw new Error(`T-Bank row ${i+1} has no readable amount.`);
-    const opCurrency=String(get(row,'Валюта операции')).trim().toUpperCase(); const currency=String(get(row,'Валюта счёта')||opCurrency||'RUB').trim().toUpperCase();
+    const opCurrency=String(get(row,'Валюта операции')).trim().toUpperCase(); const accountCurrency=String(get(row,'Валюта счёта')).trim().toUpperCase();
+    // Keep the currency paired with the source amount column.
+    const currency=String((accAmount!==null?accountCurrency||opCurrency:opCurrency||accountCurrency)||'RUB').trim().toUpperCase();
     const description=String(get(row,'Описание')||get(row,'Сообщение')||get(row,'Категория по-умолчанию')||'Операция Т-Банка').trim();
     const message=String(get(row,'Сообщение')).trim(); const defaultBankCategory=String(get(row,'Категория по-умолчанию')).trim();
     const personalCategory=String(get(row,'Ваша категория')).trim(); const status=String(get(row,'Статус')).trim();

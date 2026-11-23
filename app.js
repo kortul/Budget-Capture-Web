@@ -190,15 +190,15 @@ async function importFiles(){
 }
 function filteredTransactions(){
  if(!state.db)return[];
- const month=$('filter-month').value,bank=$('filter-bank').value,status=$('filter-status').value,category=$('filter-category').value,search=$('filter-search').value.trim().toLowerCase(),showInternal=$('show-internal').checked;
+ const month=$('filter-month').value,bank=$('filter-bank').value,status=$('filter-status').value,category=$('filter-category').value,search=$('filter-search').value.trim().toLocaleLowerCase('ru-RU').replaceAll('ё','е'),showInternal=$('show-internal').checked;
  let rows=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL');
  rows=rows.filter(r=>{
   if(month&&monthOf(r.tx_date)!==month)return false;
   if(bank&&r.account!==bank)return false;
   if(status&&r.status!==status)return false;
   if(category&&r.category!==category)return false;
-  if(!showInternal&&isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text))return false;
-  if(search&&[r.description,r.merchant,r.account,r.notes,r.raw_text].join(' ').toLowerCase().includes(search))return false;
+  if(!showInternal&&isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text))return false;
+  if(search&&![r.description,r.merchant,r.account,r.notes,r.raw_text].join(' ').toLocaleLowerCase('ru-RU').replaceAll('ё','е').includes(search))return false;
   return true;
  });
  return sortTransactions(rows,state.transactionSort);
@@ -222,7 +222,7 @@ function renderTransactionSortHeaders(){
 }
 function transactionRow(r){
  const kind=categoryDropdownGroup(state.profile?.categories?.find(item=>item.name===r.category)||{name:r.category,kind:'other'});
- const opts=categoryOptionGroups(r.category),internal=isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text);
+ const opts=categoryOptionGroups(r.category),internal=isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text);
  const signed=Number(r.amount)||0;
  return '<tr data-id="'+esc(r.id)+'"'+(r.status==='Confirmed'?' class="is-confirmed"':'')+'><td><input class="row-check" type="checkbox" data-action="select" '+(state.selected.has(r.id)?'checked':'')+'></td><td>'+esc(r.tx_date)+'</td><td><span class="bank-pill">'+esc(r.account)+'</span>'+(internal?'<small class="internal-tag">Own transfer</small>':'')+'</td><td><input class="merchant-input" data-action="merchant" value="'+esc(r.merchant||r.description)+'" aria-label="Merchant"><small class="description-text">'+esc(r.description)+(r.notes?' · '+esc(r.notes):'')+'</small></td><td class="amount-cell '+(signed>0?'positive':signed<0?'negative':'')+'">'+esc(displayMoney(amountCents(r.amount),r.currency))+'</td><td><select class="category-select '+kind+'" data-action="category">'+opts+'</select><label class="remember-line"><input type="checkbox" data-action="remember" checked> Remember category</label></td><td><input type="checkbox" data-action="done" '+(r.status==='Confirmed'?'checked':'')+' aria-label="Completed"></td><td class="transaction-action-cell"><button class="heart-button '+(r.highlighted_flag?'active':'')+'" data-action="heart" title="Add to custom Numbers list">'+(r.highlighted_flag?'♥':'♡')+'</button></td><td><button class="delete-button" data-action="delete" title="Delete transaction">×</button></td></tr>';
 }
@@ -265,7 +265,7 @@ function ruCount(value,forms){
   const form=lastTwo>=11&&lastTwo<=14?forms[2]:last===1?forms[0]:last>=2&&last<=4?forms[1]:forms[2];
   return `${count.toLocaleString('ru-RU')} ${form}`;
 }
-function numberRows(month,bank,currency,includeInternal){let rows=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL');rows=rows.filter(r=>(!month||monthOf(r.tx_date)===month)&&(!bank||bank==='TOTAL'||r.account===bank)&&(!currency||r.currency===currency)&&(includeInternal||!isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text)));return rows;}
+function numberRows(month,bank,currency,includeInternal){let rows=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL');rows=rows.filter(r=>(!month||monthOf(r.tx_date)===month)&&(!bank||bank==='TOTAL'||r.account===bank)&&(!currency||r.currency===currency)&&(includeInternal||!isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text)));return rows;}
 function renderNumbers(){
   if(!state.db){
     $('expenses-list').innerHTML='';
@@ -314,7 +314,7 @@ function renderNumbers(){
   const specialZeroCount=[...specialInRaw,...specialOutRaw].filter(r=>amountCents(r.amount)===0).length;
   const specialIn=specialInRaw.filter(r=>amountCents(r.amount)!==null&&amountCents(r.amount)!==0);
   const specialOut=specialOutRaw.filter(r=>amountCents(r.amount)!==null&&amountCents(r.amount)!==0);
-  const includedInternalCount=rows.filter(r=>isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text)).length;
+  const includedInternalCount=rows.filter(r=>isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text)).length;
   document.querySelector('[data-profile-role="special-input"]').hidden=!specialInCategory;
   document.querySelector('[data-profile-role="special-output"]').hidden=!specialOutCategory;
   const sumAbs=items=>items.reduce((sum,row)=>sum+Math.abs(amountCents(row.amount)||0),0);

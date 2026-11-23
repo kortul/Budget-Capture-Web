@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { createDatabase, openDatabase, databaseNeedsSave, all, scalar, exportLegacyJson, importLegacyJson, addRecognizedAccount, upsertRecognizedAccount, insertTransaction, readBudgetProfile, saveBudgetProfile, exportBudgetProfile, importBudgetProfile } from '../db.js';
+import { createDatabase, openDatabase, initializeDatabase, databaseNeedsSave, all, scalar, exportLegacyJson, importLegacyJson, addRecognizedAccount, upsertRecognizedAccount, insertTransaction, readBudgetProfile, saveBudgetProfile, exportBudgetProfile, importBudgetProfile } from '../db.js';
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'budget-web-db-test-'));
 const sourcePath = path.join(tempRoot, 'windows-v163.sqlite3');
@@ -84,6 +84,11 @@ try {
   assert(Number(scalar(fresh, "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('transactions','categories','recognized_accounts','import_batches','merchant_rules','merchant_labels','category_rules','transaction_delete_actions','web_metadata')")) === 9, 'a new database must create every required table');
   assert(Number(scalar(fresh,'SELECT COUNT(*) FROM categories')) >= 10, 'default categories seeded in a new database');
   fresh.close();
+  const categoryTransferDb=createDatabase(SQL);
+  insertTransaction(categoryTransferDb,{id:'category-transfer',account:'TBANK',tx_date:'2026-10-10',description:'Unclear transfer description',transaction_type:'expense',amount:-100,currency:'RUB',category:'Внутренний перевод (не расход)',status:'Needs review',created_at:'2026-11-01T00:00:00Z'});
+  initializeDatabase(categoryTransferDb);
+  assert.equal(all(categoryTransferDb,"SELECT transaction_type FROM transactions WHERE id='category-transfer'")[0].transaction_type,'internal_transfer','explicit internal-transfer category must be canonicalized during DB migration');
+  categoryTransferDb.close();
 
   makeWindowsV163Fixture(sourcePath);
   const originalBytes = fs.readFileSync(sourcePath);

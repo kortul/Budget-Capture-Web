@@ -48,6 +48,12 @@ const tbank=[
 const tb=parseTbankRows(tbank,'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789','Tbank.xlsx');
 assert.equal(tb.rows.length,1);assert.equal(tb.rows[0].amount,14046.9);assert.equal(tb.rows[0].merchant,'Sample Payee');
 assert.equal(tb.rows[0].source_ref,'tbank-xlsx:abcdef0123456789abcdef01:r2','T-Bank source refs must match the Windows 24-character digest convention.');
+const tbankOperationCurrency=parseTbankRows([tbank[0],['Black','31.10.2026','100,00','USD','','RUB','Ок','Foreign amount only','','Да','*9001']],'abcdef0123456789abcdef0123456789abcdef0123456789','Tbank-currency.xlsx');
+assert.equal(tbankOperationCurrency.rows[0].amount,100);
+assert.equal(tbankOperationCurrency.rows[0].currency,'USD','missing account-currency amount must retain operation currency');
+const tbankAccountCurrency=parseTbankRows([tbank[0],['Black','31.10.2026','100,00','USD','91,25','RUB','Ок','Account amount','','Да','*9001']],'abcdef0123456789abcdef0123456789abcdef0123456789','Tbank-currency.xlsx');
+assert.equal(tbankAccountCurrency.rows[0].amount,91.25);
+assert.equal(tbankAccountCurrency.rows[0].currency,'RUB','account amount must retain account currency');
 const rememberedTransfer=parseTbankRows([
   tbank[0],
   ['Black','31.10.2026','-1500,00','RUB','-1500,00','RUB','Ок','Example recipient','','Да','*9001','Переводы','','','','','']
@@ -73,6 +79,7 @@ assert.equal(monthNowPrevious(new Date('2026-11-18T12:00:00Z')),'2026-10');
 assert.equal(categoryKind('Sample expense',{categories:[{name:'Sample expense',kind:'expense'}]}),'expense');
 assert.equal(categoryKind('Возвраты',{categories:[{name:'Возвраты',kind:'income'}]}),'income');
 assert.equal(isInternalTransfer('Между своими счетами'),true);
+assert.equal(isInternalTransfer('Внутренний перевод (не расход)'),true,'explicit non-expense category must classify a transaction as internal');
 const markedOwnSbp=applyOwnSbpNameMarkers([
   {description:'Example Account Holder',merchant:'Example Account Holder',bank_comment:'Перевод по СБП',transaction_type:'income',category:'Не распределено'},
   {description:'Example Account Holder',merchant:'Example Account Holder',bank_comment:'Покупка по карте',transaction_type:'income',category:'Не распределено'}
@@ -157,6 +164,14 @@ assert.equal(foreignOnly.ambiguous,true,'multiple non-ruble currencies must not 
 assert.deepEqual(foreignOnly.rows,[],'ambiguous Auto mode must produce no mixed-currency totals');
 assert.equal(resolveCurrencyRows([{currency:'USD'}]).currency,'USD','Auto may use a single available non-ruble currency');
 assert.equal(parseDate('46326.52072916667'),'2026-10-31','Excel date serial strings must be handled by browser T-Bank import.');
+assert.throws(()=>parseDate('31.02.2026'),/Cannot read transaction date/,'invalid calendar dates must not normalize silently');
+const previousTimezone=process.env.TZ;
+try {
+ process.env.TZ='Pacific/Kiritimati';
+ const excelDate=new Date(2026,9,31,0,0,0);
+ assert.equal(excelDate.toISOString().slice(0,10),'2026-10-30','fixture reproduces a positive-offset UTC rollover');
+ assert.equal(parseDate(excelDate),'2026-10-31','Excel calendar date must not shift in positive UTC offsets');
+} finally { if(previousTimezone===undefined)delete process.env.TZ;else process.env.TZ=previousTimezone; }
 const cp1251=await decodeStatementBytes(new Uint8Array([0xC4,0xE0,0xF2,0xE0]));
 assert.equal(cp1251,'Дата','Raiffeisen CSV decoder must fall back to Windows-1251.');
 console.log('Browser core smoke tests: PASS');
