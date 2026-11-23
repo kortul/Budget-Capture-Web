@@ -324,7 +324,7 @@ function renderNumbers(){
   const unallocatedExpenseCents=unallocatedRows.reduce((sum,row)=>{const cents=amountCents(row.amount);return cents!==null&&cents<0?sum+Math.abs(cents):sum;},0);
   const analyticsExpenseCents=summary.expense.cents+unallocatedExpenseCents;
   $('numbers-integrity').className='integrity-banner '+(unassigned?'review':'pass');
-  $('numbers-integrity').textContent=`${rows.length} transactions · ${expCount} expense-category rows · ${incCount} income-category rows · ${specialIn.length+specialOut.length} non-zero special-flow rows (${specialIn.length} in / ${specialOut.length} out) · ${specialZeroCount} zero-value special rows excluded · ${includedInternalCount} own transfers included · ${unassigned} unallocated / unknown category rows`;
+  $('numbers-integrity').textContent=`${rows.length} transactions · ${expCount} expense-category rows · ${incCount} income-category rows · ${specialIn.length+specialOut.length} non-zero special-flow rows (${specialIn.length} in / ${specialOut.length} out) · zero-value special rows excluded: ${specialZeroCount} · own transfers included: ${includedInternalCount} · ${unassigned} unallocated / unknown category rows`;
   $('unallocated-panel').classList.toggle('hidden',!unassigned);
   $('unallocated-count').textContent=`${unassigned} transactions`;
   $('unallocated-expense-total').textContent=displayMoney(unallocatedExpenseCents,currency||'');
