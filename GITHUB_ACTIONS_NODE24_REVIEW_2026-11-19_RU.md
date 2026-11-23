@@ -39,3 +39,10 @@
 - The workflow contract test checks expected refs, Node 24 configuration, and the no-auto-deploy gate.
 - Both YAML files parse successfully with PyYAML.
 - This is source/workflow validation only. The workflows have not yet been run in the user's GitHub repository.
+
+
+## Quality workflow — 23 ноября 2026
+
+- `.github/workflows/quality.yml` переведён на проверенные immutable refs `actions/checkout@v7.0.1` (`3d3c42e5aac5ba805825da76410c181273ba90b1`) и `actions/setup-node@v7.1.0` (`949feb2413d6458794dcd2491c4babbbce0c15c1`).
+- Checkout настроен с `persist-credentials: false`: workflow только читает исходники и не нуждается в сохранённом GitHub token для последующих команд.
+- Проектный Node.js runtime оставлен на 22; Node 24 используется для самих GitHub Actions.
