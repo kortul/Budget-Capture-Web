@@ -267,11 +267,17 @@ try {
     const addHistory=analyticsFixture.prepare('INSERT INTO numbers_history(month_key,year,month,kind,category,amount,role,source) VALUES(?,?,?,?,?,?,?,?)');
     for(const row of [
       ['2026-09',2026,9,'income','Работа',1000,'income','numbers'],
-      ['2026-09',2026,9,'expense','Еда',600,'expense','numbers'],
+      ['2026-05',2026,5,'expense','Еда',0,'expense','numbers'],
+      ['2026-06',2026,6,'expense','Еда',0,'expense','numbers'],
+      ['2026-07',2026,7,'expense','Еда',0,'expense','numbers'],
+      ['2026-08',2026,8,'expense','Еда',0,'expense','numbers'],
+      ['2026-09',2026,9,'expense','Еда',3000,'expense','numbers'],
+      ['2026-09',2026,9,'expense','Ремонт',5000,'expense','numbers'],
       ['2026-10',2026,10,'income','Работа',2000,'income','numbers'],
-      ['2026-10',2026,10,'expense','Еда',1500,'expense','numbers'],
+      ['2026-10',2026,10,'expense','Еда',4000,'expense','numbers'],
       ['2026-11',2026,11,'income','Работа',500,'income','numbers'],
-      ['2026-11',2026,11,'expense','Еда',700,'expense','numbers'],
+      ['2026-11',2026,11,'expense','Еда',8000,'expense','numbers'],
+      ['2026-11',2026,11,'expense','Ремонт',20000,'expense','numbers'],
     ]) addHistory.run(...row);
   } finally { analyticsFixture.close(); }
 
@@ -285,7 +291,11 @@ try {
   assert.equal(await analyticsPage.locator('#report-tab-month').getAttribute('aria-selected'),'true','Month tab must be selected by default');
   assert.equal(await analyticsPage.locator('#month-view').isVisible(),true,'Month analysis must be the first visible workspace');
   assert.equal(await analyticsPage.locator('#period-view').isVisible(),false,'Period analysis must be a separate inactive tab');
-  assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'-200 ₽','default month must show that month only');
+  assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'-27 500 ₽','default month must show that month only');
+  assert.equal(await analyticsPage.locator('#month-insights .a-month-insight').count(),4,'Month view must show two headline insights plus category growth and anomaly analysis');
+  assert.match(await analyticsPage.locator('#month-insights').nth(2).textContent(),/Еда[\\s\\S]*Ремонт|Ремонт[\\s\\S]*Еда/,'three-month comparison must flag categories with a clear increase');
+  assert.match(await analyticsPage.locator('#month-insights').nth(3).textContent(),/Ремонт/,'six-month anomaly analysis must flag an unusually high category spend');
+  assert.match(await analyticsPage.locator('#month-insights').nth(3).textContent(),/медиан/i,'anomaly insight must disclose its six-month median baseline');
   const monthOptions=await analyticsPage.locator('#month-detail-select option').evaluateAll(options=>options.map(option=>option.value));
   assert.deepEqual(monthOptions,['2026-09','2026-10','2026-11'],'Month picker must list all months in the database');
 
@@ -304,6 +314,16 @@ try {
   assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'500 ₽','October must open even though the Period tab is filtered to November');
   assert.equal(await analyticsPage.locator('#range-from').inputValue(),'2026-11','Month selection must not change Period start');
   assert.equal(await analyticsPage.locator('#range-to').inputValue(),'2026-11','Month selection must not change Period end');
+  await analyticsPage.locator('#report-tab-year').click();
+  assert.equal(await analyticsPage.locator('#year-view').isVisible(),true,'Year tab must show its own annual workspace');
+  assert.equal(await analyticsPage.locator('#period-view').isVisible(),false,'Year tab must not reuse Period workspace');
+  assert.equal(await analyticsPage.locator('#year-detail-select').inputValue(),'2026','Year selector must default to latest available year');
+  assert.equal(await analyticsPage.locator('#year-income-value').textContent(),'3 500 ₽','Year report must aggregate all ordinary income for selected year');
+  assert.equal(await analyticsPage.locator('#year-expense-value').textContent(),'40 000 ₽','Year report must aggregate all ordinary expenses for selected year');
+  assert.equal(await analyticsPage.locator('#year-net-value').textContent(),'-36 500 ₽','Year report must calculate annual net cash flow');
+  assert.equal(await analyticsPage.locator('#year-month-chart svg').count(),1,'Year report must render monthly cashflow');
+  assert.equal(await analyticsPage.locator('#year-expense-list .a-month-category-row').count(),2,'Year report must list expense categories');
+  assert.equal(await analyticsPage.locator('#year-comparison').count(),1,'Long-term year comparison must be available inside Year tab');
   await analyticsPage.close();
   fs.rmSync(analyticsFixtureDir,{recursive:true,force:true});
 

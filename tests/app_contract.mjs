@@ -25,7 +25,15 @@ assert.ok(app.includes('sortTransactions(rows,state.transactionSort)'),'visible 
 assert.ok(!app.includes('filter-sort')&&!html.includes('id="filter-sort"'),'obsolete standalone sort selector must be removed');
 assert.match(app,/if\(search&&!\[r\.description,r\.merchant,r\.account,r\.notes,r\.raw_text\][\s\S]*?\.includes\(search\)\)return false;/,'Review search must keep matches and discard non-matches');
 assert.equal((app.match(/isInternalTransfer\(r\.transaction_type,r\.category,r\.description/g)||[]).length,4,'Review, row badge, Numbers and integrity count must share internal-category classification');
-assert.ok(analytics.includes('id="report-tab-month"')&&analytics.includes('id="report-tab-period"'),'Analytics must expose dedicated Month and Period tabs');
+assert.ok(analytics.includes('id="report-tab-month"')&&analytics.includes('id="report-tab-period"')&&analytics.includes('id="report-tab-year"'),'Analytics must expose Month, Period and Year tabs');
+assert.ok(analytics.includes('id="year-view" class="a-report-panel hidden"'),'Year must have a dedicated initially hidden workspace');
+assert.ok(analytics.includes('function renderYearDetail()'),'Year tab must render a dedicated annual report');
+assert.ok(analytics.includes('function monthExpenseSignals(month)'),'Monthly analytics must compare category growth and unusual expenses');
+assert.ok(analytics.includes('previous3[0]>=minimumMonth')&&analytics.includes('previous6[0]>=minimumMonth'),'Expense alerts must require complete 3- and 6-month baselines');
+assert.ok(analytics.includes('delta>=Math.max(3000,average*.30)'),'Category growth threshold must include percentage and absolute increase');
+assert.ok(analytics.includes('value>=Math.max(10000,median*1.8)&&delta>=5000'),'Expense anomaly threshold must be transparent and conservative');
+assert.ok(!analytics.includes('ТРИ КРУПНЕЙШИЕ СТАТЬИ'),'The low-value top-three concentration insight must be removed');
+
 assert.ok(analytics.includes('id="month-view" class="a-report-panel"')&&analytics.includes('id="period-view" class="a-report-panel hidden"'),'Month must be the default visible analytics workspace');
 assert.ok(analytics.indexOf('id="month-view"')<analytics.indexOf('id="period-view"'),'Month workspace must appear before Period workspace');
 assert.ok(analytics.includes('function setReportTab(tab)'),'Analytics tabs must have a working view switcher');

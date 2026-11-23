@@ -235,6 +235,13 @@ try {
   assert.equal(await analytics.locator('#range-from').inputValue(), '2026-01', 'analytics must default to the latest available year start');
   assert.ok(await analytics.locator('#month-detail-title').textContent(), 'monthly detail must be rendered after loading');
   assert.equal(await analytics.locator('#month-detail-select option').count(), 1, 'month selector must list available months in the reporting range');
+  assert.equal(await analytics.locator('#report-tab-year').getAttribute('aria-selected'),'false', 'Year tab must be separate from default Month view');
+  await analytics.locator('#report-tab-year').click();
+  assert.equal(await analytics.locator('#year-view').isVisible(),true,'Year tab must render annual workspace');
+  assert.equal(await analytics.locator('#year-detail-select').inputValue(),'2026','Year tab must select latest available year');
+  assert.equal(await analytics.locator('#year-income-value').textContent(),'260 000 ₽','Annual tab must use Numbers income for selected year');
+  assert.equal(await analytics.locator('#year-month-chart svg').count(),1,'Annual tab must render a monthly chart');
+  await analytics.locator('#report-tab-period').click();
   assert.equal(await analytics.locator('#month-income-list .a-month-category-row').count(), 1, 'income list must show active imported income categories');
   assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'expense list must preserve both nonzero imported expense categories');
   assert.equal(await analytics.locator('#month-expense-list img').count(), 0, 'untrusted historical category text must not create HTML elements');
@@ -243,7 +250,7 @@ try {
   assert.match(await analytics.locator('#month-income-list').innerText(), /Зарплата/, 'income list must show actual imported categories');
   assert.match(await analytics.locator('#month-expense-list').innerText(), /Продукты/, 'expense list must include categories assigned to the shop in settings');
   assert.equal(await analytics.locator('#month-expense-chart svg').count(), 1, 'expense composition must render a donut chart');
-  assert.equal(await analytics.locator('#month-insights .a-month-insight').count(), 3, 'month view must include three concise data-driven insights');
+  assert.equal(await analytics.locator('#month-insights .a-month-insight').count(), 4, 'month view must show two headline cards plus growth and anomaly insights');
   assert.equal(await analytics.locator('#month-expense-list .a-month-category-row').count(), 2, 'both nonzero expense categories must render while zero-valued categories stay hidden');
   assert.equal(await analytics.locator('#cashflow-chart svg.a-chart-svg').count(), 1, 'Financial Analytics must render the interactive cashflow SVG chart');
   assert.match(await analytics.locator('#month-overall-net').textContent(), /247\s?498/, 'month headline must show income less expense including all ordinary categories');

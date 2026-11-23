@@ -374,6 +374,42 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 .a-period-range-controls{align-items:flex-end}
 @media(max-width:720px){.a-report-tabs{width:100%}.a-report-tab{flex:1;padding:11px 15px}.a-period-controls-head{align-items:flex-start}.a-period-range-controls{width:100%}.a-period-range-controls>label{flex:1}.a-period-range-controls input{width:100%;min-width:0}}
 
+
+/* Monthly trend signals and dedicated annual report */
+.a-month-insight-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.a-month-signal-list{display:grid;gap:8px;margin-top:11px}
+.a-month-signal-row{padding-top:8px;border-top:1px solid rgba(145,169,181,.1);min-width:0}
+.a-month-signal-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.a-month-signal-name{font-size:11px;font-weight:720;color:#e6edf2;overflow-wrap:anywhere}
+.a-month-signal-value{font-size:12px;font-weight:760;white-space:nowrap;color:#e7eff2;font-variant-numeric:tabular-nums}
+.a-month-signal-note{display:block;margin-top:4px;font-size:9px;line-height:1.45;color:#8294a1}
+.a-month-signal-empty{font-size:10px;color:#8294a1;line-height:1.55;padding:9px 0}
+.a-month-insight-foot{display:block;margin-top:9px;font-size:9px;line-height:1.5;color:#718593}
+.a-year-focus{padding:22px}
+.a-year-header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.a-year-header h2{font-size:25px;letter-spacing:-.04em;margin:4px 0 6px}
+.a-year-header p{font-size:11px;color:#8293a2;margin:0}
+.a-year-select{display:flex;flex-direction:column;gap:6px;color:#9eacb9;font-size:10px;font-weight:700}
+.a-year-select select{min-width:130px;min-height:42px;padding:9px 12px;border:1px solid #354352;border-radius:10px;background:#111a23;color:#e5edf3;font:inherit;font-size:13px;color-scheme:dark}
+.a-year-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.a-year-metrics .a-metric{min-height:112px;padding:15px;background:#111a23;border:1px solid rgba(148,169,188,.1);border-radius:14px}
+.a-year-metrics .a-metric small{font-size:10px;color:#8ea0af}
+.a-year-metrics .a-metric strong{font-size:clamp(20px,2vw,27px)}
+.a-year-special{margin:0 0 15px}
+.a-year-insights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 15px}
+.a-year-insight{padding:13px 15px;border:1px solid rgba(148,169,188,.1);border-radius:13px;background:rgba(255,255,255,.025);min-width:0}
+.a-year-insight small{display:block;font-size:9px;color:#8698a8;margin-bottom:7px}
+.a-year-insight strong{display:block;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.a-year-insight p{font-size:9px;color:#748594;line-height:1.45;margin:5px 0 0}
+.a-year-lists{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:12px;margin-top:14px}
+.a-year-category-panel{padding:16px;border:1px solid rgba(145,169,181,.12);border-radius:15px;background:linear-gradient(155deg,rgba(16,27,36,.9),rgba(19,30,39,.94));min-width:0}
+.a-year-category-panel h3{font-size:15px;margin:0 0 4px}
+.a-year-category-panel p{font-size:9px;color:#8293a2;margin:0 0 12px}
+.a-year-category-panel .a-month-category-list{max-height:540px;overflow:auto}
+.a-year-comparison{margin-top:14px}
+@media(max-width:1000px){.a-year-lists{grid-template-columns:1fr}.a-year-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.a-month-insight-grid{grid-template-columns:1fr}.a-year-insights{grid-template-columns:1fr}.a-year-focus{padding:15px!important}.a-year-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.a-year-metrics .a-metric{padding:12px}.a-year-metrics .a-metric strong{font-size:19px}}
+
 </style>
 </head>
 <body>
@@ -401,6 +437,7 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 <nav class="a-report-tabs" role="tablist" aria-label="Режим финансовой аналитики">
   <button class="a-report-tab active" id="report-tab-month" type="button" role="tab" aria-selected="true" aria-controls="month-view" tabindex="0">Месяц</button>
   <button class="a-report-tab" id="report-tab-period" type="button" role="tab" aria-selected="false" aria-controls="period-view" tabindex="-1">Период</button>
+  <button class="a-report-tab" id="report-tab-year" type="button" role="tab" aria-selected="false" aria-controls="year-view" tabindex="-1">Год</button>
 </nav>
 <section id="month-view" class="a-report-panel" role="tabpanel" aria-labelledby="report-tab-month">
 <section class="a-card a-month-focus" id="month-detail">
@@ -446,7 +483,7 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
   </div>
 </section>
 <nav class="a-anchor" aria-label="Разделы анализа периода">
-  <a href="#annual">Сводка периода</a><a href="#monthly-balance">Баланс по месяцам</a><a href="#life">Жизнь</a><a href="#sasha">Саша</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#year-comparison">Годы</a><a href="#report-settings">Настройки</a>
+  <a href="#annual">Сводка периода</a><a href="#monthly-balance">Баланс по месяцам</a><a href="#life">Жизнь</a><a href="#sasha">Саша</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#report-settings">Настройки</a>
 </nav>
 <section class="a-overview-head"><div><span class="a-overview-kicker">АНАЛИЗ ВЫБРАННОГО ПЕРИОДА</span><h2>Итоги и динамика</h2><p id="overview-period-caption">Выбранный период</p></div><div class="a-overview-meta"><span><i class="a-live-dot"></i>Аналитика по истории Numbers</span><span id="overview-range">—</span></div></section>
 <section class="a-grid" id="annual">
@@ -525,13 +562,6 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 <div class="a-section-head a-inner-section-head"><div><h2>По годам</h2></div></div><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Получено</th><th class="num">Погашено</th><th class="num">Разница</th></tr></thead><tbody id="loanYearRows"></tbody></table></div>
 <div class="a-section-head a-inner-section-head"><div><h2>По месяцам</h2></div></div><div class="a-table-wrap"><table class="a-table"><thead><tr><th>Месяц</th><th class="num">Получено</th><th class="num">Погашено</th><th class="num">Разница</th></tr></thead><tbody id="loanMonthlyRows"></tbody></table></div></div></details>
 
-<details class="a-card a-foldout" id="year-comparison"><summary class="a-foldout-summary">
-<span class="a-foldout-heading"><span class="a-foldout-index">06 · ДОЛГОСРОЧНАЯ КАРТИНА</span><span class="a-foldout-title">Итоги по годам</span><span class="a-foldout-description">Сравнение годового дохода, расходов и финансового результата</span></span>
-<span class="a-foldout-glance"><span class="a-foldout-stats"><span class="a-foldout-stat"><small>Лет в истории</small><strong id="year-preview-count">—</strong></span><span class="a-foldout-stat"><small>Последний год</small><strong id="year-preview-label">—</strong></span><span class="a-foldout-stat"><small>Баланс последнего года</small><strong id="year-preview-net">—</strong></span></span><span class="a-foldout-spark" id="year-preview-chart" aria-hidden="true"></span></span>
-<span class="a-foldout-toggle"><span>Подробнее</span><i>⌄</i></span></summary>
-<div class="a-foldout-body"><div class="a-viz-panel"><div class="a-viz-head"><div><h3>Как менялась финансовая картина</h3><p>Год к году: поступления против расходов</p></div><span class="a-viz-badge">ИСТОРИЯ</span></div><div id="year-comparison-chart" class="a-full-chart"></div></div>
-<div class="a-section-head a-inner-section-head"><div><h2>Сводка по годам</h2><p>Специальные вводы и выводы остаются отдельными от обычных доходов и расходов</p></div></div>
-<div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th><th class="num">Доля сбережений</th><th class="num">Спец. вводы</th><th class="num">Спец. выводы</th></tr></thead><tbody id="yearRows"></tbody></table></div></div></details>
 
 <section class="a-card" id="report-settings">
   <div class="a-section-head"><div><h2>Настройка состава отчётов</h2><p>Выбери, какие категории относятся к жизни, расходам Саши, работе, магазину и кредитам</p></div></div>
@@ -542,6 +572,43 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
     <div class="a-settings-actions"><button id="save-settings" class="button primary" type="button">Сохранить настройки в базу</button><span class="a-settings-foot">Правила распределения и доля Саши записываются внутрь выбранного .budget. Затем скачай обновлённую базу и используй её на остальных компьютерах.</span></div>
   </details>
 </section>
+</section>
+
+<section id="year-view" class="a-report-panel hidden" role="tabpanel" aria-labelledby="report-tab-year">
+  <section class="a-card a-year-focus">
+    <div class="a-year-header">
+      <div><span class="a-overview-kicker">ГОДОВОЙ ФИНАНСОВЫЙ ОТЧЁТ</span><h2 id="year-detail-title">—</h2><p id="year-detail-subtitle">Итоги выбранного года по истории Numbers</p></div>
+      <label class="a-year-select">ГОД<select id="year-detail-select" aria-label="Выбрать год"></select></label>
+    </div>
+    <section class="a-grid a-year-metrics">
+      <div class="a-metric"><small>Поступления</small><strong id="year-income-value">—</strong><div class="sub">Обычные поступления за год</div></div>
+      <div class="a-metric"><small>Расходы</small><strong id="year-expense-value">—</strong><div class="sub">Обычные расходы за год</div></div>
+      <div class="a-metric"><small>Баланс</small><strong id="year-net-value">—</strong><div class="sub">Поступления минус расходы</div></div>
+      <div class="a-metric"><small>Доля сбережений</small><strong id="year-saving-rate">—</strong><div class="sub">Баланс / поступления</div></div>
+    </section>
+    <div class="a-summary-grid a-year-special">
+      <div class="a-summary"><small>Специальные вводы</small><strong id="year-special-input">—</strong></div>
+      <div class="a-summary"><small>Специальные выводы</small><strong id="year-special-output">—</strong></div>
+      <div class="a-summary"><small>Разница спецпотоков</small><strong id="year-special-net">—</strong></div>
+    </div>
+    <div class="a-year-insights" id="year-detail-insights" aria-live="polite"></div>
+    <section class="a-card a-chart-card" style="margin:0">
+      <div class="a-section-head"><div><h2>Движение денег по месяцам</h2><p id="year-chart-caption">Поступления и расходы выбранного года</p></div><span class="a-pill">По месяцам</span></div>
+      <div id="year-month-chart" class="a-full-chart"></div>
+    </section>
+    <div class="a-year-lists">
+      <section class="a-year-category-panel"><h3>Куда ушли деньги</h3><p id="year-expense-caption">Расходы по категориям за год</p><div id="year-expense-list" class="a-month-category-list expense-list"></div></section>
+      <section class="a-year-category-panel"><h3>Откуда пришли деньги</h3><p id="year-income-caption">Поступления по категориям за год</p><div id="year-income-list" class="a-month-category-list income-list"></div></section>
+    </div>
+  </section>
+  <div class="a-year-comparison"><details class="a-card a-foldout" id="year-comparison"><summary class="a-foldout-summary">
+<span class="a-foldout-heading"><span class="a-foldout-index">06 · ДОЛГОСРОЧНАЯ КАРТИНА</span><span class="a-foldout-title">Итоги по годам</span><span class="a-foldout-description">Сравнение годового дохода, расходов и финансового результата</span></span>
+<span class="a-foldout-glance"><span class="a-foldout-stats"><span class="a-foldout-stat"><small>Лет в истории</small><strong id="year-preview-count">—</strong></span><span class="a-foldout-stat"><small>Последний год</small><strong id="year-preview-label">—</strong></span><span class="a-foldout-stat"><small>Баланс последнего года</small><strong id="year-preview-net">—</strong></span></span><span class="a-foldout-spark" id="year-preview-chart" aria-hidden="true"></span></span>
+<span class="a-foldout-toggle"><span>Подробнее</span><i>⌄</i></span></summary>
+<div class="a-foldout-body"><div class="a-viz-panel"><div class="a-viz-head"><div><h3>Как менялась финансовая картина</h3><p>Год к году: поступления против расходов</p></div><span class="a-viz-badge">ИСТОРИЯ</span></div><div id="year-comparison-chart" class="a-full-chart"></div></div>
+<div class="a-section-head a-inner-section-head"><div><h2>Сводка по годам</h2><p>Специальные вводы и выводы остаются отдельными от обычных доходов и расходов</p></div></div>
+<div class="a-table-wrap"><table class="a-table"><thead><tr><th>Год</th><th class="num">Доходы</th><th class="num">Расходы</th><th class="num">Баланс</th><th class="num">Доля сбережений</th><th class="num">Спец. вводы</th><th class="num">Спец. выводы</th></tr></thead><tbody id="yearRows"></tbody></table></div></div></details>
+</div>
 </section>
 </div>
 </div>
@@ -570,7 +637,7 @@ function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.cla
 function showError(message){$('error').textContent=message;$('error').classList.remove('hidden');}
 function hideError(){$('error').classList.add('hidden');}
 function sum(rows,fn){return rows.reduce((total,row)=>total+fn(row),0);}
-let rangeFrom='',rangeTo='',selectedMonthKey='';
+let rangeFrom='',rangeTo='',selectedMonthKey='',reportYear=0;
 function shiftMonthKey(key,delta){
  const [year,month]=String(key).split('-').map(Number);
  const date=new Date(Date.UTC(year,month-1+delta,1));
@@ -597,8 +664,8 @@ function setRange(from,to,render=true){
  if(render)renderAll();
 }
 function setReportTab(tab){
- const selected=tab==='period'?'period':'month';
- for(const [name,buttonId,panelId] of [['month','report-tab-month','month-view'],['period','report-tab-period','period-view']]){
+ const selected=['period','year'].includes(tab)?tab:'month';
+ for(const [name,buttonId,panelId] of [['month','report-tab-month','month-view'],['period','report-tab-period','period-view'],['year','report-tab-year','year-view']]){
   const active=name===selected,button=$(buttonId),panel=$(panelId);
   button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.setAttribute('tabindex',active?'0':'-1');
   panel.classList.toggle('hidden',!active);
@@ -895,15 +962,81 @@ function renderMonthExpenseComposition(items,total){
   return '<div class="a-month-legend-row" title="'+escapeHtml(item.category)+' · '+money(value)+'"><i class="a-month-legend-dot" style="background:'+colors[index%colors.length]+'"></i><span class="a-month-legend-name">'+escapeHtml(item.category)+'</span><strong class="a-month-legend-share">'+share.toFixed(1).replace('.',',')+'%</strong></div>';
  }).join('');
 }
+
+function monthExpenseCategoryMap(monthKey){
+ const result=new Map();
+ for(const row of data){
+  if(row.month_key!==monthKey||row.role!=='expense')continue;
+  const key=normalized(row.category),item=result.get(key)||{category:row.category,total:0};
+  item.total+=Number(row.amount)||0;result.set(key,item);
+ }
+ return result;
+}
+function numericMedian(values){
+ const sorted=values.map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+ if(!sorted.length)return 0;
+ const middle=Math.floor(sorted.length/2);
+ return sorted.length%2?sorted[middle]:(sorted[middle-1]+sorted[middle])/2;
+}
+function monthExpenseSignals(month){
+ const minimumMonth=data.reduce((min,row)=>!min||row.month_key<min?row.month_key:min,'');
+ const previous3=Array.from({length:3},(_,i)=>shiftMonthKey(month,i-3));
+ const previous6=Array.from({length:6},(_,i)=>shiftMonthKey(month,i-6));
+ const current=monthExpenseCategoryMap(month);
+ const history3Ready=!!minimumMonth&&previous3[0]>=minimumMonth;
+ const history6Ready=!!minimumMonth&&previous6[0]>=minimumMonth;
+ const growth=[],anomalies=[];
+ if(history3Ready){
+  const historyMaps=previous3.map(key=>monthExpenseCategoryMap(key));
+  for(const [key,item] of current){
+   const value=item.total;if(value<=0)continue;
+   const values=historyMaps.map(map=>map.get(key)?.total||0);
+   const average=values.reduce((a,b)=>a+b,0)/3,delta=value-average;
+   const qualifies=average<=0?value>=7000:delta>=Math.max(3000,average*.30);
+   if(qualifies)growth.push({...item,average,delta,percent:average>0?delta/average*100:null,isNew:average<=0});
+  }
+ }
+ if(history6Ready){
+  const historyMaps=previous6.map(key=>monthExpenseCategoryMap(key));
+  for(const [key,item] of current){
+   const value=item.total;if(value<=0)continue;
+   const values=historyMaps.map(map=>map.get(key)?.total||0);
+   const median=numericMedian(values),delta=value-median;
+   if(value>=Math.max(10000,median*1.8)&&delta>=5000){
+    anomalies.push({...item,median,delta,ratio:median>0?value/median:null,isNew:median===0&&values.every(v=>v<=0)});
+   }
+  }
+ }
+ growth.sort((a,b)=>b.delta-a.delta);anomalies.sort((a,b)=>b.delta-a.delta);
+ return {growth:growth.slice(0,3),anomalies:anomalies.slice(0,3),history3Ready,history6Ready};
+}
+function renderSignalRows(items,kind,ready){
+ if(!ready)return '<div class="a-month-signal-empty">Недостаточно истории: для сравнения нужны предыдущие '+(kind==='growth'?'3':'6')+' календарных месяцев.</div>';
+ if(!items.length)return '<div class="a-month-signal-empty">Подходящих категорий нет. По заданным порогам заметных отклонений не обнаружено.</div>';
+ return '<div class="a-month-signal-list">'+items.map(item=>{
+  let note='';
+  if(kind==='growth'){
+   note=item.isNew?'Нет расходов в предыдущие 3 месяца · новая трата':
+    'Среднее за 3 мес.: '+money(item.average)+' · рост на '+money(item.delta)+(item.percent===null?'':' ('+item.percent.toFixed(0).replace('.',',')+'%)');
+  }else{
+   note=item.isNew?'В предыдущие 6 месяцев расходов не было · новая крупная трата':
+    'Медиана за 6 мес.: '+money(item.median)+' · выше обычного на '+money(item.delta)+(item.ratio===null?'':' ('+item.ratio.toFixed(1).replace('.',',')+'×)');
+  }
+  return '<div class="a-month-signal-row"><div class="a-month-signal-top"><span class="a-month-signal-name">'+escapeHtml(item.category)+'</span><strong class="a-month-signal-value">'+escapeHtml(money(item.total))+'</strong></div><span class="a-month-signal-note">'+escapeHtml(note)+'</span></div>';
+ }).join('')+'</div>';
+}
 function renderMonthInsights(incomes,expenses,totals){
- const topExpense=expenses[0],topIncome=incomes[0],topThree=expenses.slice(0,3).reduce((acc,item)=>acc+Math.abs(Number(item.total)||0),0);
+ const topExpense=expenses[0],topIncome=incomes[0];
+ const signals=monthExpenseSignals(selectedMonthKey);
  const expenseBase=Math.max(0,Number(totals.expense)||0),incomeBase=Math.max(0,Number(totals.income)||0);
  const cards=[
   {label:'КРУПНЕЙШАЯ СТАТЬЯ РАСХОДОВ',value:topExpense?.category||'Нет расходов',note:topExpense?money(topExpense.total)+' · '+(expenseBase?Math.abs(topExpense.total)/expenseBase*100:0).toFixed(1).replace('.',',')+'% всех расходов':'За этот месяц расходов нет'},
-  {label:'ОСНОВНОЙ ИСТОЧНИК ДОХОДА',value:topIncome?.category||'Нет поступлений',note:topIncome?money(topIncome.total)+' · '+(incomeBase?Math.abs(topIncome.total)/incomeBase*100:0).toFixed(1).replace('.',',')+'% всех поступлений':'За этот месяц поступлений нет'},
-  {label:'ТРИ КРУПНЕЙШИЕ СТАТЬИ',value:expenseBase?(topThree/expenseBase*100).toFixed(1).replace('.',',')+'% расходов':'—',note:expenseBase?money(topThree)+' из '+money(expenseBase):'Нет данных для сравнения'}
+  {label:'ОСНОВНОЙ ИСТОЧНИК ПОСТУПЛЕНИЙ',value:topIncome?.category||'Нет поступлений',note:topIncome?money(topIncome.total)+' · '+(incomeBase?Math.abs(topIncome.total)/incomeBase*100:0).toFixed(1).replace('.',',')+'% всех поступлений':'За этот месяц поступлений нет'}
  ];
- $('month-insights').innerHTML=cards.map(card=>'<article class="a-month-insight"><span class="a-month-insight-label">'+card.label+'</span><strong class="a-month-insight-value" title="'+escapeHtml(card.value)+'">'+escapeHtml(card.value)+'</strong><span class="a-month-insight-note">'+escapeHtml(card.note)+'</span></article>').join('');
+ const headlineHtml=cards.map(card=>'<article class="a-month-insight"><span class="a-month-insight-label">'+card.label+'</span><strong class="a-month-insight-value" title="'+escapeHtml(card.value)+'">'+escapeHtml(card.value)+'</strong><span class="a-month-insight-note">'+escapeHtml(card.note)+'</span></article>').join('');
+ const growthHtml='<article class="a-month-insight"><span class="a-month-insight-label">ЗАМЕТНЫЙ РОСТ КАТЕГОРИЙ · К СРЕДНЕМУ ЗА 3 МЕСЯЦА</span>'+renderSignalRows(signals.growth,'growth',signals.history3Ready)+'<span class="a-month-insight-foot">Порог: рост минимум на 30% и на 3 000 ₽; новая категория — от 7 000 ₽.</span></article>';
+ const anomalyHtml='<article class="a-month-insight"><span class="a-month-insight-label">НЕОБЫЧНЫЕ ТРАТЫ · ПРЕДЫДУЩИЕ 6 МЕСЯЦЕВ</span>'+renderSignalRows(signals.anomalies,'anomaly',signals.history6Ready)+'<span class="a-month-insight-foot">Порог: минимум 1,8× медианы и +5 000 ₽; новая категория — от 10 000 ₽.</span></article>';
+ $('month-insights').innerHTML=headlineHtml+growthHtml+anomalyHtml;
 }
 function renderMonthDetail(){
  const month=selectedMonthKey;if(!month)return;
@@ -1101,6 +1234,56 @@ function renderYearRows(){
  setPreviewMetric('year-preview-count',String(annual.length));setPreviewMetric('year-preview-label',latest?String(latest.year):'—');setPreviewMetric('year-preview-net',latest?compactMoney(latestNet):'—');const yearNet=$('year-preview-net');if(yearNet)yearNet.className=latestNet>=0?'a-positive':'a-negative';
  renderMiniSparkline('year-preview-chart',annual.map(row=>row.income-row.expense),latestNet>=0?'#72d8ae':'#e7ae73');
 }
+
+function yearMonthsFor(year,endMonth,rows=data){
+ const selected=rows.filter(row=>row.year===year&&row.month<=endMonth);
+ const map=new Map(rowMonthTotals(selected).map(row=>[row.key,row]));
+ return Array.from({length:endMonth},(_,index)=>{
+  const month=index+1,key=String(year)+'-'+String(month).padStart(2,'0');
+  return map.get(key)||{key,year,month,income:0,expense:0,special_input:0,special_output:0};
+ });
+}
+function renderYearDetail(){
+ if(!years.length)return;
+ const selector=$('year-detail-select');
+ if(!years.includes(Number(reportYear)))reportYear=years[years.length-1];
+ selector.innerHTML=years.slice().sort((a,b)=>b-a).map(year=>'<option value="'+year+'">'+year+'</option>').join('');
+ selector.value=String(reportYear);
+ const year=Number(reportYear),latestYear=years[years.length-1];
+ const keys=data.filter(row=>row.year===year).map(row=>row.month_key);
+ const endMonth=year===latestYear&&keys.length?Math.max(...keys.map(key=>Number(key.slice(5,7)))):12;
+ const rows=data.filter(row=>row.year===year&&row.month<=endMonth);
+ const totals=totalsFor(rows),months=yearMonthsFor(year,endMonth,rows);
+ $('year-detail-title').textContent=String(year);
+ $('year-detail-subtitle').textContent='Январь — '+MONTHS[endMonth-1].toLocaleLowerCase('ru-RU')+' · '+ruCount(rows.length,['запись','записи','записей'])+' истории Numbers';
+ $('year-income-value').textContent=money(totals.income);
+ $('year-expense-value').textContent=money(totals.expense);
+ $('year-net-value').textContent=money(totals.net);
+ $('year-net-value').className=totals.net>=0?'a-positive':'a-negative';
+ $('year-saving-rate').textContent=(totals.income?totals.net/totals.income*100:0).toFixed(1).replace('.',',')+'%';
+ $('year-special-input').textContent=money(totals.specialInput);
+ $('year-special-output').textContent=money(totals.specialOutput);
+ $('year-special-net').textContent=money(totals.specialInput-totals.specialOutput);
+ $('year-chart-caption').textContent='Январь — '+MONTHS[endMonth-1].toLocaleLowerCase('ru-RU')+' '+year;
+ renderGroupedBars('year-month-chart',months.map(row=>({...row,label:MONTHS[row.month-1].slice(0,3)})),[{key:'income',label:'Поступления',color:'#63d4a5'},{key:'expense',label:'Расходы',color:'#ff9588'}],'В этом году пока нет движения денег');
+ const expenseItems=totalsByCategory(rows.filter(row=>row.role==='expense')).filter(item=>Math.abs(item.total)>.0001);
+ const incomeItems=totalsByCategory(rows.filter(row=>row.role==='income')).filter(item=>Math.abs(item.total)>.0001);
+ $('year-expense-caption').textContent=ruCount(expenseItems.length,['категория','категории','категорий'])+' · чистые суммы по категориям';
+ $('year-income-caption').textContent=ruCount(incomeItems.length,['категория','категории','категорий']);
+ renderMonthCategoryList('year-expense-list',expenseItems,totals.expense,'expense');
+ renderMonthCategoryList('year-income-list',incomeItems,totals.income,'income');
+ const previousRows=data.filter(row=>row.year===year-1&&row.month<=endMonth);
+ const previousAvailable=previousRows.length>0,previous=totalsFor(previousRows);
+ const expenseChange=previousAvailable?totals.expense-previous.expense:null;
+ const expensePercent=previousAvailable&&previous.expense?expenseChange/previous.expense*100:null;
+ const topExpense=expenseItems[0],peakMonth=months.slice().sort((a,b)=>b.expense-a.expense)[0];
+ const insights=[
+  {label:'РАСХОДЫ К ТОМУ ЖЕ ПЕРИОДУ ПРОШЛОГО ГОДА',value:expenseChange===null?'Нет базы сравнения':(expenseChange>0?'+':'')+money(expenseChange)+(expensePercent===null?'':' · '+(expensePercent>0?'+':'')+expensePercent.toFixed(1).replace('.',',')+'%'),note:previousAvailable?'Сравнение январь — '+MONTHS[endMonth-1].toLocaleLowerCase('ru-RU')+' '+(year-1):'В истории нет данных за предыдущий год'},
+  {label:'КРУПНЕЙШАЯ СТАТЬЯ РАСХОДОВ',value:topExpense?.category||'Нет расходов',note:topExpense?money(topExpense.total)+' · '+(totals.expense?Math.abs(topExpense.total)/totals.expense*100:0).toFixed(1).replace('.',',')+'% всех расходов':'За этот год расходов нет'},
+  {label:'САМЫЙ ДОРОГОЙ МЕСЯЦ',value:peakMonth&&peakMonth.expense?MONTHS[peakMonth.month-1]+' '+peakMonth.year:'Нет расходов',note:peakMonth&&peakMonth.expense?money(peakMonth.expense)+' расходов':'За этот год расходов нет'}
+ ];
+ $('year-detail-insights').innerHTML=insights.map(item=>'<article class="a-year-insight"><small>'+item.label+'</small><strong>'+escapeHtml(item.value)+'</strong><p>'+escapeHtml(item.note)+'</p></article>').join('');
+}
 function renderAll(){
  const rows=filterYear(data),monthsCount=monthCount(rangeFrom,rangeTo),stats=totalsFor(rows);
  $('incomeMetric').textContent=money(stats.income);$('expenseMetric').textContent=money(stats.expense);$('netMetric').textContent=money(stats.net);$('netMetric').className=stats.net>=0?'a-positive':'a-negative';
@@ -1118,7 +1301,7 @@ function renderAll(){
  setPreviewMetric('work-preview-net',compactMoney(workResult.net));setPreviewMetric('shop-preview-net',compactMoney(shopResult.net));setPreviewMetric('business-preview-net',compactMoney(workResult.net+shopResult.net));
  for(const [id,value] of [['work-preview-net',workResult.net],['shop-preview-net',shopResult.net],['business-preview-net',workResult.net+shopResult.net]]){const el=$(id);if(el)el.className=value>=0?'a-positive':'a-negative';}
  const workMonths=rangeMonthRows(workResult.rows),shopMonths=rangeMonthRows(shopResult.rows),combinedNet=workMonths.map((row,index)=>row.income-row.expense+(shopMonths[index]?.income||0)-(shopMonths[index]?.expense||0));
- renderMiniSparkline('business-preview-chart',combinedNet,'#76d6ad');renderLoans(rows);renderYearRows();
+ renderMiniSparkline('business-preview-chart',combinedNet,'#76d6ad');renderLoans(rows);renderYearDetail();renderYearRows();
 }
 async function loadSql(){
  if(SQL)return SQL;
@@ -1185,7 +1368,7 @@ async function loadDatabaseBytes(bytes,name){
   if(!years.length)throw new Error('В этой базе нет подходящих данных для финансовой аналитики: отсутствуют исторические данные Numbers и пригодные RUB-транзакции.');
   db?.close();db=opened;opened=null;dbName=String(name||'Budget Capture.budget');dbChanged=false;
   const maxKey=data[data.length-1].month_key,latest=years[years.length-1];
-  selectedMonthKey=maxKey;
+  selectedMonthKey=maxKey;reportYear=latest;
   $('database-name').textContent=dbName;
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
@@ -1218,6 +1401,8 @@ $('manual-file').addEventListener('change',async event=>{
 });
 $('report-tab-month').addEventListener('click',()=>setReportTab('month'));
 $('report-tab-period').addEventListener('click',()=>setReportTab('period'));
+$('report-tab-year').addEventListener('click',()=>setReportTab('year'));
+$('year-detail-select').addEventListener('change',event=>{reportYear=Number(event.target.value);renderYearDetail();});
 setReportTab('month');
 $('range-from').addEventListener('change',()=>{setRange($('range-from').value,$('range-to').value);for(const id of ['6','12','year','all']){$('range-'+id).classList.remove('active');$('range-'+id).setAttribute('aria-pressed','false');}});
 $('range-to').addEventListener('change',()=>{setRange($('range-from').value,$('range-to').value);for(const id of ['6','12','year','all']){$('range-'+id).classList.remove('active');$('range-'+id).setAttribute('aria-pressed','false');}});
