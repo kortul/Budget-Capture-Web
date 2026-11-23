@@ -299,7 +299,7 @@ try {
   assert.match(await analyticsPage.locator('#month-insights .a-month-insight').nth(3).textContent(),/Ремонт/,'six-month anomaly analysis must flag an unusually high category spend');
   assert.match(await analyticsPage.locator('#month-insights .a-month-insight').nth(3).textContent(),/медиан/i,'anomaly insight must disclose its six-month median baseline');
   const monthOptions=await analyticsPage.locator('#month-detail-select option').evaluateAll(options=>options.map(option=>option.value));
-  assert.deepEqual(monthOptions,['2026-09','2026-10','2026-11'],'Month picker must list all months in the database');
+  assert.deepEqual(monthOptions,['2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11'],'Month picker must list all months in the database, including zero-value history months');
 
   await analyticsPage.locator('#report-tab-period').click();
   assert.equal(await analyticsPage.locator('#period-view').isVisible(),true,'Period tab must open its own workspace');
