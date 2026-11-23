@@ -3,6 +3,8 @@ import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 const port = Number(process.env.PORT || 4175);
@@ -250,6 +252,60 @@ try {
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
   assert.equal(await page.locator('#transactions-body select[data-action="category"]').inputValue(),'Еда','reassigned transaction category must survive .budget save and reopen');
 
+
+
+  // Financial analytics opens on the selected month; period filters remain isolated
+  // and cannot prevent opening a month that is outside the selected period.
+  const analyticsFixtureDir=fs.mkdtempSync(path.join(os.tmpdir(),'budget-analytics-e2e-'));
+  const analyticsFixturePath=path.join(analyticsFixtureDir,'Analytics.budget');
+  const analyticsFixture=new DatabaseSync(analyticsFixturePath);
+  try {
+    analyticsFixture.exec(`CREATE TABLE numbers_history (
+      month_key TEXT NOT NULL,year INTEGER NOT NULL,month INTEGER NOT NULL,
+      kind TEXT NOT NULL,category TEXT NOT NULL,amount REAL NOT NULL,role TEXT,source TEXT NOT NULL
+    )`);
+    const addHistory=analyticsFixture.prepare('INSERT INTO numbers_history(month_key,year,month,kind,category,amount,role,source) VALUES(?,?,?,?,?,?,?,?)');
+    for(const row of [
+      ['2026-09',2026,9,'income','Работа',1000,'income','numbers'],
+      ['2026-09',2026,9,'expense','Еда',600,'expense','numbers'],
+      ['2026-10',2026,10,'income','Работа',2000,'income','numbers'],
+      ['2026-10',2026,10,'expense','Еда',1500,'expense','numbers'],
+      ['2026-11',2026,11,'income','Работа',500,'income','numbers'],
+      ['2026-11',2026,11,'expense','Еда',700,'expense','numbers'],
+    ]) addHistory.run(...row);
+  } finally { analyticsFixture.close(); }
+
+  const analyticsPage=await context.newPage();
+  analyticsPage.on('pageerror',e=>pageErrors.push('analytics: '+e.message));
+  analyticsPage.on('request',req=>{if(new URL(req.url()).origin!==origin)externalRequests.push(req.url());});
+  analyticsPage.on('requestfailed',req=>failedRequests.push('analytics: '+req.url()+' · '+(req.failure()?.errorText||'failed')));
+  await analyticsPage.goto(origin+basePath+'numbers-analytics.html',{waitUntil:'networkidle',timeout:30000});
+  await analyticsPage.locator('#manual-file').setInputFiles(analyticsFixturePath);
+  await analyticsPage.waitForFunction(()=>!document.querySelector('#dashboard')?.classList.contains('hidden')&&document.querySelector('#month-detail-title')?.textContent==='Ноябрь 2026',null,{timeout:20000});
+  assert.equal(await analyticsPage.locator('#report-tab-month').getAttribute('aria-selected'),'true','Month tab must be selected by default');
+  assert.equal(await analyticsPage.locator('#month-view').isVisible(),true,'Month analysis must be the first visible workspace');
+  assert.equal(await analyticsPage.locator('#period-view').isVisible(),false,'Period analysis must be a separate inactive tab');
+  assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'-200 ₽','default month must show that month only');
+  const monthOptions=await analyticsPage.locator('#month-detail-select option').evaluateAll(options=>options.map(option=>option.value));
+  assert.deepEqual(monthOptions,['2026-09','2026-10','2026-11'],'Month picker must list all months in the database');
+
+  await analyticsPage.locator('#report-tab-period').click();
+  assert.equal(await analyticsPage.locator('#period-view').isVisible(),true,'Period tab must open its own workspace');
+  assert.equal(await analyticsPage.locator('#month-view').isVisible(),false,'Month workspace must be hidden while Period is active');
+  await analyticsPage.locator('#range-from').fill('2026-11');
+  await analyticsPage.locator('#range-from').dispatchEvent('change');
+  await analyticsPage.locator('#range-to').fill('2026-11');
+  await analyticsPage.locator('#range-to').dispatchEvent('change');
+  assert.equal(await analyticsPage.locator('#overview-range').textContent(),'2026-11 — 2026-11','Period tab must apply its own one-month range');
+
+  await analyticsPage.locator('#report-tab-month').click();
+  await analyticsPage.locator('#month-detail-select').selectOption('2026-10');
+  await analyticsPage.waitForFunction(()=>document.querySelector('#month-detail-title')?.textContent==='Октябрь 2026');
+  assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'500 ₽','October must open even though the Period tab is filtered to November');
+  assert.equal(await analyticsPage.locator('#range-from').inputValue(),'2026-11','Month selection must not change Period start');
+  assert.equal(await analyticsPage.locator('#range-to').inputValue(),'2026-11','Month selection must not change Period end');
+  await analyticsPage.close();
+  fs.rmSync(analyticsFixtureDir,{recursive:true,force:true});
 
   assert.deepEqual(pageErrors,[],'browser page must not raise uncaught errors');
   assert.deepEqual(externalRequests,[],'all runtime assets must be same-origin');

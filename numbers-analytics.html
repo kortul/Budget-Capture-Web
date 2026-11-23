@@ -360,6 +360,20 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 @media(max-width:720px){.a-month-focus{padding:16px!important}.a-month-header{align-items:flex-start;flex-direction:column;gap:13px}.a-month-select-wrap{width:100%;min-width:0}.a-month-focus-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.a-month-focus-metric{min-height:102px;padding:12px}.a-month-focus-metric strong{font-size:19px}.a-month-metric-label{font-size:9px}.a-month-insight-grid{grid-template-columns:1fr;gap:7px}.a-month-insight{padding:11px 13px}.a-month-insight-value{font-size:14px}.a-month-category-panel{padding:13px 11px}.a-month-expense-overview{grid-template-columns:130px minmax(0,1fr);gap:8px}.a-month-donut{width:130px}.a-month-category-list.expense-list,.a-month-category-list.income-list{grid-template-columns:1fr}}
 @media(max-width:390px){.a-month-expense-overview{grid-template-columns:1fr}.a-month-donut{width:150px}.a-month-donut-legend{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 10px}.a-month-focus-metric strong{font-size:17px}}
 
+
+/* Primary month / separate period workspaces */
+.a-report-tabs{display:flex;gap:6px;width:max-content;max-width:100%;margin:0 0 18px;padding:5px;background:rgba(17,26,35,.82);border:1px solid rgba(148,169,188,.14);border-radius:13px}
+.a-report-tab{appearance:none;border:1px solid transparent;border-radius:9px;background:transparent;color:#94a4b2;padding:11px 25px;font:inherit;font-size:12px;font-weight:780;letter-spacing:.025em;cursor:pointer;transition:background .16s,color .16s,border-color .16s}
+.a-report-tab:hover{background:rgba(255,255,255,.045);color:#e7eef4}
+.a-report-tab.active{background:linear-gradient(145deg,rgba(75,169,133,.22),rgba(48,104,91,.2));border-color:rgba(102,202,164,.32);color:#a7ebce;box-shadow:0 5px 16px rgba(0,0,0,.14)}
+.a-report-tab:focus-visible{outline:2px solid #83b5f3;outline-offset:3px}
+.a-period-controls{margin-bottom:15px}
+.a-period-controls-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.a-period-controls-head h2{margin:0 0 5px;font-size:18px;letter-spacing:-.025em}
+.a-period-controls-head p{margin:0;color:#8293a2;font-size:11px}
+.a-period-range-controls{align-items:flex-end}
+@media(max-width:720px){.a-report-tabs{width:100%}.a-report-tab{flex:1;padding:11px 15px}.a-period-controls-head{align-items:flex-start}.a-period-range-controls{width:100%}.a-period-range-controls>label{flex:1}.a-period-range-controls input{width:100%;min-width:0}}
+
 </style>
 </head>
 <body>
@@ -372,14 +386,6 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 <section class="a-card">
   <div class="a-topline">
     <div class="a-controls">
-      <label>С<input id="range-from" type="month" aria-label="Начало периода"></label>
-      <label>По<input id="range-to" type="month" aria-label="Конец периода"></label>
-      <div class="a-range-presets">
-        <button class="button secondary button-small" id="range-6" type="button" aria-pressed="false">6 мес.</button>
-        <button class="button secondary button-small" id="range-12" type="button" aria-pressed="false">12 мес.</button>
-        <button class="button secondary button-small active" id="range-year" type="button" aria-pressed="true">Этот год</button>
-        <button class="button secondary button-small" id="range-all" type="button" aria-pressed="false">Вся история</button>
-      </div>
       <div class="a-file"><label>Открыть другую базу (.budget)<input id="manual-file" type="file" accept=".budget,.sqlite,.sqlite3,.db"></label></div>
       <button id="download-db" class="button secondary" type="button" disabled>Скачать обновлённую базу</button>
     </div>
@@ -390,11 +396,59 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
 </section>
 
 <div id="dashboard" class="hidden">
-<nav class="a-anchor">
-  <a href="#annual">Обзор</a><a href="#month-detail">Месяц</a><a href="#monthly-balance">Баланс</a><a href="#life">Жизнь</a><a href="#sasha">Саша</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#year-comparison">Годы</a><a href="#report-settings">Настройки</a>
-</nav>
 
-<section class="a-overview-head"><div><span class="a-overview-kicker">ВАШ ФИНАНСОВЫЙ ОБЗОР</span><h2>Финансовая картина</h2><p id="overview-period-caption">Выбранный период</p></div><div class="a-overview-meta"><span><i class="a-live-dot"></i>Аналитика по истории Numbers</span><span id="overview-range">—</span></div></section>
+
+<nav class="a-report-tabs" role="tablist" aria-label="Режим финансовой аналитики">
+  <button class="a-report-tab active" id="report-tab-month" type="button" role="tab" aria-selected="true" aria-controls="month-view" tabindex="0">Месяц</button>
+  <button class="a-report-tab" id="report-tab-period" type="button" role="tab" aria-selected="false" aria-controls="period-view" tabindex="-1">Период</button>
+</nav>
+<section id="month-view" class="a-report-panel" role="tabpanel" aria-labelledby="report-tab-month">
+<section class="a-card a-month-focus" id="month-detail">
+  <div class="a-month-header">
+    <div class="a-month-heading"><span class="a-month-eyebrow">ФИНАНСЫ ЗА МЕСЯЦ</span><h2 id="month-detail-title">Выбери месяц</h2><p id="month-detail-subtitle">Все поступления и расходы по категориям</p></div>
+    <label class="a-month-select-wrap"><span>МЕСЯЦ</span><select id="month-detail-select" aria-label="Выбрать месяц"></select></label>
+  </div>
+  <div class="a-month-focus-grid">
+    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong><span class="a-month-metric-note">Обычные категории поступлений и расходов. Спецвводы / спецвыводы Дима показаны отдельно.</span></article>
+    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Баланс без магазина и KGR</span><strong id="month-no-shop-net">—</strong><span id="month-no-shop-note" class="a-month-metric-note"></span></article>
+    <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong></article>
+    <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong></article>
+  </div>
+  <div class="a-month-insight-grid" id="month-insights" aria-live="polite"></div>
+  <div class="a-month-analysis-grid">
+    <section class="a-month-category-panel expense-panel">
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОДЫ</span><h3>Куда ушли деньги</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
+      <div class="a-month-expense-overview"><div id="month-expense-chart" class="a-month-donut" aria-label="Структура расходов"></div><div id="month-expense-legend" class="a-month-donut-legend"></div></div>
+      <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
+      <p class="a-small">Суммы расходных категорий показаны за вычетом возвратов и положительных корректировок, отнесённых в ту же категорию (например, возврата KGR).</p>
+      <div id="month-expense-list" class="a-month-category-list expense-list"></div>
+    </section>
+    <section class="a-month-category-panel income-panel">
+      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПОСТУПЛЕНИЯ</span><h3>Откуда пришли деньги</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
+      <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
+      <div id="month-income-list" class="a-month-category-list income-list"></div>
+    </section>
+  </div>
+</section>
+</section>
+<section id="period-view" class="a-report-panel hidden" role="tabpanel" aria-labelledby="report-tab-period">
+<section class="a-card a-period-controls" aria-label="Настройки периода">
+  <div class="a-period-controls-head">
+    <div><span class="a-overview-kicker">СРАВНИТЕЛЬНЫЙ АНАЛИЗ</span><h2>Выбери период</h2><p>Сводные показатели и динамика за выбранный диапазон</p></div>
+    <div class="a-controls a-period-range-controls"><label>С<input id="range-from" type="month" aria-label="Начало периода"></label>
+      <label>По<input id="range-to" type="month" aria-label="Конец периода"></label>
+      <div class="a-range-presets">
+        <button class="button secondary button-small" id="range-6" type="button" aria-pressed="false">6 мес.</button>
+        <button class="button secondary button-small" id="range-12" type="button" aria-pressed="false">12 мес.</button>
+        <button class="button secondary button-small active" id="range-year" type="button" aria-pressed="true">Этот год</button>
+        <button class="button secondary button-small" id="range-all" type="button" aria-pressed="false">Вся история</button>
+      </div></div>
+  </div>
+</section>
+<nav class="a-anchor" aria-label="Разделы анализа периода">
+  <a href="#annual">Сводка периода</a><a href="#monthly-balance">Баланс по месяцам</a><a href="#life">Жизнь</a><a href="#sasha">Саша</a><a href="#work">Работа и магазин</a><a href="#loans">Кредиты</a><a href="#year-comparison">Годы</a><a href="#report-settings">Настройки</a>
+</nav>
+<section class="a-overview-head"><div><span class="a-overview-kicker">АНАЛИЗ ВЫБРАННОГО ПЕРИОДА</span><h2>Итоги и динамика</h2><p id="overview-period-caption">Выбранный период</p></div><div class="a-overview-meta"><span><i class="a-live-dot"></i>Аналитика по истории Numbers</span><span id="overview-range">—</span></div></section>
 <section class="a-grid" id="annual">
   <div class="a-metric"><small>Поступления за период</small><strong id="incomeMetric">—</strong><div class="sub">Обычные поступления</div></div>
   <div class="a-metric"><small>Расходы за период</small><strong id="expenseMetric">—</strong><div class="sub">Обычные расходы</div></div>
@@ -424,34 +478,6 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
   </section>
 </div>
 
-
-<section class="a-card a-month-focus" id="month-detail">
-  <div class="a-month-header">
-    <div class="a-month-heading"><span class="a-month-eyebrow">ФИНАНСЫ ЗА МЕСЯЦ</span><h2 id="month-detail-title">Выбери месяц</h2><p id="month-detail-subtitle">Все поступления и расходы по категориям</p></div>
-    <label class="a-month-select-wrap"><span>МЕСЯЦ</span><select id="month-detail-select" aria-label="Выбрать месяц"></select></label>
-  </div>
-  <div class="a-month-focus-grid">
-    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong><span class="a-month-metric-note">Обычные категории поступлений и расходов. Спецвводы / спецвыводы Дима показаны отдельно.</span></article>
-    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Баланс без магазина и KGR</span><strong id="month-no-shop-net">—</strong><span id="month-no-shop-note" class="a-month-metric-note"></span></article>
-    <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong></article>
-    <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong></article>
-  </div>
-  <div class="a-month-insight-grid" id="month-insights" aria-live="polite"></div>
-  <div class="a-month-analysis-grid">
-    <section class="a-month-category-panel expense-panel">
-      <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОДЫ</span><h3>Куда ушли деньги</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
-      <div class="a-month-expense-overview"><div id="month-expense-chart" class="a-month-donut" aria-label="Структура расходов"></div><div id="month-expense-legend" class="a-month-donut-legend"></div></div>
-      <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
-      <p class="a-small">Суммы расходных категорий показаны за вычетом возвратов и положительных корректировок, отнесённых в ту же категорию (например, возврата KGR).</p>
-      <div id="month-expense-list" class="a-month-category-list expense-list"></div>
-    </section>
-    <section class="a-month-category-panel income-panel">
-      <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПОСТУПЛЕНИЯ</span><h3>Откуда пришли деньги</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
-      <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
-      <div id="month-income-list" class="a-month-category-list income-list"></div>
-    </section>
-  </div>
-</section>
 
 <details class="a-card a-foldout" id="monthly-balance"><summary class="a-foldout-summary">
 <span class="a-foldout-heading"><span class="a-foldout-index">01 · ДЕНЕЖНЫЙ ПОТОК</span><span class="a-foldout-title">Баланс по месяцам</span><span class="a-foldout-description">Доходы, расходы и результат каждого месяца</span></span>
@@ -516,6 +542,7 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
     <div class="a-settings-actions"><button id="save-settings" class="button primary" type="button">Сохранить настройки в базу</button><span class="a-settings-foot">Правила распределения и доля Саши записываются внутрь выбранного .budget. Затем скачай обновлённую базу и используй её на остальных компьютерах.</span></div>
   </details>
 </section>
+</section>
 </div>
 </div>
 
@@ -566,8 +593,16 @@ function setRange(from,to,render=true){
  $('range-from').value=from;$('range-to').value=to;
  $('range-from').min=min.slice(0,4)+'-01';$('range-from').max=max;
  $('range-to').min=min;$('range-to').max=max;
- if(!selectedMonthKey||!keyInsideRange(selectedMonthKey))selectedMonthKey=to;
+ if(!selectedMonthKey)selectedMonthKey=to;
  if(render)renderAll();
+}
+function setReportTab(tab){
+ const selected=tab==='period'?'period':'month';
+ for(const [name,buttonId,panelId] of [['month','report-tab-month','month-view'],['period','report-tab-period','period-view']]){
+  const active=name===selected,button=$(buttonId),panel=$(panelId);
+  button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.setAttribute('tabindex',active?'0':'-1');
+  panel.classList.toggle('hidden',!active);
+ }
 }
 function applyRangePreset(preset){
  if(!data.length)return;
@@ -881,7 +916,7 @@ function renderMonthDetail(){
  $('month-detail-subtitle').textContent=ruCount(expenses.length,['категория расходов','категории расходов','категорий расходов'])+' · '+ruCount(incomes.length,['категория поступлений','категории поступлений','категорий поступлений'])+' · суммы отсортированы по убыванию';
  const selector=$('month-detail-select');
  if(selector){
-  const monthKeys=[...new Set(data.filter(row=>keyInsideRange(row.month_key)).map(row=>row.month_key))].sort();
+  const monthKeys=[...new Set(data.map(row=>row.month_key))].sort();
   selector.innerHTML=monthKeys.map(key=>{const [y,m]=key.split('-').map(Number);return '<option value="'+key+'">'+MONTHS[m-1]+' '+y+'</option>';}).join('');
   selector.value=month;
  }
@@ -976,11 +1011,11 @@ function renderPeriodInsights(rows,months){
  $('period-top-category-note').textContent=topCategory?money(topCategory.total)+' · '+(currentExpense?((topCategory.total/currentExpense)*100).toFixed(1).replace('.',',')+'% всех расходов':'0%'):'Нет данных';
 }
 function selectMonth(key){
- if(!keyInsideRange(key)||!data.some(row=>row.month_key===key))return;
+ if(!data.some(row=>row.month_key===key))return;
  selectedMonthKey=key;
  renderChart(rangeMonthRows(filterYear(data)));
  $('monthlyRows').querySelectorAll('tr[data-month-key]').forEach(el=>el.classList.toggle('selected-month',el.dataset.monthKey===key));
- renderMonthDetail();
+ renderMonthDetail();setReportTab('month');
 }
 function renderLife(rows,monthsCount){
  const selected=rowsForGroup('life',rows).filter(row=>row.role==='expense'),cats=totalsByCategory(selected),total=sum(selected,row=>row.amount);
@@ -1181,6 +1216,9 @@ $('manual-file').addEventListener('change',async event=>{
  catch(error){showError(error.message);}
  event.target.value='';
 });
+$('report-tab-month').addEventListener('click',()=>setReportTab('month'));
+$('report-tab-period').addEventListener('click',()=>setReportTab('period'));
+setReportTab('month');
 $('range-from').addEventListener('change',()=>{setRange($('range-from').value,$('range-to').value);for(const id of ['6','12','year','all']){$('range-'+id).classList.remove('active');$('range-'+id).setAttribute('aria-pressed','false');}});
 $('range-to').addEventListener('change',()=>{setRange($('range-from').value,$('range-to').value);for(const id of ['6','12','year','all']){$('range-'+id).classList.remove('active');$('range-'+id).setAttribute('aria-pressed','false');}});
 $('range-6').addEventListener('click',()=>applyRangePreset('6'));

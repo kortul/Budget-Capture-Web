@@ -25,6 +25,13 @@ assert.ok(app.includes('sortTransactions(rows,state.transactionSort)'),'visible 
 assert.ok(!app.includes('filter-sort')&&!html.includes('id="filter-sort"'),'obsolete standalone sort selector must be removed');
 assert.match(app,/if\(search&&!\[r\.description,r\.merchant,r\.account,r\.notes,r\.raw_text\][\s\S]*?\.includes\(search\)\)return false;/,'Review search must keep matches and discard non-matches');
 assert.equal((app.match(/isInternalTransfer\(r\.transaction_type,r\.category,r\.description/g)||[]).length,4,'Review, row badge, Numbers and integrity count must share internal-category classification');
+assert.ok(analytics.includes('id="report-tab-month"')&&analytics.includes('id="report-tab-period"'),'Analytics must expose dedicated Month and Period tabs');
+assert.ok(analytics.includes('id="month-view" class="a-report-panel"')&&analytics.includes('id="period-view" class="a-report-panel hidden"'),'Month must be the default visible analytics workspace');
+assert.ok(analytics.indexOf('id="month-view"')<analytics.indexOf('id="period-view"'),'Month workspace must appear before Period workspace');
+assert.ok(analytics.includes('function setReportTab(tab)'),'Analytics tabs must have a working view switcher');
+assert.ok(analytics.includes('const monthKeys=[...new Set(data.map(row=>row.month_key))].sort();'),'Month selector must include all months, independently of the period filter');
+assert.ok(analytics.includes("renderMonthDetail();setReportTab('month');"),'Drilling into a month must open the Month workspace');
+assert.ok(analytics.includes('a-period-controls'),'Period range controls must live inside the Period workspace');
 assert.ok(analytics.includes('Баланс без магазина и KGR'),'non-shop balance label must disclose KGR exclusion');
 assert.ok(analytics.includes('Поступления вне магазина:'),'non-shop balance must explain income and expense bases');
 assert.ok(analytics.includes('const MONTH_DETAIL_MANUAL_RULES={'),'the no-shop ledger must use the agreed, explicit category list');
