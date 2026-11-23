@@ -431,8 +431,8 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
     <label class="a-month-select-wrap"><span>МЕСЯЦ</span><select id="month-detail-select" aria-label="Выбрать месяц"></select></label>
   </div>
   <div class="a-month-focus-grid">
-    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong></article>
-    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Доходы за вычетом расходов (без магазина)</span><strong id="month-no-shop-net">—</strong></article>
+    <article class="a-month-focus-metric is-total"><span class="a-month-metric-label">Доходы за вычетом расходов</span><strong id="month-overall-net">—</strong><span class="a-month-metric-note">Обычные категории поступлений и расходов. Спецвводы / спецвыводы Дима показаны отдельно.</span></article>
+    <article class="a-month-focus-metric is-no-shop"><span class="a-month-metric-label">Баланс без магазина и KGR</span><strong id="month-no-shop-net">—</strong><span id="month-no-shop-note" class="a-month-metric-note"></span></article>
     <article class="a-month-focus-metric is-sasha"><span class="a-month-metric-label">Саша Расходы</span><strong id="month-sasha-expense">—</strong></article>
     <article class="a-month-focus-metric is-dima"><span class="a-month-metric-label">ВВОДЫ / ВЫВОДЫ ДИМА</span><strong id="month-dima-net">—</strong></article>
   </div>
@@ -880,7 +880,7 @@ function renderMonthDetail(){
   selector.value=month;
  }
  $('month-overall-net').textContent=money(current.net);$('month-overall-net').className=current.net>=0?'a-positive':'a-negative';
- $('month-no-shop-net').textContent=money(noShop.net);$('month-no-shop-net').className=noShop.net>=0?'a-positive':'a-negative';
+ $('month-no-shop-net').textContent=money(noShop.net);$('month-no-shop-net').className=noShop.net>=0?'a-positive':'a-negative';$('month-no-shop-note').textContent='Поступления вне магазина: '+money(noShop.income)+' − расходы без KGR: '+money(noShop.expense)+'. Спецвводы / спецвыводы Дима не включены.';
  $('month-sasha-expense').textContent=money(sashaExpense);$('month-dima-net').textContent=money(dimaNet);
  $('month-income-total').textContent=money(current.income);$('month-expense-total').textContent=money(current.expense);
  $('month-income-count').textContent=incomes.length+' активных категорий';
@@ -893,56 +893,12 @@ function renderMonthDetail(){
 
 
 
-const MONTH_DETAIL_MANUAL_RULES={
- income:[
-  {label:'Приход от работы Дима',aliases:['Приход от работы Дима']},
-  {label:'Кредит',aliases:['Кредит']},
-  {label:'Возвраты',aliases:['Возвраты']},
-  {label:'Наличные взнос',aliases:['Наличные взнос','Налиные взнос']}
- ],
- expense:[
-  {label:'Дом/ Locker(аренда, ипотека, налоги, страховка)',aliases:['Дом/ Locker(аренда, ипотека, налоги, страховка)']},
-  {label:'Кафе',aliases:['Кафе']},
-  {label:'Коммунальные услуги',aliases:['Коммунальные услуги']},
-  {label:'Рестораны',aliases:['Рестораны']},
-  {label:'Медицина / корона',aliases:['Медицина / корона','Медицина/корона']},
-  {label:'Еда',aliases:['Еда']},
-  {label:'iTunes',aliases:['iTunes']},
-  {label:'Подарки Саше',aliases:['Подарки Саше']},
-  {label:'Образование',aliases:['Образование']},
-  {label:'Пени за снятие наличных/ Комиссии',aliases:['Пени за снятие наличных/ Комиссии','Пени за снятие наличных / Комиссии']},
-  {label:'Снятие наличных',aliases:['Снятие наличных']},
-  {label:'Для дома',aliases:['Для дома']},
-  {label:'Одежда',aliases:['Одежда']},
-  {label:'Путешествия',aliases:['Путешествия']},
-  {label:'Подарки нг/ семья',aliases:['Подарки нг/ семья','Подарки нг/  семья','Подарки нг / семья']},
-  {label:'Авиабилеты',aliases:['Авиабилеты']},
-  {label:'Развлечения',aliases:['Развлечения','Развлечения ']},
-  {label:'Долг Саше',aliases:['Долг Саше']},
-  {label:'Виза',aliases:['Виза']},
-  {label:'Уход за собой',aliases:['Уход за собой']},
-  {label:'Бензин Съем машины',aliases:['Бензин Съем машины','Бензин Съём машины']},
-  {label:'Цветы',aliases:['Цветы']},
-  {label:'Такси',aliases:['Такси']},
-  {label:'Саша Расходы',aliases:['Саша Расходы']},
-  {label:'Налоги',aliases:['Налоги']},
-  {label:'Погашения кредита',aliases:['Погашения кредита']},
-  {label:'Саша Обучение Part Academy',aliases:['Саша Обучение Part Academy']},
-  {label:'Саша Квартира Дедушки',aliases:['Саша Квартира Дедушки']}
- ]
-};
-function monthCategoriesWithoutShop(monthRows){
- const buildSide=side=>MONTH_DETAIL_MANUAL_RULES[side].map(rule=>{
-  const names=new Set([rule.label,...rule.aliases].map(normalized));
-  const storedName=data.find(row=>names.has(normalized(row.category)))?.category;
-  const total=sum(monthRows.filter(row=>names.has(normalized(row.category))),row=>Math.abs(Number(row.amount)||0));
-  return {category:storedName||rule.label,role:side==='income'?'income':'expense',total};
- });
- return {income:buildSide('income'),expense:buildSide('expense')};
-}
 function noShopTotals(rows){
- const ledger=monthCategoriesWithoutShop(rows);
- const income=sum(ledger.income,item=>item.total),expense=sum(ledger.expense,item=>item.total);
+ // Non-shop / non-KGR result. Include all ordinary categories dynamically so new
+ // categories cannot silently disappear from this comparison.
+ const ordinary=(rows||[]).filter(row=>row.role==='income'||row.role==='expense');
+ const income=sum(ordinary.filter(row=>row.role==='income'&&!normalized(row.category).includes('магаз')),row=>Number(row.amount)||0);
+ const expense=sum(ordinary.filter(row=>row.role==='expense'&&normalized(row.category)!=='kgr'),row=>Number(row.amount)||0);
  return {income,expense,net:income-expense};
 }
 
