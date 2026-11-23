@@ -11,24 +11,24 @@
   "delivery": "same-origin GitHub Pages assets; no third-party CDN runtime fallback",
   "assets": {
     "index.html": {
-      "bytes": 18737,
-      "sha256": "515fdb412d7cc67d38efa805be7d1245bf710632ae93d0302949df0c01c4b79c"
+      "bytes": 21261,
+      "sha256": "73ef52d999011968c13a58740cd3d9f4cfbb2cfbb5ddeee0a7d53ea38a3ab763"
     },
     "numbers-import.html": {
       "bytes": 18243,
       "sha256": "3e7d45cc66a05adef6e42a637a17f0cf60934face4cfb1931d6945742ed917b8"
     },
     "numbers-analytics.html": {
-      "bytes": 136319,
-      "sha256": "ca38cb1f4b7e0d50d14b4c37f06b3ff5054e69d223699af94df4d0db97bd9029"
+      "bytes": 137885,
+      "sha256": "eae5dc5c8e04b82ce251c082b03a5a45d898ddb4eb5b140526b6ab9963962b71"
     },
     "styles.css": {
       "bytes": 18459,
       "sha256": "64a36754897302c7957d4877fbe9a1830a23ec986189ae60cde93bff998b9e3a"
     },
     "app.js": {
-      "bytes": 49707,
-      "sha256": "2075c3692bdee28e2e17bd5476bc6b33afa54b0b11d6f02e93f961774d84cffa"
+      "bytes": 54924,
+      "sha256": "3bc9138ef6f4fc46cd64a6f74fd23f55b5bf6b8aa515ba4cf3ee3604272f144c"
     },
     "core.js": {
       "bytes": 42343,

@@ -25,8 +25,11 @@ assert.ok(app.includes('sortTransactions(rows,state.transactionSort)'),'visible 
 assert.ok(!app.includes('filter-sort')&&!html.includes('id="filter-sort"'),'obsolete standalone sort selector must be removed');
 assert.ok(analytics.includes('Баланс без магазина и KGR'),'non-shop balance label must disclose KGR exclusion');
 assert.ok(analytics.includes('Поступления вне магазина:'),'non-shop balance must explain income and expense bases');
-assert.ok(analytics.includes("normalized(row.category)!=='kgr'"),'non-shop calculation must explicitly exclude KGR rather than a manual whitelist');
-assert.ok(!analytics.includes('MONTH_DETAIL_MANUAL_RULES'),'non-shop calculation must not rely on a hard-coded category whitelist');
+assert.ok(analytics.includes('const MONTH_DETAIL_MANUAL_RULES={'),'the no-shop ledger must use the agreed, explicit category list');
+assert.ok(analytics.includes('const ledger=monthCategoriesWithoutShop(rows)'),'the no-shop monthly balance must use that manual ledger');
+assert.ok(analytics.includes("aliases:['Наличные взнос','Налиные взнос']"),'cash deposit category spelling variants must map to one manual ledger line');
+assert.ok(!analytics.includes("label:'KGR'")&&!analytics.includes("label:'Приход магазин'"),'KGR and shop income must stay outside the manual no-shop ledger');
+assert.match(analytics,/const total=sum\(matching,row=>Number\(row\.amount\)\|\|0\)/,'expense refunds must retain their sign and reduce the manual ledger total');
 
 assert.match(app,/r\.status==='Confirmed'\?' class="is-confirmed"'/,'confirmed transaction rows must receive the green-highlight state class');
 assert.ok(app.includes('specialZeroCount')&&app.includes('amountCents(r.amount)!==0'),'zero-value special transactions must not count as financial flows');
