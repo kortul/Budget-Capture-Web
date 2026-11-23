@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseSberLinePages, parseTbankRows, parseRaiffeisenCSV, decodeStatementBytes, defaultCategory,
-  monthNowPrevious, categoryKind, isInternalTransfer, applyOwnSbpNameMarkers, amountCents, numbersValue, numbersCategoryTotals, categoryLedgerContribution, categoryReclassificationDeltas, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
+  monthNowPrevious, categoryKind, isInternalTransfer, applyOwnSbpNameMarkers, amountCents, numbersValue, numbersCategoryTotals, resolveCurrencyRows, categoryLedgerContribution, categoryReclassificationDeltas, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, parseDate
 } from '../core.js';
 
 const sberLines=[{x:20,top:10,text:'25 октября,'}];
@@ -138,6 +138,24 @@ assert.deepEqual(dropdownGroups.income.map(item=>item.name),['ВВОДЫ ДИМ�
 assert.equal(categoryDropdownGroup({name:'Приход от работы Дима',kind:'other'}),'income','unused legacy income categories can be placed in Income from their explicit name');
 assert.equal(categoryDropdownGroup({name:'Траты по работе',kind:'other'}),'expense','unclassified legacy categories default to Expenses');
 assert.equal(parseDate(46326.52072916667),'2026-10-31','Excel date serials must be handled by browser T-Bank import.');
+const currencyFixture=[
+  {id:'rub',currency:'RUB',amount:-1000},
+  {id:'rur',currency:'RUR',amount:-250},
+  {id:'blank',currency:'',amount:-50},
+  {id:'usd',currency:'USD',amount:-10},
+  {id:'eur',currency:'EUR',amount:-5},
+];
+const autoCurrency=resolveCurrencyRows(currencyFixture);
+assert.equal(autoCurrency.currency,'RUB','Auto currency must prefer rubles when present');
+assert.deepEqual(autoCurrency.currencies,['RUB','EUR','USD'],'currency choices must canonicalize legacy ruble codes');
+assert.deepEqual(autoCurrency.rows.map(row=>row.id),['rub','rur','blank'],'Auto RUB must include only ruble rows and blank legacy currency rows');
+const selectedUsd=resolveCurrencyRows(currencyFixture,'USD');
+assert.equal(selectedUsd.currency,'USD');
+assert.deepEqual(selectedUsd.rows.map(row=>row.id),['usd'],'a manual currency choice must filter exactly that currency');
+const foreignOnly=resolveCurrencyRows([{currency:'USD'},{currency:'EUR'}]);
+assert.equal(foreignOnly.ambiguous,true,'multiple non-ruble currencies must not be added together in Auto mode');
+assert.deepEqual(foreignOnly.rows,[],'ambiguous Auto mode must produce no mixed-currency totals');
+assert.equal(resolveCurrencyRows([{currency:'USD'}]).currency,'USD','Auto may use a single available non-ruble currency');
 assert.equal(parseDate('46326.52072916667'),'2026-10-31','Excel date serial strings must be handled by browser T-Bank import.');
 const cp1251=await decodeStatementBytes(new Uint8Array([0xC4,0xE0,0xF2,0xE0]));
 assert.equal(cp1251,'Дата','Raiffeisen CSV decoder must fall back to Windows-1251.');

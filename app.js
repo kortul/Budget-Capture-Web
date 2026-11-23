@@ -1,5 +1,5 @@
 import {
-  APP_VERSION, categoryKind, numbersCategoryTotals, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, sortTransactions,
+  APP_VERSION, categoryKind, numbersCategoryTotals, resolveCurrencyRows, sortCategoriesAlphabetically, categoryDropdownGroup, categoryDropdownGroups, sortTransactions,
   isInternalTransfer, applyOwnSbpNameMarkers, uuid, monthNowPrevious, monthOf, amountCents,
   numbersValue, displayMoney, sha256Hex, parseSberLinePages,
   parseTbankRows, parseRaiffeisenCSV, parseYandexWordPages, pdfJsItemsToYandexWords, decodeStatementBytes, inferMonth, categoryRuleKey
@@ -290,20 +290,23 @@ function renderNumbers(){
   const bankLabel=b=>b==='TOTAL'?'ВСЕ БАНКИ':b;
   $('totals-bank-tabs').innerHTML=tabs.map(b=>`<button class="bank-tab ${state.activeBank===b?'active':''}" data-bank="${esc(b)}">${esc(bankLabel(b))}</button>`).join('');
   const bankRows=numberRows(month,state.activeBank,'',includeInternal);
-  const currencies=[...new Set(bankRows.map(r=>r.currency).filter(Boolean))].sort();
+
+  const automaticCurrency=resolveCurrencyRows(bankRows);
   const curr=$('totals-currency');const prev=curr.value;
-  curr.innerHTML='<option value="">Auto</option>'+currencies.map(c=>`<option>${esc(c)}</option>`).join('');
-  if(currencies.includes(prev))curr.value=prev;
-  const currency=curr.value||(currencies.length===1?currencies[0]:'');
-  const rows=bankRows.filter(r=>!currency||r.currency===currency);
+  curr.innerHTML='<option value="">Авто (RUB, если доступен)</option>'+automaticCurrency.currencies.map(c=>'<option>'+esc(c)+'</option>').join('');
+  if(automaticCurrency.currencies.includes(prev))curr.value=prev;
+  const currencySelection=resolveCurrencyRows(bankRows,curr.value);
+  const currency=currencySelection.currency;
+  const currencyAmbiguous=currencySelection.ambiguous;
+  const rows=currencySelection.rows;
   const summary=numbersCategoryTotals(rows,profile.categories);
   const makeList=(kind)=>summary[kind].items.map(item=>
     `<div class="number-row"><span>${esc(item.name)}</span><span class="kind">${item.count||''}</span><span class="value ${kind}">${displayMoney(item.cents,currency||'')}</span></div>`
   ).join('');
-  $('expenses-list').innerHTML=makeList('expense');
-  $('incomes-list').innerHTML=makeList('income');
-  $('expenses-total').textContent=displayMoney(summary.expense.cents,currency||'');
-  $('incomes-total').textContent=displayMoney(summary.income.cents,currency||'');
+  $('expenses-list').innerHTML=currencyAmbiguous?'<div class="muted">Сначала выберите валюту для расчёта.</div>':makeList('expense');
+  $('incomes-list').innerHTML=currencyAmbiguous?'<div class="muted">Сначала выберите валюту для расчёта.</div>':makeList('income');
+  $('expenses-total').textContent=currencyAmbiguous?'—':displayMoney(summary.expense.cents,currency||'');
+  $('incomes-total').textContent=currencyAmbiguous?'—':displayMoney(summary.income.cents,currency||'');
   const specialInCategory=numbers.specialInput.category;
   const specialOutCategory=numbers.specialOutput.category;
   const specialInRaw=specialInCategory?rows.filter(r=>r.category===specialInCategory):[];
@@ -315,12 +318,12 @@ function renderNumbers(){
   document.querySelector('[data-profile-role="special-input"]').hidden=!specialInCategory;
   document.querySelector('[data-profile-role="special-output"]').hidden=!specialOutCategory;
   const sumAbs=items=>items.reduce((sum,row)=>sum+Math.abs(amountCents(row.amount)||0),0);
-  $('special-input-count').textContent=ruCount(specialIn.length,['операция','операции','операций']);
-  $('special-output-count').textContent=ruCount(specialOut.length,['операция','операции','операций']);
-  $('special-input-total').textContent=displayMoney(sumAbs(specialIn),currency||'RUB').replace(/\s*RUB$/,'');
-  $('special-output-total').textContent=displayMoney(sumAbs(specialOut),currency||'RUB').replace(/\s*RUB$/,'');
-  $('special-input-rows').innerHTML=specialIn.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
-  $('special-output-rows').innerHTML=specialOut.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
+  $('special-input-count').textContent=currencyAmbiguous?'—':ruCount(specialIn.length,['операция','операции','операций']);
+  $('special-output-count').textContent=currencyAmbiguous?'—':ruCount(specialOut.length,['операция','операции','операций']);
+  $('special-input-total').textContent=currencyAmbiguous?'—':displayMoney(sumAbs(specialIn),currency||'RUB').replace(/\s*RUB$/,'');
+  $('special-output-total').textContent=currencyAmbiguous?'—':displayMoney(sumAbs(specialOut),currency||'RUB').replace(/\s*RUB$/,'');
+  $('special-input-rows').innerHTML=currencyAmbiguous?'<div class="muted">Сначала выберите валюту для расчёта.</div>':specialIn.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
+  $('special-output-rows').innerHTML=currencyAmbiguous?'<div class="muted">Сначала выберите валюту для расчёта.</div>':specialOut.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
   const expenseNames=new Set(profile.categories.filter(item=>item.kind==='expense').map(item=>item.name));
   const incomeNames=new Set(profile.categories.filter(item=>item.kind==='income').map(item=>item.name));
   const knownNames=new Set(profile.categories.map(item=>item.name));
@@ -330,18 +333,30 @@ function renderNumbers(){
   const unassigned=unallocatedRows.length;
   const unallocatedExpenseCents=unallocatedRows.reduce((sum,row)=>{const cents=amountCents(row.amount);return cents!==null&&cents<0?sum+Math.abs(cents):sum;},0);
   const analyticsExpenseCents=summary.expense.cents+unallocatedExpenseCents;
-  $('numbers-integrity').className='integrity-banner '+(unassigned?'review':'pass');
-  $('numbers-integrity').textContent=`${ruCount(rows.length,['операция','операции','операций'])} · ${ruCount(expCount,['операция в расходной категории','операции в расходных категориях','операций в расходных категориях'])} · ${ruCount(incCount,['операция в доходной категории','операции в доходных категориях','операций в доходных категориях'])} · ${ruCount(specialIn.length+specialOut.length,['специальная операция','специальные операции','специальных операций'])} (${ruCount(specialIn.length,['поступление','поступления','поступлений'])} / ${ruCount(specialOut.length,['списание','списания','списаний'])}) · нулевых специальных операций исключено: ${specialZeroCount} · собственных переводов учтено: ${includedInternalCount} · без категории: ${ruCount(unassigned,['операция','операции','операций'])}`;
-  $('unallocated-panel').classList.toggle('hidden',!unassigned);
+  const integrityText=[
+    ruCount(rows.length,['операция','операции','операций']),
+    ruCount(expCount,['операция в расходной категории','операции в расходных категориях','операций в расходных категориях']),
+    ruCount(incCount,['операция в доходной категории','операции в доходных категориях','операций в доходных категориях']),
+    ruCount(specialIn.length+specialOut.length,['специальная операция','специальные операции','специальных операций'])+' ('+ruCount(specialIn.length,['поступление','поступления','поступлений'])+' / '+ruCount(specialOut.length,['списание','списания','списаний'])+')',
+    'нулевых специальных операций исключено: '+specialZeroCount,
+    'собственных переводов учтено: '+includedInternalCount,
+    'без категории: '+ruCount(unassigned,['операция','операции','операций'])
+  ].join(' · ');
+  $('numbers-integrity').className='integrity-banner '+(unassigned||currencyAmbiguous?'review':'pass');
+  $('numbers-integrity').textContent=currencyAmbiguous
+    ? 'Автоматический расчёт остановлен: обнаружены разные валюты ('+currencySelection.currencies.join(', ')+'). Выберите валюту вручную — суммы в разных валютах не складываются.'
+    : integrityText;
+  $('unallocated-panel').classList.toggle('hidden',!unassigned||currencyAmbiguous);
   $('unallocated-count').textContent=ruCount(unassigned,['операция','операции','операций']);
-  $('unallocated-expense-total').textContent=displayMoney(unallocatedExpenseCents,currency||'');
-  $('analytics-expense-total').textContent=displayMoney(analyticsExpenseCents,currency||'');
-  $('unallocated-rows').innerHTML=unallocatedRows.map(row=>`<div class="special-row"><span>${esc(row.tx_date)} · ${esc(row.merchant||row.description||'Без описания')}<small class="unallocated-category">${esc(row.category||'Не распределено')} · ${esc(transactionTypeLabel(row.transaction_type))}</small></span><b class="${Number(row.amount)<0?'expense-text':'income-text'}">${esc(displayMoney(amountCents(row.amount)||0,row.currency||currency||''))}</b></div>`).join('')||'<div class="muted">Нераспределённых операций нет</div>';
+  $('unallocated-expense-total').textContent=currencyAmbiguous?'—':displayMoney(unallocatedExpenseCents,currency||'');
+  $('analytics-expense-total').textContent=currencyAmbiguous?'—':displayMoney(analyticsExpenseCents,currency||'');
+  $('unallocated-rows').innerHTML=currencyAmbiguous?'<div class="muted">Сначала выберите валюту для расчёта.</div>':unallocatedRows.map(row=>`<div class="special-row"><span>${esc(row.tx_date)} · ${esc(row.merchant||row.description||'Без описания')}<small class="unallocated-category">${esc(row.category||'Не распределено')} · ${esc(transactionTypeLabel(row.transaction_type))}</small></span><b class="${Number(row.amount)<0?'expense-text':'income-text'}">${esc(displayMoney(amountCents(row.amount)||0,row.currency||currency||''))}</b></div>`).join('')||'<div class="muted">Нераспределённых операций нет</div>';
   const highlighted=rows.filter(row=>row.highlighted_flag&&Number(row.amount)<0);
-  $('highlighted-count').textContent=ruCount(highlighted.length,['операция','операции','операций']);
-  $('highlighted-total').textContent=displayMoney(sumAbs(highlighted),currency||'RUB');
-  $('highlighted-rows').innerHTML=highlighted.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
-  state.numberPayloads={
+  $('highlighted-count').textContent=currencyAmbiguous?'—':ruCount(highlighted.length,['операция','операции','операций']);
+  $('highlighted-total').textContent=currencyAmbiguous?'—':displayMoney(sumAbs(highlighted),currency||'RUB');
+  $('highlighted-rows').innerHTML=currencyAmbiguous?'<div class="muted">Сначала выберите валюту для расчёта.</div>':highlighted.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
+  for(const id of ['copy-expenses','copy-incomes','copy-analytics-expense-total','copy-special-input-total','copy-special-output-total','copy-special-inputs','copy-special-outputs','copy-highlighted'])$(id).disabled=currencyAmbiguous;
+  state.numberPayloads=currencyAmbiguous?null:{
     expense:makeListValues(rows,'expense'),
     analyticsExpenseCents,
     income:makeListValues(rows,'income'),

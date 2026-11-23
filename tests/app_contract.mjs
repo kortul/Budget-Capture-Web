@@ -71,6 +71,9 @@ assert.match(html,/id="profile-expenses"/,'profile editor must expose category g
 for(const id of ['expenses-total','incomes-total']) assert(known.has(id),`Numbers view must expose ${id}`);
 assert(!known.has('other-list')&&!known.has('other-total')&&!known.has('copy-other'),'Numbers must keep the original two main category tables only');
 assert.match(app,/numbersCategoryTotals\(rows,profile\.categories\)/,'Numbers must calculate totals across every profile category group');
+assert.ok(app.includes('resolveCurrencyRows(bankRows,curr.value)'),'Numbers must resolve exactly one currency bucket before calculating totals');
+assert.ok(app.includes('currencyAmbiguous')&&app.includes('Автоматический расчёт остановлен'),'Numbers must stop and explain when Auto cannot select a single currency safely');
+assert.ok(app.includes("['copy-expenses','copy-incomes','copy-analytics-expense-total'"),'copy actions must be disabled while the currency selection is ambiguous');
 assert.doesNotMatch(app,/numberPayloads\.other|copy-other/,'Numbers must not expose a third Other table or copy action');
 assert.match(html,/id="profile-special-input-category"/,'profile editor must expose special Numbers labels');
 assert.match(html,/Yandex Bank/,'Yandex bank import instructions must be visible');

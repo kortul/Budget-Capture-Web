@@ -56,6 +56,21 @@ export function displayMoney(cents, currency='RUB') {
   return `${sign}${grouped}${frac?','+frac:''}${currency?' '+currency:''}`;
 }
 
+const RUBLE_CURRENCIES=new Set(['RUB','RUR','₽','РУБ','РУБ.','РУБЛЬ','РУБЛЯ','РУБЛЕЙ']);
+function canonicalCurrency(value){
+  const code=String(value??'').trim().toUpperCase();
+  return !code||RUBLE_CURRENCIES.has(code)?'RUB':code;
+}
+export function resolveCurrencyRows(rows=[],selectedCurrency=''){
+  const source=Array.isArray(rows)?rows:[];
+  const currencies=[...new Set(source.map(row=>canonicalCurrency(row?.currency)))].sort((a,b)=>a==='RUB'?-1:b==='RUB'?1:a.localeCompare(b,'en'));
+  const selected=String(selectedCurrency??'').trim();
+  const currency=selected?canonicalCurrency(selected):currencies.includes('RUB')?'RUB':currencies.length===1?currencies[0]:'';
+  const ambiguous=!currency&&currencies.length>1;
+  const filteredRows=currency?source.filter(row=>canonicalCurrency(row?.currency)===currency):[];
+  return {currency,currencies,rows:filteredRows,ambiguous};
+}
+
 export function sortCategoriesAlphabetically(categories=[]) {
   const collator=new Intl.Collator('ru-RU',{sensitivity:'base',numeric:true});
   return [...(Array.isArray(categories)?categories:[])].sort((a,b)=>
