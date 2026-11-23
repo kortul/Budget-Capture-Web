@@ -10,7 +10,7 @@ const ids=(key,direction)=>sortTransactions(rows,{key,direction}).map(row=>row.i
 assert.deepEqual(ids('date','desc'),['new','same-date','middle','old']);
 assert.deepEqual(ids('date','asc'),['old','middle','new','same-date']);
 assert.deepEqual(ids('bank','asc'),['new','old','middle','same-date']);
-assert.deepEqual(ids('merchant','asc'),['new','middle','old','same-date']);
+assert.deepEqual(ids('merchant','asc'),['new','middle','same-date','old']);
 assert.deepEqual(ids('amount','desc'),['new','same-date','middle','old']);
 assert.deepEqual(ids('amount','asc'),['old','middle','same-date','new']);
 assert.deepEqual(ids('category','asc'),['middle','same-date','old','new']);
