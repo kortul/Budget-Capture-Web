@@ -76,6 +76,9 @@ try {
   assert.equal(response.status(),200,'site root must be served under a repository subpath');
   await page.waitForFunction(()=>document.querySelector('#new-db')&&!document.querySelector('#new-db').disabled,{},{timeout:20000});
   assert.equal(await page.locator('#app-version').textContent(),'0.1.6.0');
+  assert.equal(await page.locator('[data-tab="overview"]').getAttribute('class'),'main-tab active','overview must be the default landing screen');
+  assert.equal(await page.locator('#overview-empty').isVisible(),true,'overview must explain how to open a database when none is loaded');
+  assert.equal(await page.locator('#overview-content').isVisible(),false,'financial totals must stay hidden until a database is opened');
   assert.equal(await page.locator('#dependency-warning').isVisible(),false,'same-origin SQLite runtime should load');
   const pdfResourceSamples = await page.evaluate(async () => {
     const manifestResponse = await fetch('./asset-manifest.json');
@@ -174,6 +177,13 @@ try {
   assert.match(firstImportResult.heading,/^Import complete/i,'first import must complete successfully');
   assert.equal(firstImportResult.metrics.Imported,'1','first import must insert one transaction');
   assert.equal(firstImportResult.metrics['Duplicates skipped'],'0','first import must not report duplicates');
+  await page.locator('[data-tab="overview"]').click();
+  await page.locator('#overview-month').fill('2026-10');
+  await page.waitForFunction(()=>document.querySelector('#overview-income-total')?.textContent==='123,45 RUB');
+  assert.equal(await page.locator('#overview-review-count').textContent(),'1','overview must count imported unconfirmed transactions');
+  assert.equal(await page.locator('#overview-unallocated-count').textContent(),'1','overview must surface imported transactions without a category');
+  assert.equal(await page.locator('#overview-expenses-total').textContent(),'0 RUB','cash-flow expense KPI must not mistake a positive bank inflow for an expense');
+  assert.match(await page.locator('#overview-daily-chart').innerText(),/31/,'historical monthly chart must render its final date label');
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
