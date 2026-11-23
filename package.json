@@ -8,7 +8,7 @@
   },
   "description": "Private local-file Budget Capture web app with same-origin pinned browser libraries and E2E tests",
   "scripts": {
-    "test": "node tests/core_smoke.mjs && node tests/profile_migration.mjs && node tests/db_roundtrip.mjs && node tests/app_contract.mjs && node tests/build_contract.mjs && node tests/root_publish_contract.mjs && node tests/lockfile_guard.mjs && node tests/windows_compat.mjs && node tests/yandex_pdf.mjs",
+    "test": "node tests/core_smoke.mjs && node tests/transaction_sort.mjs && node tests/profile_migration.mjs && node tests/db_roundtrip.mjs && node tests/app_contract.mjs && node tests/build_contract.mjs && node tests/root_publish_contract.mjs && node tests/lockfile_guard.mjs && node tests/windows_compat.mjs && node tests/yandex_pdf.mjs",
     "build:pages": "node scripts/build-pages.mjs",
     "test:dist": "node tests/dist_contract.mjs",
     "test:e2e": "node tests/e2e.mjs && node tests/numbers_import_e2e.mjs",
