@@ -68,11 +68,16 @@ try {
   browser = await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
   const context = await browser.newContext({acceptDownloads:true});
   const page = await context.newPage();
+  await page.setViewportSize({width:390,height:844});
   const pageErrors=[]; const externalRequests=[]; const failedRequests=[];
   page.on('pageerror', e => pageErrors.push(e.message));
   page.on('request', req => { if(new URL(req.url()).origin!==origin) externalRequests.push(req.url()); });
   page.on('requestfailed', req => failedRequests.push(`${req.url()} · ${req.failure()?.errorText||'failed'}`));
   const response=await page.goto(origin+basePath,{waitUntil:'networkidle',timeout:30000});
+  assert.equal(await page.locator('.main-tabs').evaluate(el=>getComputedStyle(el).position),'fixed','mobile navigation must stay reachable at the bottom');
+  assert.match(await page.locator('.main-tab[data-tab="overview"]').evaluate(el=>getComputedStyle(el,'::before').content),/Обзор/,'mobile navigation must use a readable compact label');
+  assert.equal(await page.locator('.main-tabs').isVisible(),true,'mobile navigation must remain visible');
+  await page.setViewportSize({width:1280,height:800});
   assert.equal(response.status(),200,'site root must be served under a repository subpath');
   await page.waitForFunction(()=>document.querySelector('#new-db')&&!document.querySelector('#new-db').disabled,{},{timeout:20000});
   assert.equal(await page.locator('#app-version').textContent(),'0.1.6.0');
