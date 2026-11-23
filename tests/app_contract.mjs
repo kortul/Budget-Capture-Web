@@ -10,6 +10,11 @@ const analytics=fs.readFileSync(path.join(root,'numbers-analytics.html'),'utf8')
 const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'HTML IDs must be unique');
+assert.match(html,/id="tab-overview" class="tab-panel active"/,'the action-oriented overview must be the first workspace');
+assert.match(html,/id="overview-daily-chart"/,'overview must include daily cash-flow visualization');
+assert.match(app,/function\s+renderOverview\s*\(/,'overview must be calculated from the opened database');
+assert.ok(app.includes("overviewOpenReview('pending')")&&app.includes("overviewOpenReview('unallocated')"),'overview attention items must open the relevant review filters');
+assert.ok(app.includes('overviewCompare(current,previous,kind,currency)'),'overview must compare the selected period to the previous matching period');
 assert.match(html,/<b id="app-version">0\.1\.6\.0<\/b>/,'visible footer version must match the current web build');
 const known=new Set(ids);
 const used=new Set([...app.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]));
