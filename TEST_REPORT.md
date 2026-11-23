@@ -1,34 +1,37 @@
-# Test report — актуальное состояние на 21 ноября 2026
+# Test report — актуальное состояние на 24 ноября 2026
 
-**Текущий publishing path:** GitHub Pages → Deploy from a branch → `main` → `/(root)`. GitHub Actions удалены и не являются частью тестового или publishing процесса.
+**Текущий publishing path:** GitHub Pages → Deploy from a branch → `main` → `/(root)` (описан в checkpoint; фактический source mode GitHub Pages из этого подключения не подтверждён). GitHub Actions намеренно отсутствуют.
 
-## Изменения с последнего отчёта
+## UI polish и исправления — 24 ноября 2026
 
-- Build включает все три HTML-страницы, включая обе Numbers-страницы.
-- Добавлен безопасный скрипт `publish:root`, который после SHA-256 проверки копирует готовый production build из `dist/` в корень репозитория.
-- `vendor/` переведён в tracked content (убран из `.gitignore`); `dist/` остаётся ignored.
-- Build проверяет same-origin CSP и отсутствие CDN на всех трёх страницах.
-- Добавлен новый Numbers Chromium E2E: история в отдельной таблице, exported `.budget`, повторная замена истории, защита live transactions/categories, reopen analytics.
-- Добавлено HTML escaping для названий категорий в Numbers preview/matching/analytics.
-- Workflow contract test удалён из `npm test`; проверки root publishing закрепляют отсутствие Pages workflows.
+- Главный экран заменён на действие-ориентированный **Обзор**: расходы/поступления, чистый денежный поток, сравнение с предыдущим сопоставимым периодом, дневная динамика, изменения расходных категорий, незавершённые операции и последние транзакции.
+- Исправлено сравнение валют: валюта выбирается по финансовым операциям обеих частей сравнения; собственные переводы и технические строки типа `review` не создают ложную неоднозначность.
+- Границы месячных выборок переведены на исключительную дату следующего дня, чтобы операции с временем в последний день месяца не выпадали.
+- Последние операции фильтруются той же валютой, что и обзор; для пустого месяца есть отдельное состояние графика.
+- Фильтр «Не распределено» теперь охватывает и пустые значения категории; кнопка обзора ведёт в соответствующий список.
+- Добавлены видимые состояния фокуса с клавиатуры, доступная подпись графика и поддержка `prefers-reduced-motion`.
+- Добавлены regression assertions и Chromium E2E-проверки обзора и перехода к нераспределённым операциям.
+- Обновлён корневой `asset-manifest.json`; SHA-256 и размеры трёх изменённых production-файлов (`index.html`, `app.js`, `styles.css`) повторно рассчитаны и совпадают с manifest.
 
-## Фактический статус
+## Проверки, фактически выполненные в этой сессии
 
-| Проверка | Состояние |
-|---|---|
-| GitHub source updates | Записаны в `main` |
-| Actions workflows | Удалены |
-| Numbers pages in production build | Включены в builder; локальный build ещё не выполнялся после изменений |
-| Local vendor assets in root | **Отсутствуют до локального publish:root** |
-| `npm ci` / `npm test` after latest changes | Не запускались |
-| `npm run test:dist` after latest changes | Не запускался |
-| App Chromium E2E | Не запускался после последних изменений |
-| Numbers Chromium E2E | Добавлен, но не запускался |
-| Direct Pages source Settings | Не подтверждены из подключения; проверить вручную |
-| Public browser smoke test | Не выполнен |
+| Проверка | Результат | Объём |
+|---|---|---|
+| JS/MJS syntax parsing | PASS | `app.js`, `core.js`, `profile.js`, `tests/app_contract.mjs`, `tests/e2e.mjs` |
+| DOM contract | PASS | 138 уникальных ID, 0 дубликатов, 0 отсутствующих ID-селекторов |
+| Navigation / panels | PASS | все 6 пунктов навигации соответствуют секциям; ровно одна активная секция |
+| Overview regression source checks | PASS | валюта, границы дат, пустые категории, выбранная валюта в последних операциях |
+| Production manifest entries | PASS | SHA-256 и байты совпадают для изменённых `index.html`, `app.js`, `styles.css` |
+| Runtime metadata | PASS | версии манифестов совпадают с приложением; основные SQL.js/SheetJS-файлы присутствуют |
+| `npm test` / `npm run test:e2e` | NOT RUN | нет локального checkout и доступного Node/Playwright прогона в этой сессии |
+| GitHub CI status | NOT RUN | Actions удалены из проекта; API не вернул status checks |
+| Public browser smoke test | NOT RUN | открытая production-страница не проверялась |
 
-Исторические результаты artifact validation, source tests и прошлых Actions runs ниже относятся к прежней сборке и не подтверждают текущие изменения.
+**Не считать полный npm/Chromium прогон пройденным.** Синтаксическая и DOM-проверки — это не замена запуску приложения в браузере. Ближайшая локальная проверка на машине проекта: `npm test`, затем `npm run test:e2e`, `npm run build:pages` и `npm run test:dist`.
 
+
+---
+# Test report — Budget Capture Web 0.1.6.0
 ---
 # Test report — Budget Capture Web 0.1.6.0
 
