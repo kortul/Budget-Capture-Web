@@ -11,8 +11,8 @@
   "delivery": "same-origin GitHub Pages assets; no third-party CDN runtime fallback",
   "assets": {
     "index.html": {
-      "bytes": 21291,
-      "sha256": "ef5429ef60c14aa87affae2b4519a5f4cc614ddaa2c21a4e2b5ebd2247fac7a5"
+      "bytes": 26672,
+      "sha256": "135162f978cdc34f71f10e101009e861bf71ea60e1c60e6aa7f05959be824973"
     },
     "numbers-import.html": {
       "bytes": 18243,
@@ -23,12 +23,12 @@
       "sha256": "facd3a65a32db476749d58aa556e44a2a72e7f2968ff92d9e36d7f7b20be35df"
     },
     "styles.css": {
-      "bytes": 18459,
-      "sha256": "64a36754897302c7957d4877fbe9a1830a23ec986189ae60cde93bff998b9e3a"
+      "bytes": 27085,
+      "sha256": "0b546b980a638f42e90138f3fbc6dff7dfbdd16573226c2bd506c7b10b0cddd7"
     },
     "app.js": {
-      "bytes": 56763,
-      "sha256": "21e4bc60bbf89f99867a911cf43a9cc98053d3b75c00363f2d961f7bbb148770"
+      "bytes": 70950,
+      "sha256": "9584beb50b3cd56003548441a53ef88108c4a2dfc978da528731cb15c75cd6f6"
     },
     "core.js": {
       "bytes": 45708,
