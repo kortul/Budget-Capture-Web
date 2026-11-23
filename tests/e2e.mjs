@@ -293,11 +293,11 @@ try {
   assert.equal(await analyticsPage.locator('#period-view').isVisible(),false,'Period analysis must be a separate inactive tab');
   assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'-27 500 ₽','default month must show that month only');
   assert.equal(await analyticsPage.locator('#month-insights .a-month-insight').count(),4,'Month view must show two headline insights plus category growth and anomaly analysis');
-  const growthText=await analyticsPage.locator('#month-insights').nth(2).textContent();
+  const growthText=await analyticsPage.locator('#month-insights .a-month-insight').nth(2).textContent();
   assert.match(growthText,/Еда/,'three-month comparison must flag the rising Food category');
   assert.match(growthText,/Ремонт/,'three-month comparison must flag the rising Repair category');
-  assert.match(await analyticsPage.locator('#month-insights').nth(3).textContent(),/Ремонт/,'six-month anomaly analysis must flag an unusually high category spend');
-  assert.match(await analyticsPage.locator('#month-insights').nth(3).textContent(),/медиан/i,'anomaly insight must disclose its six-month median baseline');
+  assert.match(await analyticsPage.locator('#month-insights .a-month-insight').nth(3).textContent(),/Ремонт/,'six-month anomaly analysis must flag an unusually high category spend');
+  assert.match(await analyticsPage.locator('#month-insights .a-month-insight').nth(3).textContent(),/медиан/i,'anomaly insight must disclose its six-month median baseline');
   const monthOptions=await analyticsPage.locator('#month-detail-select option').evaluateAll(options=>options.map(option=>option.value));
   assert.deepEqual(monthOptions,['2026-09','2026-10','2026-11'],'Month picker must list all months in the database');
 
