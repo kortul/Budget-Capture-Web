@@ -492,12 +492,15 @@ function renderOverview(){
   const previousEndExclusive=dateKey(new Date(previousYear,previousMonth-1,previousEndDay+1));
   const currentRaw=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL AND tx_date>=? AND tx_date<?',[currentStart,currentEndExclusive]);
   const previousRaw=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL AND tx_date>=? AND tx_date<?',[previousStart,previousEndExclusive]);
-  const currencies=resolveCurrencyRows([...currentRaw,...previousRaw]).currencies;
+  const financialRows=[...currentRaw,...previousRaw].filter(r=>
+    !isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text)&&r.transaction_type!=='review'
+  );
+  const currencies=resolveCurrencyRows(financialRows).currencies;
   const currencySelect=$('overview-currency'),oldCurrency=currencySelect.value;
   currencySelect.innerHTML='<option value="">Авто (RUB, если есть)</option>'+currencies.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
   currencySelect.value=currencies.includes(oldCurrency)?oldCurrency:'';
   // Detect currency ambiguity across both sides of the comparison, not only the current month.
-  const resolution=resolveCurrencyRows([...currentRaw,...previousRaw],currencySelect.value);
+  const resolution=resolveCurrencyRows(financialRows,currencySelect.value);
   const attentionRows=currentRaw.filter(r=>!isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text));
   const awaiting=attentionRows.filter(r=>r.status!=='Confirmed');
   const unallocated=attentionRows.filter(r=>!String(r.category||'').trim()||String(r.category).trim()==='Не распределено');
