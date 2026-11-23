@@ -17,6 +17,8 @@ for(const name of ['saveDatabase','newDatabase','openDatabaseFile','importFiles'
   assert.match(app,new RegExp(`function\\s+${name}\\s*\\(`),`${name} handler must be defined`);
 }
 assert.match(app,/function\s+saveDatabase\s*\(/,'database save function is wired and defined');
+assert.match(app,/r\.status==='Confirmed'\?' class="is-confirmed"'/,'confirmed transaction rows must receive the green-highlight state class');
+assert.match(fs.readFileSync(path.join(root,'styles.css'),'utf8'),/\.transactions-table tbody tr\.is-confirmed>td\{background:/,'confirmed transaction rows must have a visible row-wide highlight');
 assert.match(app,/databaseNeedsSave\(db\)/,'SQLite migration state must be checked after opening');
 assert.match(app,/loadGlobal\('initSqlJs'/,'SQLite library loader must be available');
 assert.doesNotMatch(app,/https?:\/\/(?:cdn\.|cdnjs\.|unpkg\.|jsdelivr\.)/i,'browser runtime must not fall back to third-party CDNs');
