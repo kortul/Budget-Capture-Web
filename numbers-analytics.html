@@ -1155,7 +1155,7 @@ async function loadDatabaseBytes(bytes,name){
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
-  setStatus('Загружена история: '+ruCount(data.length,['запись','записи','записей'])+' · файл: '+dbName+' · период: '+years[0]+'–'+years[years.length-1]+' · источники: '+monthlySources.historyMonths+' мес. Numbers / '+monthlySources.ledgerMonths+' мес. транзакции · исключено операций в валюте, отличной от RUB: '+monthlySources.excludedCurrencyTransactions+' · операций со статусом «На проверку»: '+monthlySources.excludedReviewTransactions+'.','ok');
+  setStatus('Загружена история: '+ruCount(data.length,['запись','записи','записей'])+' · файл: '+dbName+' · период: '+years[0]+'–'+years[years.length-1]+' · источники: '+monthlySources.historyMonths+' мес. Numbers / '+monthlySources.ledgerMonths+' мес. транзакции · исключено операций в валюте, отличной от RUB: '+monthlySources.excludedCurrencyTransactions+' · операций на проверку: '+monthlySources.excludedReviewTransactions+'.','ok');
   return true;
  }catch(error){
   try{opened?.close();}catch{}
