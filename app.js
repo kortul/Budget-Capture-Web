@@ -484,19 +484,23 @@ function renderOverview(){
   const previousDays=new Date(previousYear,previousMonth,0).getDate();
   const previousEndDay=isCurrent?Math.min(currentEndDay,previousDays):previousDays;
   const pad=n=>String(n).padStart(2,'0');
+  const dateKey=date=>date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate());
   const currentStart=monthKey+'-01',currentEnd=monthKey+'-'+pad(currentEndDay);
   const previousStart=previousKey+'-01',previousEnd=previousKey+'-'+pad(previousEndDay);
-  const currentRaw=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL AND tx_date>=? AND tx_date<=?',[currentStart,currentEnd]);
-  const previousRaw=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL AND tx_date>=? AND tx_date<=?',[previousStart,previousEnd]);
+  // Use an exclusive next-day bound so ISO timestamps on the final day are included.
+  const currentEndExclusive=dateKey(new Date(year,month-1,currentEndDay+1));
+  const previousEndExclusive=dateKey(new Date(previousYear,previousMonth-1,previousEndDay+1));
+  const currentRaw=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL AND tx_date>=? AND tx_date<?',[currentStart,currentEndExclusive]);
+  const previousRaw=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL AND tx_date>=? AND tx_date<?',[previousStart,previousEndExclusive]);
   const currencies=resolveCurrencyRows([...currentRaw,...previousRaw]).currencies;
   const currencySelect=$('overview-currency'),oldCurrency=currencySelect.value;
   currencySelect.innerHTML='<option value="">Авто (RUB, если есть)</option>'+currencies.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
   currencySelect.value=currencies.includes(oldCurrency)?oldCurrency:'';
-  const currencySource=currentRaw.length?currentRaw:previousRaw;
-  const resolution=resolveCurrencyRows(currencySource,currencySelect.value);
+  // Detect currency ambiguity across both sides of the comparison, not only the current month.
+  const resolution=resolveCurrencyRows([...currentRaw,...previousRaw],currencySelect.value);
   const attentionRows=currentRaw.filter(r=>!isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text));
   const awaiting=attentionRows.filter(r=>r.status!=='Confirmed');
-  const unallocated=attentionRows.filter(r=>String(r.category||'').trim()==='Не распределено');
+  const unallocated=attentionRows.filter(r=>!String(r.category||'').trim()||String(r.category).trim()==='Не распределено');
   $('overview-period-caption').textContent='Период: '+overviewPeriodLabel(monthKey,currentEndDay)+' · сравнение: '+overviewPeriodLabel(previousKey,previousEndDay);
   $('overview-pending-count').textContent=awaiting.length.toLocaleString('ru-RU');
   $('overview-unallocated-count').textContent=unallocated.length.toLocaleString('ru-RU');
@@ -552,7 +556,8 @@ function renderOverview(){
     }
     const maxValue=Math.max(1,...dayValues.flatMap(x=>[x.expense,x.income]));
     $('overview-daily-chart').style.setProperty('--overview-days',String(Math.max(dayValues.length,1)));
-    $('overview-daily-chart').innerHTML=dayValues.length?dayValues.map(item=>{
+    const hasDailyActivity=dayValues.some(item=>item.expense>0||item.income>0);
+    $('overview-daily-chart').innerHTML=hasDailyActivity?dayValues.map(item=>{
       const expenseHeight=item.expense?Math.max(3,item.expense/maxValue*100):0;
       const incomeHeight=item.income?Math.max(3,item.income/maxValue*100):0;
       const label=item.day===1||item.day%5===0||item.day===currentEndDay?item.day:'';
@@ -574,8 +579,12 @@ function renderOverview(){
       '<div class="overview-change-row"><span class="overview-change-name">'+esc(item.name)+'</span><span class="overview-change-direction '+(item.delta>0?'bad':'good')+'">'+(item.delta>0?'Больше':'Меньше')+'</span><strong class="'+(item.delta>0?'bad':'good')+'">'+(item.delta>0?'+':'−')+displayMoney(Math.abs(item.delta),knownCurrency)+'</strong></div>'
     ).join(''):'<div class="overview-chart-empty">Нет заметных изменений в расходных категориях.</div>';
   }
-  const recent=attentionRows.filter(r=>r.transaction_type!=='review').sort((a,b)=>String(b.tx_date||'').localeCompare(String(a.tx_date||''))).slice(0,6);
-  $('overview-recent-list').innerHTML=recent.length?recent.map(row=>{
+  const recentSource=resolution.ambiguous?[]:resolveCurrencyRows(currentRaw,currencySelect.value).rows;
+  const recent=recentSource.filter(r=>!isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text)&&r.transaction_type!=='review')
+    .sort((a,b)=>String(b.tx_date||'').localeCompare(String(a.tx_date||''))).slice(0,6);
+  $('overview-recent-list').innerHTML=resolution.ambiguous
+    ?'<div class="overview-chart-empty">Выбери валюту, чтобы увидеть операции.</div>'
+    :recent.length?recent.map(row=>{
     const cents=amountCents(row.amount)||0,merchant=row.merchant||row.description||'Без описания';
     return '<div class="overview-recent-row"><div><strong>'+esc(merchant)+'</strong><small>'+esc(row.tx_date)+' · '+esc(row.category||'Без категории')+' · '+esc(row.account||'')+'</small></div><b class="'+(cents>0?'income':'expense')+'">'+esc(displayMoney(cents,row.currency||'RUB'))+'</b></div>';
   }).join(''):'<div class="overview-chart-empty">Нет операций за выбранный период.</div>';
