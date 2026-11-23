@@ -1,46 +1,40 @@
 <!-- CURRENT STATUS: DIRECT MAIN ROOT PUBLISHING -->
-# Budget Capture Web — актуальная контрольная точка 0.1.6.0 · 21 ноября 2026
+# Budget Capture Web — актуальная контрольная точка 0.1.6.0 · 24 ноября 2026
+
+## Актуальные изменения интерфейса — 24 ноября 2026
+
+- Вкладка **Обзор** стала стартовым экраном: месячные KPI, дневной график движения денег, сравнение категорий, список задач учёта и последние операции.
+- Обзор использует данные открытого локального `.budget`-файла; схему SQLite и финансовые данные не менял.
+- Исправлены границы выборок по датам, выбор валюты между сравниваемыми месяцами, последние операции при выборе валюты и пустые категории при переходе в Review.
+- Добавлены мобильные стили, фокус для клавиатуры, описание графика для assistive technology и reduced-motion.
+- Расширены `tests/app_contract.mjs` и `tests/e2e.mjs`.
+- Корневой `asset-manifest.json` синхронизирован с обновлёнными `index.html`, `app.js`, `styles.css`; контрольные суммы и размеры этих трёх файлов сверены.
 
 ## Текущая архитектура публикации
 
 **Подробная точка продолжения:** [`CHECKPOINT_DIRECT_PAGES_2026-11-21_RU.md`](CHECKPOINT_DIRECT_PAGES_2026-11-21_RU.md).
 
-**GitHub Pages: Deploy from a branch → main → /(root). GitHub Actions не используются.** Оба workflow удалены из `.github/workflows/`; в `npm test` нет теста, требующего этих workflow. Не восстанавливать Actions.
+**GitHub Pages: Deploy from a branch → main → /(root). GitHub Actions не используются.** Не восстанавливать Actions.
 
-## Что изменено после перехода на прямую публикацию
+## Фактический статус
 
-- `scripts/build-pages.mjs` создаёт production `dist/` и включает `index.html`, `numbers-import.html`, `numbers-analytics.html`, приложение, стили, локальные runtime assets, PDF.js CMaps/fonts/WASM/ICC и лицензии. Build проверяет same-origin CSP и отсутствие CDN-ссылок на всех трёх HTML-страницах.
-- `scripts/publish-root.mjs` копирует проверенный production build из `dist/` в корень репозитория. Перед копированием он проверяет manifest, версию приложения, SHA-256 и размеры всех assets, обязательные HTML-страницы и отсутствие финансовых файлов. Требует явный флаг `--publish`.
-- `scripts/publish-root.mjs` теперь дополнительно требует точное совпадение всех файлов сборки с allow-list из manifest: лишние или пропущенные файлы блокируют публикацию.
-- `scripts/build-pages.mjs` поддерживает fallback на проверенный `vendor/` без `node_modules`: проверяет точный набор из 212 runtime-файлов, версии и SHA-256 из `vendor/runtime-manifest.json`. Если `node_modules` установлен частично, но найденные версии правильные, builder также безопасно переходит на vendor fallback; если обнаружена неверная установленная версия — останавливается.
-- Создан проверенный vendor-only ZIP в текущем разговоре: `Budget-Capture-vendor-runtime-0.1.6.0.zip`. Проверены 218/218 исходных production assets и 212/212 файлов runtime bundle. Сам архив ещё не извлечён и не закоммичен в `main`.
-- `package.json` содержит `npm run publish:root`: build + safe copy to repository root.
-- `.gitignore` игнорирует `dist/`, но не `vendor/`. При прямой публикации `vendor/` должен быть закоммичен.
-- README и resume-инструкция обновлены под branch-root publishing.
-- `numbers-import.html`: исправлены состояния disabled для Import/Export при смене файлов; невалидная SQLite-копия закрывается; категории из Excel/SQLite экранируются перед вставкой в HTML.
-- `numbers-analytics.html`: категории экранируются перед вставкой в HTML.
-- Добавлен `tests/numbers_import_e2e.mjs`: проверяет загрузку XLSX, preview, запись в `numbers_history`, экспорт `.budget`, повторный импорт без накопления дублей, неизменность `transactions` и live categories и последующее чтение Financial Analytics.
-- `npm run test:e2e` теперь включает app E2E и Numbers E2E.
+- Все UI/source изменения сохранены непосредственно в `main`.
+- JS/MJS syntax parsing: PASS для `app.js`, `core.js`, `profile.js`, `tests/app_contract.mjs`, `tests/e2e.mjs`.
+- DOM sanity: 138 уникальных ID, дубликатов нет, все статические `$('id')` найдены, навигация и секции совпадают.
+- Production asset manifest: 221 записи; контрольные суммы/размеры изменённых `index.html`, `app.js`, `styles.css` совпадают.
+- Runtime metadata и основные entrypoints vendor-библиотек присутствуют в `main`; версии приложения и runtime manifest совпадают — 0.1.6.0.
+- Полные `npm test`, `npm run test:e2e`, `npm run build:pages`, `npm run test:dist` в этой сессии **не запускались**. Не заявлять их как PASS.
+- GitHub status checks не вернули результатов; это ожидаемо при удалённых Actions workflows, но не доказывает успешный браузерный прогон.
+- Публичная страница в браузере и фактические настройки Pages source mode не подтверждены из этой сессии.
 
-## Текущий проверенный статус
+## Следующий локальный шаг
 
-- Новые fallback/publisher source tests добавлены, но после последних изменений локально не запускались.
-- Следующий локальный шаг теперь не требует npm registry: установить vendor bundle, затем `npm test`, `npm run publish:root`, `npm run test:dist`; Chromium E2E требует Playwright и запускается отдельно.
-- Код и конфигурация этих изменений сохранены непосредственно в `main`.
-- Приложение остаётся версии **0.1.6.0**.
-- Существующий `package-lock.json` не изменён.
-- Исторический vendor artifact от более ранней сборки содержит проверенные версии sql.js 1.16.0, PDF.js 6.5.438, SheetJS 0.20.3; он послужил ориентиром, но его файлы ещё не перенесены в корень `main`.
-- `vendor/` **ещё не присутствует в корне main**. Поэтому прямую публикацию с готовыми runtime assets пока нельзя считать завершённой.
-- GitHub API metadata подтверждает `has_pages: true` и default branch `main`; точный source mode не удалось прочитать через подключение. Требуется вручную подтвердить `Deploy from a branch`, Branch `main`, Folder `/(root)`.
-- После последних изменений не выполнялись локально `npm ci`, `npm test`, `npm run build:pages`, `npm run publish:root`, `npm run test:dist` и Chromium E2E. Результаты этих тестов не заявлять как PASS.
-- Опубликованный сайт и Numbers-страницы в браузере ещё не проверены.
+На машине проекта обновить checkout из `main`, выполнить `npm test`, затем `npm run test:e2e`, `npm run build:pages` и `npm run test:dist`. После этого проверить Git status и выполнить браузерный smoke test на синтетической базе: открыть → импортировать тестовую выписку → Review → сохранить → открыть снова → Financial Analytics. Пользовательскую финансовую базу не использовать для первого теста.
 
-## Следующий шаг
+- Версия приложения остаётся **0.1.6.0**; `package-lock.json` не менялся.
 
-На локальной Windows-машине скачать vendor ZIP из текущего разговора, установить `vendor/` командой `Install-Vendor.ps1 -ProjectRoot 'C:\path\to\Budget-Capture-Web'`, затем выполнить `npm test`, `npm run publish:root`, `npm run test:dist`, `git status --short`. Это работает без npm registry: builder проверит все файлы из `vendor/runtime-manifest.json`. Chromium E2E запускается отдельно только при установленном Playwright (`npm run test:e2e`). После проверки изучить Changes, сделать обычный commit и Push origin.
-
-После публикации проверить Pages в браузере и пройти import → download `.budget` → повторное открытие → Analytics на синтетической тестовой базе. Пользовательскую финансовую базу не использовать для первого теста.
-
+---
+> Всё ниже этой строки сохранено как исторический контекст прежней архитектуры Actions и не описывает текущий publishing plan.
 ---
 > Всё ниже этой строки сохранено как исторический контекст прежней архитектуры Actions и не описывает текущий publishing plan.
 
