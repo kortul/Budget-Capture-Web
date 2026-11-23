@@ -184,6 +184,10 @@ try {
   assert.equal(await page.locator('#overview-unallocated-count').textContent(),'1','overview must surface imported transactions without a category');
   assert.equal(await page.locator('#overview-expenses-total').textContent(),'0 RUB','cash-flow expense KPI must not mistake a positive bank inflow for an expense');
   assert.match(await page.locator('#overview-daily-chart').innerText(),/31/,'historical monthly chart must render its final date label');
+  await page.locator('#overview-review-unallocated').click();
+  assert.equal(await page.locator('#filter-category').inputValue(),'Не распределено','the overview action must set the unallocated category filter');
+  await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
+  assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/,'the unallocated action must open the matching transaction, not the full list');
   await page.locator('[data-tab="review"]').click();
   await page.waitForFunction(()=>document.querySelector('#transaction-count')?.textContent==='1');
   assert.match(await page.locator('#transactions-body').innerText(),/E2E MARKET/);
