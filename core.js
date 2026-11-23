@@ -573,3 +573,35 @@ export function inferMonth(rows){
   return [...counts.entries()].sort((a,b)=>b[1]-a[1]||b[0].localeCompare(a[0]))[0]?.[0]||monthNowPrevious();
 }
 export function inferAccountForBank(bank){return ({SBER:'SBER',TBANK:'TBANK',RAIFFEISEN:'RAIFFEISEN',YANDEX:'YANDEX'})[bank]||bank;}
+
+/** Sort transactions for Review; signed amounts are compared as signed values. */
+export function sortTransactions(rows, sort = {}) {
+  const keys = new Set(['date','bank','merchant','amount','category','done','heart']);
+  const key = keys.has(sort?.key) ? sort.key : 'date';
+  const defaults = {date:'desc',bank:'asc',merchant:'asc',amount:'desc',category:'asc',done:'desc',heart:'desc'};
+  const direction = sort?.direction==='asc'||sort?.direction==='desc' ? sort.direction : defaults[key];
+  const factor = direction==='asc' ? 1 : -1;
+  const collator = new Intl.Collator('ru',{numeric:true,sensitivity:'base'});
+  const string = value => String(value??'').trim();
+  const number = value => { const n=Number(value); return Number.isFinite(n)?n:0; };
+  const compare = (a,b) => {
+    let result=0;
+    switch(key){
+      case 'date': result=collator.compare(string(a.tx_date),string(b.tx_date)); break;
+      case 'bank': result=collator.compare(string(a.account),string(b.account)); break;
+      case 'merchant':
+        result=collator.compare(string(a.merchant||a.description),string(b.merchant||b.description));
+        if(!result)result=collator.compare(string(a.description),string(b.description));
+        break;
+      case 'amount': result=number(a.amount)-number(b.amount); break;
+      case 'category': result=collator.compare(string(a.category),string(b.category)); break;
+      case 'done': result=Number(a.status==='Confirmed')-Number(b.status==='Confirmed'); break;
+      case 'heart': result=Number(Boolean(number(a.highlighted_flag)))-Number(Boolean(number(b.highlighted_flag))); break;
+    }
+    return result*factor;
+  };
+  return (Array.isArray(rows)?rows:[])
+    .map((row,index)=>({row,index}))
+    .sort((a,b)=>compare(a.row,b.row)||a.index-b.index)
+    .map(item=>item.row);
+}
