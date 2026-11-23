@@ -6,6 +6,8 @@ const root=path.resolve(new URL('..',import.meta.url).pathname);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 const e2e=fs.readFileSync(path.join(root,'tests/e2e.mjs'),'utf8');
+const analytics=fs.readFileSync(path.join(root,'numbers-analytics.html'),'utf8');
+const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'HTML IDs must be unique');
 assert.match(html,/<b id="app-version">0\.1\.6\.0<\/b>/,'visible footer version must match the current web build');
@@ -17,6 +19,15 @@ for(const name of ['saveDatabase','newDatabase','openDatabaseFile','importFiles'
   assert.match(app,new RegExp(`function\\s+${name}\\s*\\(`),`${name} handler must be defined`);
 }
 assert.match(app,/function\s+saveDatabase\s*\(/,'database save function is wired and defined');
+assert.ok(core.includes('export function sortTransactions('),'transaction sort helper must be exported and testable');
+for(const key of ['date','bank','merchant','amount','category','done','heart']) assert.ok(html.includes('data-sort-key="'+key+'"'),`Review table must expose sorting for ${key}`);
+assert.ok(app.includes('sortTransactions(rows,state.transactionSort)'),'visible transactions must use the selected table sort');
+assert.ok(!app.includes('filter-sort')&&!html.includes('id="filter-sort"'),'obsolete standalone sort selector must be removed');
+assert.ok(analytics.includes('Баланс без магазина и KGR'),'non-shop balance label must disclose KGR exclusion');
+assert.ok(analytics.includes('Поступления вне магазина:'),'non-shop balance must explain income and expense bases');
+assert.ok(analytics.includes("normalized(row.category)!=='kgr'"),'non-shop calculation must explicitly exclude KGR rather than a manual whitelist');
+assert.ok(!analytics.includes('MONTH_DETAIL_MANUAL_RULES'),'non-shop calculation must not rely on a hard-coded category whitelist');
+
 assert.match(app,/r\.status==='Confirmed'\?' class="is-confirmed"'/,'confirmed transaction rows must receive the green-highlight state class');
 assert.match(fs.readFileSync(path.join(root,'styles.css'),'utf8'),/\.transactions-table tbody tr\.is-confirmed>td\{background:/,'confirmed transaction rows must have a visible row-wide highlight');
 assert.match(app,/databaseNeedsSave\(db\)/,'SQLite migration state must be checked after opening');
