@@ -196,7 +196,10 @@ function filteredTransactions(){
   if(month&&monthOf(r.tx_date)!==month)return false;
   if(bank&&r.account!==bank)return false;
   if(status&&r.status!==status)return false;
-  if(category&&r.category!==category)return false;
+  if(category==='Не распределено'){
+   const rowCategory=String(r.category??'').trim();
+   if(rowCategory&&rowCategory!=='Не распределено')return false;
+  }else if(category&&r.category!==category)return false;
   if(!showInternal&&isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text))return false;
   if(search&&![r.description,r.merchant,r.account,r.notes,r.raw_text].join(' ').toLocaleLowerCase('ru-RU').replaceAll('ё','е').includes(search))return false;
   return true;
@@ -582,7 +585,9 @@ function renderOverview(){
       '<div class="overview-change-row"><span class="overview-change-name">'+esc(item.name)+'</span><span class="overview-change-direction '+(item.delta>0?'bad':'good')+'">'+(item.delta>0?'Больше':'Меньше')+'</span><strong class="'+(item.delta>0?'bad':'good')+'">'+(item.delta>0?'+':'−')+displayMoney(Math.abs(item.delta),knownCurrency)+'</strong></div>'
     ).join(''):'<div class="overview-chart-empty">Нет заметных изменений в расходных категориях.</div>';
   }
-  const recentSource=resolution.ambiguous?[]:resolveCurrencyRows(currentRaw,currencySelect.value).rows;
+  const recentSource=resolution.ambiguous?[]:resolveCurrencyRows(
+    financialRows.filter(r=>monthOf(r.tx_date)===monthKey),currencySelect.value
+  ).rows;
   const recent=recentSource.filter(r=>!isInternalTransfer(r.transaction_type,r.category,r.description,r.merchant,r.notes,r.raw_text)&&r.transaction_type!=='review')
     .sort((a,b)=>String(b.tx_date||'').localeCompare(String(a.tx_date||''))).slice(0,6);
   $('overview-recent-list').innerHTML=resolution.ambiguous
