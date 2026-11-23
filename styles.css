@@ -57,3 +57,20 @@
 @media(max-width:1000px){.overview-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-main-grid{grid-template-columns:minmax(0,1.3fr) minmax(260px,.9fr)}}
 @media(max-width:760px){.overview-heading{align-items:flex-start;flex-direction:column}.overview-controls{width:100%}.overview-controls label{flex:1}.overview-controls input,.overview-controls select{width:100%;min-width:0}.overview-main-grid,.overview-lower-grid{grid-template-columns:1fr}.overview-chart-panel{min-width:0}}
 @media(max-width:480px){.overview-kpis{grid-template-columns:1fr 1fr;gap:8px}.overview-kpi{padding:12px}.overview-kpi>strong{font-size:17px}.overview-change-row{gap:7px;grid-template-columns:minmax(0,1fr) auto auto}.overview-panel-heading{flex-wrap:wrap}.overview-recent-row strong{max-width:190px}}
+
+/* Keyboard access and reduced-motion preferences. */
+.button:focus-visible,.main-tab:focus-visible,.bank-tab:focus-visible,.heart-button:focus-visible,.delete-button:focus-visible,
+.overview-controls input:focus-visible,.overview-controls select:focus-visible{
+ outline:2px solid #8bd8b5;outline-offset:3px
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+.overview-chart-empty{min-height:120px;display:flex;align-items:center;justify-content:center;border:1px dashed #34414d;border-radius:9px}
+.overview-attention-item .button:disabled{visibility:hidden}
+.overview-recent-row small{overflow-wrap:anywhere}
+@media(max-width:700px){
+ .overview-chart-legend{font-size:9px}
+ .overview-kpi>small{min-height:35px}
+ .overview-panel-heading{align-items:flex-start}
+}
