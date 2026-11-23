@@ -299,8 +299,12 @@ function renderNumbers(){
   $('incomes-total').textContent=displayMoney(summary.income.cents,currency||'');
   const specialInCategory=numbers.specialInput.category;
   const specialOutCategory=numbers.specialOutput.category;
-  const specialIn=specialInCategory?rows.filter(r=>r.category===specialInCategory):[];
-  const specialOut=specialOutCategory?rows.filter(r=>r.category===specialOutCategory):[];
+  const specialInRaw=specialInCategory?rows.filter(r=>r.category===specialInCategory):[];
+  const specialOutRaw=specialOutCategory?rows.filter(r=>r.category===specialOutCategory):[];
+  const specialZeroCount=[...specialInRaw,...specialOutRaw].filter(r=>amountCents(r.amount)===0).length;
+  const specialIn=specialInRaw.filter(r=>amountCents(r.amount)!==null&&amountCents(r.amount)!==0);
+  const specialOut=specialOutRaw.filter(r=>amountCents(r.amount)!==null&&amountCents(r.amount)!==0);
+  const includedInternalCount=rows.filter(r=>isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text)).length;
   document.querySelector('[data-profile-role="special-input"]').hidden=!specialInCategory;
   document.querySelector('[data-profile-role="special-output"]').hidden=!specialOutCategory;
   const sumAbs=items=>items.reduce((sum,row)=>sum+Math.abs(amountCents(row.amount)||0),0);
@@ -320,7 +324,7 @@ function renderNumbers(){
   const unallocatedExpenseCents=unallocatedRows.reduce((sum,row)=>{const cents=amountCents(row.amount);return cents!==null&&cents<0?sum+Math.abs(cents):sum;},0);
   const analyticsExpenseCents=summary.expense.cents+unallocatedExpenseCents;
   $('numbers-integrity').className='integrity-banner '+(unassigned?'review':'pass');
-  $('numbers-integrity').textContent=`${rows.length} transactions · ${expCount} expense-category rows · ${incCount} income-category rows · ${unassigned} unallocated / unknown category rows`;
+  $('numbers-integrity').textContent=`${rows.length} transactions · ${expCount} expense-category rows · ${incCount} income-category rows · ${specialIn.length+specialOut.length} non-zero special-flow rows (${specialIn.length} in / ${specialOut.length} out) · ${specialZeroCount} zero-value special rows excluded · ${includedInternalCount} own transfers included · ${unassigned} unallocated / unknown category rows`;
   $('unallocated-panel').classList.toggle('hidden',!unassigned);
   $('unallocated-count').textContent=`${unassigned} transactions`;
   $('unallocated-expense-total').textContent=displayMoney(unallocatedExpenseCents,currency||'');
