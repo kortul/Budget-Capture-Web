@@ -41,3 +41,5 @@
 .sort-button:focus-visible{outline:2px solid var(--green);outline-offset:3px;border-radius:3px}
 .sort-indicator{font-size:9px;line-height:1;color:#718395;min-width:8px}
 .sort-button[aria-pressed="true"] .sort-indicator{color:var(--green)}
+
+.numbers-method-note{margin:-4px 2px 12px;color:#91a0ad;font-size:10px;line-height:1.5}
