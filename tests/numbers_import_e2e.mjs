@@ -223,6 +223,9 @@ try {
   for (const id of foldoutIds) assert.equal(await analytics.locator('#' + id).getAttribute('open'), null, id + ' must be collapsed after initial load');
   for (const id of ['monthly-balance-chart', 'life-trend-chart', 'life-category-chart', 'sasha-trend-chart', 'sasha-category-chart', 'work-trend-chart', 'shop-trend-chart', 'loan-trend-chart', 'loan-category-chart', 'year-comparison-chart']) assert.equal(await analytics.locator('#' + id).count(), 1, id + ' visualization must be rendered');
   assert.equal(await analytics.locator('#monthly-preview-chart svg').count(), 1, 'monthly balance preview must include a sparkline');
+  // The Life report is now part of the separate Period workspace.
+  await analytics.locator('#report-tab-period').click();
+  assert.equal(await analytics.locator('#period-view').isVisible(),true,'period reports must be opened before accessing their foldouts');
   await analytics.locator('#life > summary').click();
   assert.notEqual(await analytics.locator('#life').getAttribute('open'), null, 'the living expenses panel must expand on click');
   assert.equal(await analytics.locator('#life-trend-chart').isVisible(), true, 'visualization must be visible when its panel is expanded');
