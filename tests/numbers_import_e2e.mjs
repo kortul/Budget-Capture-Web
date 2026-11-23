@@ -340,7 +340,7 @@ try {
     await window.loadDatabaseBytes(bytes, 'Ledger-test.budget');
     return document.querySelector('#status')?.textContent || '';
   });
-  assert.match(ledgerStatus, /4 мес\. Numbers \/ 3 мес\. транзакции · пропущено валютных операций не в RUB: 1 · операций на проверку: 2/, 'Analytics must identify month sources and disclose excluded foreign-currency and review transactions');
+  assert.match(ledgerStatus, /4 мес\. Numbers \/ 3 мес\. транзакции · исключено операций в валюте, отличной от RUB: 1 · операций на проверку: 2/, 'Analytics must identify month sources and disclose excluded foreign-currency and review transactions');
   await ledgerAnalytics.locator('#month-detail-select').selectOption('2026-11');
   assert.match(await ledgerAnalytics.locator('#month-income-total').textContent(), /50.?000/, 'November must calculate income directly from the transaction ledger without a Numbers row');
   assert.match(await ledgerAnalytics.locator('#month-expense-total').textContent(), /10.?000/, 'November must calculate expenses directly from the transaction ledger without a Numbers row');
