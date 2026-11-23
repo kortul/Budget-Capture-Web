@@ -27,7 +27,8 @@
   <div id="dependency-warning" class="notice warning hidden"></div>
 
   <nav class="main-tabs" aria-label="Main sections">
-    <button class="main-tab active" data-tab="import">01 / IMPORT</button>
+    <button class="main-tab active" data-tab="overview">00 / ОБЗОР</button>
+    <button class="main-tab" data-tab="import">01 / IMPORT</button>
     <button class="main-tab" data-tab="review">02 / REVIEW <span id="review-tab-count" class="tab-count">0</span></button>
     <button class="main-tab" data-tab="numbers">03 / NUMBERS</button>
     <button class="main-tab" data-tab="accounts">04 / ACCOUNTS</button>
@@ -35,7 +36,54 @@
   </nav>
 
   <main>
-    <section id="tab-import" class="tab-panel active">
+    <section id="tab-overview" class="tab-panel active">
+      <div class="section-heading overview-heading">
+        <div><div class="eyebrow">ЛИЧНЫЕ ФИНАНСЫ / ОБЗОР</div><h1>Деньги под контролем</h1><p id="overview-period-caption">Открой базу, чтобы увидеть, что происходит с деньгами.</p></div>
+        <div class="overview-controls">
+          <label>Период<input id="overview-month" type="month"></label>
+          <label>Валюта<select id="overview-currency"><option value="">Авто (RUB, если есть)</option></select></label>
+        </div>
+      </div>
+      <div id="overview-empty" class="panel overview-empty">
+        <div class="overview-empty-icon">↗</div><h2>Начни с базы расходов</h2>
+        <p>Открой свой .budget-файл — здесь появятся итоги месяца, изменения расходов и операции, требующие внимания.</p>
+        <div class="actions-row"><button id="overview-open-db" class="button primary">Открыть базу</button><button id="overview-new-db" class="button secondary">Создать новую</button></div>
+        <small>Данные остаются в выбранном файле. Ничего не отправляется на сервер.</small>
+      </div>
+      <div id="overview-content" class="hidden">
+        <div class="overview-kpis">
+          <article class="panel overview-kpi"><div class="overview-kpi-label">Расходы</div><strong id="overview-expenses-total">—</strong><small id="overview-expenses-compare">За выбранный период</small></article>
+          <article class="panel overview-kpi"><div class="overview-kpi-label">Поступления</div><strong id="overview-income-total">—</strong><small id="overview-income-compare">За выбранный период</small></article>
+          <article class="panel overview-kpi overview-kpi-net"><div class="overview-kpi-label">Остаток потока</div><strong id="overview-net-total">—</strong><small id="overview-net-note">Поступления минус расходы</small></article>
+          <article class="panel overview-kpi overview-kpi-review"><div class="overview-kpi-label">Ждут твоего внимания</div><strong id="overview-review-count">—</strong><small id="overview-review-note">Операции на проверке</small></article>
+        </div>
+        <div class="overview-main-grid">
+          <section class="panel overview-chart-panel">
+            <div class="overview-panel-heading"><div><h2>Движение денег</h2><p>Расходы и поступления по дням выбранного периода</p></div><span class="overview-chart-legend"><i class="expense"></i> Расходы <i class="income"></i> Поступления</span></div>
+            <div class="overview-chart-scroll"><div id="overview-daily-chart" class="overview-daily-chart"></div></div>
+            <div id="overview-chart-note" class="overview-chart-note">Столбцы показывают движение денег за каждый день.</div>
+          </section>
+          <section class="panel overview-attention-panel">
+            <div class="overview-panel-heading"><div><h2>Что стоит разобрать</h2><p>Небольшие действия, которые держат учёт в порядке</p></div></div>
+            <div class="overview-attention-item"><div><strong id="overview-pending-count">0</strong><span>неподтверждённых операций</span></div><button id="overview-review-pending" class="button secondary button-small">Проверить</button></div>
+            <div class="overview-attention-item"><div><strong id="overview-unallocated-count">0</strong><span>операций без категории</span></div><button id="overview-review-unallocated" class="button secondary button-small">Распределить</button></div>
+            <div id="overview-attention-state" class="overview-attention-state">Все операции разобраны.</div>
+          </section>
+        </div>
+        <div class="overview-lower-grid">
+          <section class="panel overview-changes-panel">
+            <div class="overview-panel-heading"><div><h2>Что изменилось</h2><p id="overview-change-caption">По сравнению с предыдущим сопоставимым периодом</p></div></div>
+            <div id="overview-category-changes" class="overview-category-changes"></div>
+          </section>
+          <section class="panel overview-recent-panel">
+            <div class="overview-panel-heading"><div><h2>Последние операции</h2><p>Недавние движения по выбранному месяцу</p></div><button id="overview-open-all" class="button quiet button-small">Все операции</button></div>
+            <div id="overview-recent-list" class="overview-recent-list"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-import" class="tab-panel">
       <div class="section-heading"><div><div class="eyebrow">STATEMENT INTAKE</div><h1>Import bank statements</h1><p>Files are read and parsed in this browser. They are never uploaded to a server.</p></div><div class="privacy-chip"><span>●</span> Local processing</div></div>
       <div class="import-layout">
         <div class="panel import-panel">
