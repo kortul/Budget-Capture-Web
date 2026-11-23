@@ -29,7 +29,14 @@ for(const key of ['date','bank','merchant','amount','category','done','heart']) 
 assert.ok(app.includes('sortTransactions(rows,state.transactionSort)'),'visible transactions must use the selected table sort');
 assert.ok(!app.includes('filter-sort')&&!html.includes('id="filter-sort"'),'obsolete standalone sort selector must be removed');
 assert.match(app,/if\(search&&!\[r\.description,r\.merchant,r\.account,r\.notes,r\.raw_text\][\s\S]*?\.includes\(search\)\)return false;/,'Review search must keep matches and discard non-matches');
-assert.equal((app.match(/isInternalTransfer\(r\.transaction_type,r\.category,r\.description/g)||[]).length,4,'Review, row badge, Numbers and integrity count must share internal-category classification');
+assert((app.match(/isInternalTransfer\(r\.transaction_type,r\.category,r\.description/g)||[]).length>=8,'Review, row badges, Numbers and the overview must share internal-transfer classification');
+assert.match(app,/resolveCurrencyRows\(\[\.\.\.currentRaw,\.\.\.previousRaw\],currencySelect\.value\)/,'overview must detect mixed currencies across both comparison periods');
+assert.match(app,/tx_date>=\? AND tx_date<\?/,'overview date windows must include ISO timestamps on the final day by using exclusive bounds');
+assert.match(app,/dayValues\.some\(item=>item\.expense>0\|\|item\.income>0\)/,'overview daily chart must render a useful empty state when the period has no activity');
+assert.match(app,/!String\(r\.category\|\|''\)\.trim\(\)\|\|String\(r\.category\)\.trim\(\)==='Не распределено'/,'overview must include transactions with blank categories in its unallocated count');
+assert.match(app,/resolution\.ambiguous\?\[\]:resolveCurrencyRows\(currentRaw,currencySelect\.value\)/,'recent transactions must respect selected currency');
+assert.match(html,/role="img" aria-label="Ежедневные расходы и поступления/,'daily chart must have an accessible description');
+assert.match(css,/prefers-reduced-motion:reduce/,'interface must respect reduced-motion preferences');
 assert.ok(analytics.includes('id="report-tab-month"')&&analytics.includes('id="report-tab-period"')&&analytics.includes('id="report-tab-year"'),'Analytics must expose Month, Period and Year tabs');
 assert.ok(analytics.includes('id="year-view" class="a-report-panel hidden"'),'Year must have a dedicated initially hidden workspace');
 assert.ok(analytics.includes('function renderYearDetail()'),'Year tab must render a dedicated annual report');
