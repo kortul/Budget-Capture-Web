@@ -259,6 +259,12 @@ function restoreAction(id){const action=one(state.db,'SELECT * FROM transaction_
 function copyText(text){const value=String(text??'');if(navigator.clipboard?.writeText){navigator.clipboard.writeText(value).then(()=>toast('Copied to clipboard')).catch(()=>fallbackCopy(value));}else fallbackCopy(value);}
 function fallbackCopy(value){const ta=document.createElement('textarea');ta.value=value;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied to clipboard');}catch{showError('Clipboard access failed.');}ta.remove();}
 function formatCell(cents){return numbersValue(cents);}
+function ruCount(value,forms){
+  const count=Math.abs(Math.trunc(Number(value)||0));
+  const lastTwo=count%100,last=count%10;
+  const form=lastTwo>=11&&lastTwo<=14?forms[2]:last===1?forms[0]:last>=2&&last<=4?forms[1]:forms[2];
+  return `${count.toLocaleString('ru-RU')} ${form}`;
+}
 function numberRows(month,bank,currency,includeInternal){let rows=all(state.db,'SELECT * FROM transactions WHERE deleted_at IS NULL');rows=rows.filter(r=>(!month||monthOf(r.tx_date)===month)&&(!bank||bank==='TOTAL'||r.account===bank)&&(!currency||r.currency===currency)&&(includeInternal||!isInternalTransfer(r.transaction_type,r.description,r.merchant,r.notes,r.raw_text)));return rows;}
 function renderNumbers(){
   if(!state.db){
@@ -281,7 +287,8 @@ function renderNumbers(){
   const banks=[...new Set(allRows.map(r=>r.account))].sort();
   const tabs=['TOTAL',...banks];
   if(!tabs.includes(state.activeBank))state.activeBank='TOTAL';
-  $('totals-bank-tabs').innerHTML=tabs.map(b=>`<button class="bank-tab ${state.activeBank===b?'active':''}" data-bank="${esc(b)}">${esc(b)}</button>`).join('');
+  const bankLabel=b=>b==='TOTAL'?'ВСЕ БАНКИ':b;
+  $('totals-bank-tabs').innerHTML=tabs.map(b=>`<button class="bank-tab ${state.activeBank===b?'active':''}" data-bank="${esc(b)}">${esc(bankLabel(b))}</button>`).join('');
   const bankRows=numberRows(month,state.activeBank,'',includeInternal);
   const currencies=[...new Set(bankRows.map(r=>r.currency).filter(Boolean))].sort();
   const curr=$('totals-currency');const prev=curr.value;
@@ -308,12 +315,12 @@ function renderNumbers(){
   document.querySelector('[data-profile-role="special-input"]').hidden=!specialInCategory;
   document.querySelector('[data-profile-role="special-output"]').hidden=!specialOutCategory;
   const sumAbs=items=>items.reduce((sum,row)=>sum+Math.abs(amountCents(row.amount)||0),0);
-  $('special-input-count').textContent=`${specialIn.length} transactions`;
-  $('special-output-count').textContent=`${specialOut.length} transactions`;
+  $('special-input-count').textContent=ruCount(specialIn.length,['операция','операции','операций']);
+  $('special-output-count').textContent=ruCount(specialOut.length,['операция','операции','операций']);
   $('special-input-total').textContent=displayMoney(sumAbs(specialIn),currency||'RUB').replace(/\s*RUB$/,'');
   $('special-output-total').textContent=displayMoney(sumAbs(specialOut),currency||'RUB').replace(/\s*RUB$/,'');
-  $('special-input-rows').innerHTML=specialIn.map(row=>specialRow(row)).join('')||'<div class="muted">No transactions</div>';
-  $('special-output-rows').innerHTML=specialOut.map(row=>specialRow(row)).join('')||'<div class="muted">No transactions</div>';
+  $('special-input-rows').innerHTML=specialIn.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
+  $('special-output-rows').innerHTML=specialOut.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
   const expenseNames=new Set(profile.categories.filter(item=>item.kind==='expense').map(item=>item.name));
   const incomeNames=new Set(profile.categories.filter(item=>item.kind==='income').map(item=>item.name));
   const knownNames=new Set(profile.categories.map(item=>item.name));
@@ -324,16 +331,16 @@ function renderNumbers(){
   const unallocatedExpenseCents=unallocatedRows.reduce((sum,row)=>{const cents=amountCents(row.amount);return cents!==null&&cents<0?sum+Math.abs(cents):sum;},0);
   const analyticsExpenseCents=summary.expense.cents+unallocatedExpenseCents;
   $('numbers-integrity').className='integrity-banner '+(unassigned?'review':'pass');
-  $('numbers-integrity').textContent=`${rows.length} transactions · ${expCount} expense-category rows · ${incCount} income-category rows · ${specialIn.length+specialOut.length} non-zero special-flow rows (${specialIn.length} in / ${specialOut.length} out) · zero-value special rows excluded: ${specialZeroCount} · own transfers included: ${includedInternalCount} · ${unassigned} unallocated / unknown category rows`;
+  $('numbers-integrity').textContent=`${ruCount(rows.length,['операция','операции','операций'])} · ${ruCount(expCount,['операция в расходной категории','операции в расходных категориях','операций в расходных категориях'])} · ${ruCount(incCount,['операция в доходной категории','операции в доходных категориях','операций в доходных категориях'])} · ${ruCount(specialIn.length+specialOut.length,['специальная операция','специальные операции','специальных операций'])} (${ruCount(specialIn.length,['поступление','поступления','поступлений'])} / ${ruCount(specialOut.length,['списание','списания','списаний'])}) · нулевых специальных операций исключено: ${specialZeroCount} · собственных переводов учтено: ${includedInternalCount} · без категории: ${ruCount(unassigned,['операция','операции','операций'])}`;
   $('unallocated-panel').classList.toggle('hidden',!unassigned);
-  $('unallocated-count').textContent=`${unassigned} transactions`;
+  $('unallocated-count').textContent=ruCount(unassigned,['операция','операции','операций']);
   $('unallocated-expense-total').textContent=displayMoney(unallocatedExpenseCents,currency||'');
   $('analytics-expense-total').textContent=displayMoney(analyticsExpenseCents,currency||'');
-  $('unallocated-rows').innerHTML=unallocatedRows.map(row=>`<div class="special-row"><span>${esc(row.tx_date)} · ${esc(row.merchant||row.description||'No description')}<small class="unallocated-category">${esc(row.category||'Не распределено')} · ${esc(row.transaction_type||'unknown')}</small></span><b class="${Number(row.amount)<0?'expense-text':'income-text'}">${esc(displayMoney(amountCents(row.amount)||0,row.currency||currency||''))}</b></div>`).join('')||'<div class="muted">No unallocated transactions</div>';
+  $('unallocated-rows').innerHTML=unallocatedRows.map(row=>`<div class="special-row"><span>${esc(row.tx_date)} · ${esc(row.merchant||row.description||'Без описания')}<small class="unallocated-category">${esc(row.category||'Не распределено')} · ${esc(transactionTypeLabel(row.transaction_type))}</small></span><b class="${Number(row.amount)<0?'expense-text':'income-text'}">${esc(displayMoney(amountCents(row.amount)||0,row.currency||currency||''))}</b></div>`).join('')||'<div class="muted">Нераспределённых операций нет</div>';
   const highlighted=rows.filter(row=>row.highlighted_flag&&Number(row.amount)<0);
-  $('highlighted-count').textContent=`${highlighted.length} transactions`;
+  $('highlighted-count').textContent=ruCount(highlighted.length,['операция','операции','операций']);
   $('highlighted-total').textContent=displayMoney(sumAbs(highlighted),currency||'RUB');
-  $('highlighted-rows').innerHTML=highlighted.map(row=>specialRow(row)).join('')||'<div class="muted">No transactions</div>';
+  $('highlighted-rows').innerHTML=highlighted.map(row=>specialRow(row)).join('')||'<div class="muted">Операций нет</div>';
   state.numberPayloads={
     expense:makeListValues(rows,'expense'),
     analyticsExpenseCents,
@@ -345,7 +352,11 @@ function makeListValues(rows,kind){
   const summary=numbersCategoryTotals(rows,state.profile?.categories||[]);
   return (summary[kind]?.items||[]).map(item=>formatCell(item.cents)).join('\n');
 }
-function specialRow(r){return `<div class="special-row"><span>${esc(r.tx_date)} · ${esc(r.merchant||r.description)}</span><b>${esc(displayMoney(Math.abs(amountCents(r.amount)||0),r.currency||''))}</b></div>`;}
+function transactionTypeLabel(value){
+  const key=String(value||'').trim().toLowerCase().replaceAll('-','_');
+  return ({income:'поступление',refund:'возврат',expense:'расход',internal_transfer:'внутренний перевод',transfer:'перевод',review:'на проверку'})[key]||'неизвестно';
+}
+function specialRow(r){return `<div class="special-row"><span>${esc(r.tx_date)} · ${esc(r.merchant||r.description||'Без описания')}</span><b>${esc(displayMoney(Math.abs(amountCents(r.amount)||0),r.currency||''))}</b></div>`;}
 function profileLines(kind){return (state.profile?.categories||[]).filter(item=>item.kind===kind).map(item=>item.name).join('\n');}
 function renderProfileEditor(){
   if(!state.db)return;

@@ -30,9 +30,18 @@ assert.ok(!analytics.includes('MONTH_DETAIL_MANUAL_RULES'),'non-shop calculation
 
 assert.match(app,/r\.status==='Confirmed'\?' class="is-confirmed"'/,'confirmed transaction rows must receive the green-highlight state class');
 assert.ok(app.includes('specialZeroCount')&&app.includes('amountCents(r.amount)!==0'),'zero-value special transactions must not count as financial flows');
-assert.ok(app.includes('non-zero special-flow rows'),'Numbers reconciliation banner must account for special-flow rows');
-assert.ok(app.includes('own transfers included'),'Numbers reconciliation banner must disclose included own transfers');
-assert.ok(html.includes('Expense-category totals are net:'),'Numbers workspace must explain net-of-refund expense categories');
+assert.ok(app.includes('специальных операций')&&app.includes('нулевых специальных операций исключено'),'Numbers reconciliation banner must explain active and zero-value special flows');
+assert.ok(app.includes('собственных переводов учтено'),'Numbers reconciliation banner must disclose own transfers in Russian');
+assert.ok(html.includes('Расходные категории показаны нетто:'),'Numbers workspace must explain net-of-refund expense categories in Russian');
+const numbersStart=html.indexOf('<section id="tab-numbers"');
+const numbersEnd=html.indexOf('<section id="tab-accounts"',numbersStart);
+const numbersWorkspace=html.slice(numbersStart,numbersEnd);
+assert.ok(numbersWorkspace.includes('Суммы по категориям'),'Numbers workspace must have a Russian heading');
+for(const legacyLabel of ['Numbers category totals','Copy expenses','Copy income','Copy total','Copy one-cell amounts','Copy marked expenses','Include own transfers','Currency<select','Month<input']) assert(!numbersWorkspace.includes(legacyLabel),`Numbers workspace must not retain English UI label: ${legacyLabel}`);
+assert.match(app,/function\s+ruCount\(value,forms\)/,'Numbers counts must use correct Russian plural forms');
+assert.match(analytics,/function\s+ruCount\(value,forms\)/,'Analytics counts must use correct Russian plural forms');
+assert.ok(analytics.includes('категории поступлений'),'Analytics income count must use the correct Russian form');
+assert.ok(analytics.includes('Загружена история:'),'Analytics import status must use a grammatically neutral history label');
 assert.ok(analytics.includes('Суммы расходных категорий показаны за вычетом возвратов'),'monthly analytics must explain net expense category totals');
 
 assert.match(fs.readFileSync(path.join(root,'styles.css'),'utf8'),/\.transactions-table tbody tr\.is-confirmed>td\{background:/,'confirmed transaction rows must have a visible row-wide highlight');

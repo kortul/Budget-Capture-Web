@@ -442,7 +442,8 @@ body{background:radial-gradient(ellipse at 12% -8%,rgba(64,126,115,.20),transpar
       <div class="a-month-category-head"><div><span class="a-month-section-kicker">РАСХОДЫ</span><h3>Куда ушли деньги</h3><p id="month-expense-count">—</p></div><strong id="month-expense-total">—</strong></div>
       <div class="a-month-expense-overview"><div id="month-expense-chart" class="a-month-donut" aria-label="Структура расходов"></div><div id="month-expense-legend" class="a-month-donut-legend"></div></div>
       <div class="a-month-list-heading"><span>Все категории</span><span>Сумма · доля</span></div>
-      <p class="a-small">Суммы расходных категорий показаны за вычетом возвратов и положительных корректировок, отнесённых в ту же категорию (например, возврата KGR).</p>\n      <div id="month-expense-list" class="a-month-category-list expense-list"></div>
+      <p class="a-small">Суммы расходных категорий показаны за вычетом возвратов и положительных корректировок, отнесённых в ту же категорию (например, возврата KGR).</p>
+      <div id="month-expense-list" class="a-month-category-list expense-list"></div>
     </section>
     <section class="a-month-category-panel income-panel">
       <div class="a-month-category-head"><div><span class="a-month-section-kicker">ПОСТУПЛЕНИЯ</span><h3>Откуда пришли деньги</h3><p id="month-income-count">—</p></div><strong id="month-income-total">—</strong></div>
@@ -532,6 +533,11 @@ const GROUPS=[
  {id:'loans',title:'Кредиты',types:['income','expense'],hint:'Полученные кредиты, погашения и кредитные расходы'}
 ];
 function normalized(v){return String(v||'').trim().toLocaleLowerCase('ru-RU').replace(/ё/g,'е').replace(/\s+/g,' ');}
+function ruCount(value,forms){
+ const count=Math.abs(Math.trunc(Number(value)||0)),lastTwo=count%100,last=count%10;
+ const form=lastTwo>=11&&lastTwo<=14?forms[2]:last===1?forms[0]:last>=2&&last<=4?forms[1]:forms[2];
+ return count.toLocaleString('ru-RU')+' '+form;
+}
 function roleLabel(role){return ({income:'Доход',expense:'Расход',special_input:'Спец. ввод',special_output:'Спец. вывод'})[role]||'Другое';}
 function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.className='a-status'+(kind?' '+kind:'');}
 function showError(message){$('error').textContent=message;$('error').classList.remove('hidden');}
@@ -872,7 +878,7 @@ function renderMonthDetail(){
  const expenses=totalsByCategory(rows.filter(row=>row.role==='expense')).filter(item=>Math.abs(Number(item.total)||0)>0.0001);
  const [year,monthNumber]=month.split('-').map(Number);
  $('month-detail-title').textContent=MONTHS[monthNumber-1]+' '+year;
- $('month-detail-subtitle').textContent=expenses.length+' категорий расходов · '+incomes.length+' источников поступлений · суммы отсортированы по убыванию';
+ $('month-detail-subtitle').textContent=ruCount(expenses.length,['категория расходов','категории расходов','категорий расходов'])+' · '+ruCount(incomes.length,['категория поступлений','категории поступлений','категорий поступлений'])+' · суммы отсортированы по убыванию';
  const selector=$('month-detail-select');
  if(selector){
   const monthKeys=[...new Set(data.filter(row=>keyInsideRange(row.month_key)).map(row=>row.month_key))].sort();
@@ -883,8 +889,8 @@ function renderMonthDetail(){
  $('month-no-shop-net').textContent=money(noShop.net);$('month-no-shop-net').className=noShop.net>=0?'a-positive':'a-negative';$('month-no-shop-note').textContent='Поступления вне магазина: '+money(noShop.income)+' − расходы без KGR: '+money(noShop.expense)+'. Спецвводы / спецвыводы Дима не включены.';
  $('month-sasha-expense').textContent=money(sashaExpense);$('month-dima-net').textContent=money(dimaNet);
  $('month-income-total').textContent=money(current.income);$('month-expense-total').textContent=money(current.expense);
- $('month-income-count').textContent=incomes.length+' активных категорий';
- $('month-expense-count').textContent=expenses.length+' активных категорий · нулевые скрыты';
+ $('month-income-count').textContent=ruCount(incomes.length,['активная категория','активные категории','активных категорий']);
+ $('month-expense-count').textContent=ruCount(expenses.length,['активная категория','активные категории','активных категорий'])+' · нулевые скрыты';
  renderMonthInsights(incomes,expenses,current);
  renderMonthExpenseComposition(expenses,current.expense);
  renderMonthCategoryList('month-income-list',incomes,current.income,'income');
@@ -1102,7 +1108,7 @@ async function loadDatabaseBytes(bytes,name){
   $('dashboard').classList.remove('hidden');
   setRange(String(latest)+'-01',maxKey,false);
   loadSettings();renderAll();$('download-db').disabled=!dbChanged;
-  setStatus('Загружено '+data.length.toLocaleString('ru-RU')+' месячных записей из файла '+dbName+' · '+years[0]+'–'+years[years.length-1]+' · источники: '+monthlySources.historyMonths+' мес. Numbers / '+monthlySources.ledgerMonths+' мес. транзакции · пропущено валютных операций не в RUB: '+monthlySources.excludedCurrencyTransactions+' · операций на проверку: '+monthlySources.excludedReviewTransactions+'.','ok');
+  setStatus('Загружена история: '+ruCount(data.length,['запись','записи','записей'])+' · файл: '+dbName+' · период: '+years[0]+'–'+years[years.length-1]+' · источники: '+monthlySources.historyMonths+' мес. Numbers / '+monthlySources.ledgerMonths+' мес. транзакции · исключено операций в валюте, отличной от RUB: '+monthlySources.excludedCurrencyTransactions+' · операций со статусом «На проверку»: '+monthlySources.excludedReviewTransactions+'.','ok');
   return true;
  }catch(error){
   try{opened?.close();}catch{}

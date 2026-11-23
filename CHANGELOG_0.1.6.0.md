@@ -155,3 +155,11 @@
 - Removed the additional Other / Прочее panel from the Numbers screen. The two primary Numbers tables are Expenses and Income; special input/output and marked-expense panels remain separate.
 - Numbers category rows keep their stored profile order. Alphabetical sorting applies only to the two red/green category dropdown groups.
 - Unclassified categories remain in the local database and profile editor; they are not presented as a third main Numbers table.
+
+
+## Рабочая сводка Numbers и подписи аналитики — 23 ноября 2026
+- Вкладка месячных итогов полностью переведена на русский язык: фильтры, кнопки копирования, подсказки, пустые состояния и статусы сверки.
+- Счётчики операций используют корректные русские формы слов; техническая вкладка TOTAL подписана «Все банки».
+- В финансовой аналитике исправлены формы «категория / категории / категорий» и подпись количества исторических записей.
+- Удалён случайно отображавшийся буквальный символ `\\n` перед списком расходов.
+- Расчёты, правила учёта возвратов и содержимое пользовательской базы не менялись.
