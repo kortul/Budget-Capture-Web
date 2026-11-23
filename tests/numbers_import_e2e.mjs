@@ -435,6 +435,10 @@ try {
       expenseRows: ledger.expense.length,
       cashDeposit: ledger.income.find(item => /наличные взнос/i.test(item.category))?.total ?? null,
       missingZero: ledger.expense.find(item => item.category === 'Рестораны')?.total ?? null,
+      signedRefundNet: noShopTotals([
+        {category:'Еда',amount:1000,role:'expense'},
+        {category:'Еда',amount:-100,role:'expense'},
+      ]).expense,
     };
   });
   assert.deepEqual(manualSeptember, {
@@ -445,7 +449,8 @@ try {
     expenseRows: 28,
     cashDeposit: 0,
     missingZero: 0,
-  }, 'manual no-shop ledger must reproduce the September 2026 hand calculation and exclude unrelated categories');
+    signedRefundNet: 900,
+  }, 'manual no-shop ledger must reproduce the September 2026 hand calculation, exclude unrelated categories, and net refunds');
 
   await analytics.locator('#sasha-shared-percent').fill('60');
   await analytics.locator('#save-settings').click();
