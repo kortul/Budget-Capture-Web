@@ -29,6 +29,12 @@ assert.ok(analytics.includes("normalized(row.category)!=='kgr'"),'non-shop calcu
 assert.ok(!analytics.includes('MONTH_DETAIL_MANUAL_RULES'),'non-shop calculation must not rely on a hard-coded category whitelist');
 
 assert.match(app,/r\.status==='Confirmed'\?' class="is-confirmed"'/,'confirmed transaction rows must receive the green-highlight state class');
+assert.ok(app.includes('specialZeroCount')&&app.includes('amountCents(r.amount)!==0'),'zero-value special transactions must not count as financial flows');
+assert.ok(app.includes('non-zero special-flow rows'),'Numbers reconciliation banner must account for special-flow rows');
+assert.ok(app.includes('own transfers included'),'Numbers reconciliation banner must disclose included own transfers');
+assert.ok(html.includes('Expense-category totals are net:'),'Numbers workspace must explain net-of-refund expense categories');
+assert.ok(analytics.includes('Суммы расходных категорий показаны за вычетом возвратов'),'monthly analytics must explain net expense category totals');
+
 assert.match(fs.readFileSync(path.join(root,'styles.css'),'utf8'),/\.transactions-table tbody tr\.is-confirmed>td\{background:/,'confirmed transaction rows must have a visible row-wide highlight');
 assert.match(app,/databaseNeedsSave\(db\)/,'SQLite migration state must be checked after opening');
 assert.match(app,/loadGlobal\('initSqlJs'/,'SQLite library loader must be available');
