@@ -313,7 +313,7 @@ try {
   await analyticsPage.locator('#report-tab-month').click();
   await analyticsPage.locator('#month-detail-select').selectOption('2026-10');
   await analyticsPage.waitForFunction(()=>document.querySelector('#month-detail-title')?.textContent==='Октябрь 2026');
-  assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'500 ₽','October must open even though the Period tab is filtered to November');
+  assert.equal(await analyticsPage.locator('#month-overall-net').textContent(),'-2 000 ₽','October must show its own net balance even though the Period tab is filtered to November');
   assert.equal(await analyticsPage.locator('#range-from').inputValue(),'2026-11','Month selection must not change Period start');
   assert.equal(await analyticsPage.locator('#range-to').inputValue(),'2026-11','Month selection must not change Period end');
   await analyticsPage.locator('#report-tab-year').click();
