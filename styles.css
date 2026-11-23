@@ -34,3 +34,10 @@
 .numbers-adjust-button{width:26px;height:26px;margin-right:4px;border:1px solid var(--line,#35414d);border-radius:7px;background:#1b2731;color:#8899a5;font-size:13px;font-weight:800;cursor:pointer;vertical-align:middle}
 .numbers-adjust-button:hover{border-color:#68b995;color:#9ee1c1}
 .numbers-adjust-button.active{background:rgba(93,189,149,.17);border-color:rgba(105,205,161,.5);color:#8ce1b5}
+
+/* Review table sortable headers */
+.sort-button{display:inline-flex;align-items:center;gap:5px;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;letter-spacing:inherit;text-transform:inherit;white-space:nowrap;cursor:pointer}
+.sort-button:hover,.sort-button[aria-pressed="true"]{color:#b4edcf}
+.sort-button:focus-visible{outline:2px solid var(--green);outline-offset:3px;border-radius:3px}
+.sort-indicator{font-size:9px;line-height:1;color:#718395;min-width:8px}
+.sort-button[aria-pressed="true"] .sort-indicator{color:var(--green)}
