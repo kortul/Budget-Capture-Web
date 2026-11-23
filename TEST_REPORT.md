@@ -13,6 +13,16 @@
 - Добавлены regression assertions и Chromium E2E-проверки обзора и перехода к нераспределённым операциям.
 - Обновлён корневой `asset-manifest.json`; SHA-256 и размеры трёх изменённых production-файлов (`index.html`, `app.js`, `styles.css`) повторно рассчитаны и совпадают с manifest.
 
+## Mobile version — 24 November 2026
+
+- Dedicated mobile layout at 700px and a tighter 380px breakpoint.
+- Fixed six-item thumb navigation with compact Russian labels, translucent background and safe-area padding.
+- Database state and actions reflow into a compact header; forms use larger touch targets and 16px inputs to avoid iOS auto-zoom.
+- Overview cards, charts, review filters, import controls, account forms and profile editor are tuned for narrow screens.
+- Transaction history remains horizontally scrollable with sticky date/selection columns and touch momentum; lower-priority data is not silently removed.
+- Toast notifications and footer are repositioned above the bottom navigation.
+- Added source-contract assertions and a mobile viewport scenario to Playwright E2E. Browser execution still requires local `npm run test:e2e`.
+
 ## Проверки, фактически выполненные в этой сессии
 
 | Проверка | Результат | Объём |
@@ -22,6 +32,8 @@
 | Navigation / panels | PASS | все 6 пунктов навигации соответствуют секциям; ровно одна активная секция |
 | Overview regression source checks | PASS | валюта, границы дат, пустые категории, выбранная валюта в последних операциях |
 | Production manifest entries | PASS | SHA-256 и байты совпадают для изменённых `index.html`, `app.js`, `styles.css` |
+| Mobile CSS structure | PASS | сбалансированные скобки, safe-area, touch nav, 700px/380px breakpoints |
+| Mobile Playwright scenario | ADDED / NOT RUN | проверяет фиксированную навигацию и компактную подпись на 390px |
 | Runtime metadata | PASS | версии манифестов совпадают с приложением; основные SQL.js/SheetJS-файлы присутствуют |
 | `npm test` / `npm run test:e2e` | NOT RUN | нет локального checkout и доступного Node/Playwright прогона в этой сессии |
 | GitHub CI status | NOT RUN | Actions удалены из проекта; API не вернул status checks |
